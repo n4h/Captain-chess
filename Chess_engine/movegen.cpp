@@ -44,7 +44,31 @@ namespace movegen
 
 	std::vector<board::Move> genBishopMoves(board::Board b, unsigned int i)
 	{
-		
+		std::vector<board::Move> ml = {};
+
+		auto f = [&ml, &b, i](int r, int l) {
+			for (int k = 1; isIndex(index2index(i, k * r, k * l)); ++k)
+			{
+				if (b.mailbox[index2index(i, k * r, k * l)].color == b.toMove)
+				{
+					break;
+				}
+				else
+				{
+					auto s = board::simpleMove{ i, index2index(i, k * r, k * l), b.mailbox[index2index(i, k * r, k * l)].piece };
+					b.makeMove(s);
+					if (!isInCheck(b))
+						ml.push_back(s);
+					b.unmakeMove(s);
+				}
+				if (b.mailbox[index2index(i, k * r, k * l)].color == static_cast<board::Color>(-1 * static_cast<int>(b.toMove)))
+					break;
+			}
+		};
+		// arguments represent directions that the bishop can move in
+		f(1, 1); f(1, -1); f(-1, 1); f(-1, -1);
 	}
+
+
 
 }
