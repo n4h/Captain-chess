@@ -81,7 +81,7 @@ namespace movegen
 
 	std::vector<board::Move> genRookMoves(board::Board b, unsigned int i)
 	{
-		std::vector<board:Move> ml = {};
+		std::vector<board::Move> ml = {};
 
 		genMoveInDirection(ml, b, i, 1, 0);
 		genMoveInDirection(ml, b, i, -1, 0);
@@ -116,7 +116,7 @@ namespace movegen
 		{
 			for (int f = -1; f != 2; ++f)
 			{
-				if (r == 0 & f == 0) //skip because this is the current square
+				if (r == 0 && f == 0) //skip because this is the current square
 					continue;
 				if (isIndex(index2index(i, r, f)))
 				{
