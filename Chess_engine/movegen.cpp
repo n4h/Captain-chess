@@ -91,4 +91,27 @@ namespace movegen
 		return ml;
 	}
 
+	std::vector<board::Move> genQueenMoves(board::Board b, unsigned int i)
+	{
+		std::vector<board::Move> ml = {};
+
+		genMoveInDirection(ml, b, i, 1, 0);
+		genMoveInDirection(ml, b, i, -1, 0);
+		genMoveInDirection(ml, b, i, 0, 1);
+		genMoveInDirection(ml, b, i, 0, -1);
+		genMoveInDirection(ml, b, i, 1, 1);
+		genMoveInDirection(ml, b, i, 1, -1);
+		genMoveInDirection(ml, b, i, -1, 1);
+		genMoveInDirection(ml, b, i, -1, -1);
+
+		return ml;
+	}
+
+	std::vector<board::Move> genKingMoves(board::Board b, unsigned int i)
+	{
+		std::vector<board::Move> ml = {};
+
+
+		return ml;
+	}
 }
