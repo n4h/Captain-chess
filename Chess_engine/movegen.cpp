@@ -111,6 +111,26 @@ namespace movegen
 	{
 		std::vector<board::Move> ml = {};
 
+		// king can move one square around itself (r and f are rank and file offsets)
+		for (int r = -1; r != 2; ++r)
+		{
+			for (int f = -1; f != 2; ++f)
+			{
+				if (r == 0 & f == 0) //skip because this is the current square
+					continue;
+				if (isIndex(index2index(i, r, f)))
+				{
+					if (b.mailbox[index2index(i, r, f)].color != b.toMove)
+					{
+						auto s = board::simpleMove{ i, index2index(i, r,f), b.mailbox[index2index(i, r, f)].piece };
+						b.makeMove(s);
+						if (!isInCheck(b))
+							ml.push_back(s);
+						b.unmakeMove(s);
+					}
+				}
+			}
+		}
 
 		return ml;
 	}
