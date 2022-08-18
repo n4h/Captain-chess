@@ -10,6 +10,8 @@ export namespace movegen
 
 	bool isInCheck(const board::Board& b);
 
+	bool isAttacked(board::Board b, unsigned int i);
+
 	void genMoveInDirection(std::vector<board::Move>& ml, board::Board b, unsigned int i, int r, int f);
 
 	std::vector<board::Move> genKnightMoves(board::Board b, unsigned int i);
@@ -18,4 +20,6 @@ export namespace movegen
 	std::vector<board::Move> genQueenMoves(board::Board b, unsigned int i);
 	std::vector<board::Move> genKingMoves(board::Board b, unsigned int i);
 	std::vector<board::Move> genPawnMoves(board::Board b, unsigned int i);
+
+	std::vector<board::Move> genMoves(const board::Board& b);
 }

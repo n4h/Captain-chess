@@ -92,7 +92,7 @@ export namespace aux
 
 	constexpr int rank(int x)
 	{
-		return static_cast<int>((x + 8) / 4);
+		return static_cast<int>((x + 8) / 8);
 	}
 
 	// takes and index, and returns a new index

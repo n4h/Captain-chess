@@ -97,6 +97,7 @@ export namespace board
 	{
 		simpleMove base; // this is the pawn move that results in promotion
 		Piece promo = Piece::none;
+		promoMove(simpleMove sm, Piece p) : base(sm), promo(p) {}
 	};
 	using Move = std::variant<std::monostate, simpleMove, castleMove, enPMove, promoMove>;
 
