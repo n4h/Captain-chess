@@ -12,7 +12,7 @@ namespace movegen
 
 	bool isInCheck(const board::Board& b)
 	{
-		int i = 0;
+		int i = -1;
 		auto s = board::Square{ true,b.toMove,board::Piece::king };
 		for (int j = 0; j != 64; ++j)
 		{
@@ -22,7 +22,7 @@ namespace movegen
 				break;
 			}
 		}
-		return isAttacked(b, i);
+		return i == -1 ? false : isAttacked(b, i);
 	}
 
 	bool isAttacked(board::Board b, unsigned int i)
@@ -76,9 +76,13 @@ namespace movegen
 	std::vector<board::Move> genKnightMoves(board::Board b, unsigned int i)
 	{
 		std::vector<board::Move> ml = {};
+
+		if (b.mailbox[i].piece != board::Piece::rook)
+			return ml;
+
 		auto f = [&ml, &b, i](int r, int f) {
 			auto k = index2index(i, r, f);
-			if ((rank(i) + r > 8 || rank(i) + r < 1 || file(i) + f > 8 || file(i) + f < 1) && b.mailbox[k].color != b.toMove)
+			if (!(rank(i) + r > 8 || rank(i) + r < 1 || file(i) + f > 8 || file(i) + f < 1) && b.mailbox[k].color != b.toMove)
 			{
 				auto s = board::simpleMove{ i, k, b.mailbox[k].piece };
 				b.makeMove(s);
@@ -103,7 +107,7 @@ namespace movegen
 	// generate moves by moving (r, f) steps at a time from the position i
 	void genMoveInDirection(std::vector<board::Move>& ml, board::Board b, unsigned int i, int r, int f)
 	{
-		for (int k = 1; rank(i) + k * r > 8 || rank(i) + k * r < 1 || file(i) + k * f > 8 || file(i) + k * f < 1; ++k)
+		for (int k = 1; !(rank(i) + k * r > 8 || rank(i) + k * r < 1 || file(i) + k * f > 8 || file(i) + k * f < 1); ++k)
 		{
 			if (b.mailbox[index2index(i, k * r, k * f)].color == b.toMove)
 			{
@@ -126,6 +130,9 @@ namespace movegen
 	{
 		std::vector<board::Move> ml = {};
 
+		if (b.mailbox[i].piece != board::Piece::rook)
+			return ml;
+
 		genMoveInDirection(ml, b, i, 1, 1);
 		genMoveInDirection(ml, b, i, 1, -1);
 		genMoveInDirection(ml, b, i, -1, 1);
@@ -138,6 +145,9 @@ namespace movegen
 	{
 		std::vector<board::Move> ml = {};
 
+		if (b.mailbox[i].piece != board::Piece::rook)
+			return ml;
+
 		genMoveInDirection(ml, b, i, 1, 0);
 		genMoveInDirection(ml, b, i, -1, 0);
 		genMoveInDirection(ml, b, i, 0, 1);
@@ -149,6 +159,9 @@ namespace movegen
 	std::vector<board::Move> genQueenMoves(board::Board b, unsigned int i)
 	{
 		std::vector<board::Move> ml = {};
+
+		if (b.mailbox[i].piece != board::Piece::rook)
+			return ml;
 
 		genMoveInDirection(ml, b, i, 1, 0);
 		genMoveInDirection(ml, b, i, -1, 0);
@@ -165,6 +178,8 @@ namespace movegen
 	std::vector<board::Move> genKingMoves(board::Board b, unsigned int i)
 	{
 		std::vector<board::Move> ml = {};
+		if (b.mailbox[i].piece != board::Piece::king)
+			return ml;
 
 		// king can move one square around itself (r and f are rank and file offsets)
 		for (int r = -1; r != 2; ++r)

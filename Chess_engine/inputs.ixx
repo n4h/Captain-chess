@@ -1,4 +1,4 @@
-export module inputs;
+export module Inputs;
 
 
 import <vector>;
@@ -31,7 +31,7 @@ namespace inputs
 		}
 	}
 
-	void processAndPlay(board::Board& b, std::string move)
+	export void processAndPlay(board::Board& b, std::string move)
 	{
 		// user can only play a move from this list of valid moves
 		std::vector<board::Move> ml = movegen::genMoves(b);
@@ -47,7 +47,7 @@ namespace inputs
 			unsigned int to = index(move[3] - '0', fileNumber(move[2]));
 			if (b.mailbox[from].piece == board::Piece::none || b.mailbox[from].color != b.toMove)
 				return;
-			for (int i = 0; i != 64; ++i)
+			for (int i = 0; i != ml.size(); ++i)
 			{
 				if (std::holds_alternative<board::simpleMove>(ml[i]))
 				{
@@ -84,7 +84,7 @@ namespace inputs
 				return;
 			if (b.toMove == board::Color::black && (s == 'K' || s == 'Q'))
 				return;
-			for (int i = 0; i != 64; ++i)
+			for (int i = 0; i != ml.size(); ++i)
 			{
 				if (std::holds_alternative<board::castleMove>(ml[i]))
 				{
@@ -100,7 +100,7 @@ namespace inputs
 		{
 			unsigned int from = index(move[1] - '0', fileNumber(move[0]));
 			unsigned int to = index(move[3] - '0', fileNumber(move[2]));
-			for (int i = 0; i != 64; ++i)
+			for (int i = 0; i != ml.size(); ++i)
 			{
 				if (std::holds_alternative<board::promoMove>(ml[i]))
 				{
