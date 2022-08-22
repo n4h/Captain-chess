@@ -9,6 +9,7 @@ import <variant>;
 
 export namespace board
 {
+
 	enum class Piece
 	{
 		// the numbers correspond to the material value of the pieces
@@ -28,6 +29,8 @@ export namespace board
 		empty = 0,
 		black = -1
 	};
+
+	Color oppositeColor(Color c);
 
 	struct Square
 	{

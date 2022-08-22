@@ -7,10 +7,11 @@ import Board;
 
 export namespace movegen
 {
+	std::vector<unsigned int> genXRay(unsigned int i, int r, int f);
 
-	bool isInCheck(const board::Board& b);
+	bool isInCheck(const board::Board b, board::Color c);
 
-	bool isAttacked(board::Board b, unsigned int i);
+	bool isAttacked(board::Board b, board::Color c, unsigned int i);
 
 	void genMoveInDirection(std::vector<board::Move>& ml, board::Board b, unsigned int i, int r, int f);
 

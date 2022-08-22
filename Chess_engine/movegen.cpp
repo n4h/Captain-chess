@@ -10,10 +10,23 @@ namespace movegen
 {
 	using namespace aux;
 
-	bool isInCheck(const board::Board& b)
+	
+	std::vector<unsigned int> genXRay(unsigned int i, int r, int f)
+	{
+		std::vector<unsigned int> xray = {};
+		if (i >= 64 || i < 0)
+			return xray;
+		for (int k = 1; isIndex(i,k * r , k *f); ++k)
+		{
+			xray.push_back(index2index(i,k*r, k*f));
+		}
+		return xray;
+	}
+
+	bool isInCheck(const board::Board b, board::Color c)
 	{
 		int i = -1;
-		auto s = board::Square{ true,b.toMove,board::Piece::king };
+		auto s = board::Square{ true, c, board::Piece::king };
 		for (int j = 0; j != 64; ++j)
 		{
 			if (b.mailbox[j] == s)
@@ -22,54 +35,50 @@ namespace movegen
 				break;
 			}
 		}
-		return i == -1 ? false : isAttacked(b, i);
+		if (i == -1) return false;
+		return isAttacked(b, board::oppositeColor(c), i);
 	}
 
-	bool isAttacked(board::Board b, unsigned int i)
+	bool isAttacked(board::Board b, board::Color c, unsigned int i)
 	{
 		// if square S1 is attacked by a bishop onS2, 
 		// this is equivalent to a bishop on S1 attacking
 		// S2. This symmetry (+ special cases for pawns)
 		// is used to tell if square i is attacked
-		std::vector<board::Move> ml = {};
 
-		// delete the current color's king in order to avoid 
-		// pinned piece complications
-		for (int j = 0; j != 64; ++j)
-		{
-			if (b.mailbox[j] == board::Square{ true, b.toMove , board::Piece::king })
-				b.mailbox[j] = board::Square{ false, static_cast<board::Color>(-1 * static_cast<int>(b.toMove)), board::Piece::none };
-		}
-
-		ml = genBishopMoves(b, i);
-		for (const auto& j : ml)
-		{
-			if (auto s = std::get<board::simpleMove>(j); s.cap == board::Piece::bishop || s.cap == board::Piece::queen)
-				return true;
-		}
-
-		ml = genRookMoves(b, i);
-		for (const auto& j : ml)
-		{
-			if (auto s = std::get<board::simpleMove>(j); s.cap == board::Piece::rook || s.cap == board::Piece::queen)
-				return true;
-		}
-
-		ml = genKnightMoves(b, i);
-		for (const auto& j : ml)
-		{
-			if (auto s = std::get<board::simpleMove>(j); s.cap == board::Piece::knight)
-				return true;
-		}
-
-		ml = genKingMoves(b, i);
-		for (const auto& j : ml)
-		{
-			if (std::holds_alternative<board::simpleMove>(j))
-				if (auto s = std::get<board::simpleMove>(j); s.cap == board::Piece::king)
+		auto searchRayFor = [&c, &i, &b](int r, int f, board::Piece lookingFor) {
+			auto ray = genXRay(i, r, f);
+			auto target = board::Square{ true, c,lookingFor };
+			for (int pos = 0; pos != ray.size(); ++pos)
+			{
+				if (b.mailbox[ray[pos]].color == oppositeColor(c))
+					break;
+				if (b.mailbox[ray[pos]] == target)
 					return true;
-		}
+			}
+			return false;
+		};
 
+		auto searchJumpFor = [&c, &i, &b](int r, int f, board::Piece lookingFor) {
+			auto target = board::Square{ true, c, lookingFor };
+			auto k = index2index(i, r, f);
+			if (isIndex(i, r, f) && b.mailbox[k] == target)
+				return true;
+			return false;
+		};
+
+		for (int m = -1; m != 3; m += 2)
+			for (int j = -1; j != 3; j += 2)
+				if (searchRayFor(m, j, board::Piece::bishop) || searchRayFor(m, j, board::Piece::queen)
+					|| searchJumpFor(m, j, board::Piece::king) || searchJumpFor(2 * m, j, board::Piece::knight)
+					|| searchJumpFor(m, 2 * j, board::Piece::knight))
+					return true;
+
+		for (int m = -1; m != 3; m += 2)
+			if (searchRayFor(m, 0, board::Piece::rook) || searchRayFor(m, 0, board::Piece::queen)
+				|| searchRayFor(0, m, board::Piece::rook) || searchRayFor(0, m, board::Piece::queen)
+				|| searchJumpFor(m, 0, board::Piece::king) || searchRayFor(0, m, board::Piece::king))
+				return true;
 		return false;
 	}
 
@@ -77,16 +86,16 @@ namespace movegen
 	{
 		std::vector<board::Move> ml = {};
 
-		if (b.mailbox[i].piece != board::Piece::rook)
+		if (b.mailbox[i].piece != board::Piece::knight)
 			return ml;
 
 		auto f = [&ml, &b, i](int r, int f) {
 			auto k = index2index(i, r, f);
-			if (!(rank(i) + r > 8 || rank(i) + r < 1 || file(i) + f > 8 || file(i) + f < 1) && b.mailbox[k].color != b.toMove)
+			if (isIndex(i, r, f) && b.mailbox[k].color != b.toMove)
 			{
 				auto s = board::simpleMove{ i, k, b.mailbox[k].piece };
 				b.makeMove(s);
-				if (!isInCheck(b))
+				if (!isInCheck(b, board::oppositeColor(b.toMove)))
 				{
 					ml.push_back(s);
 				}
@@ -107,7 +116,7 @@ namespace movegen
 	// generate moves by moving (r, f) steps at a time from the position i
 	void genMoveInDirection(std::vector<board::Move>& ml, board::Board b, unsigned int i, int r, int f)
 	{
-		for (int k = 1; !(rank(i) + k * r > 8 || rank(i) + k * r < 1 || file(i) + k * f > 8 || file(i) + k * f < 1); ++k)
+		for (int k = 1; isIndex(i, k * r, k * f); ++k)
 		{
 			if (b.mailbox[index2index(i, k * r, k * f)].color == b.toMove)
 			{
@@ -117,11 +126,11 @@ namespace movegen
 			{
 				auto s = board::simpleMove{ i, index2index(i, k * r, k * f), b.mailbox[index2index(i, k * r, k * f)].piece };
 				b.makeMove(s);
-				if (!isInCheck(b))
+				if (!isInCheck(b, board::oppositeColor(b.toMove)))
 					ml.push_back(s);
 				b.unmakeMove(s);
 			}
-			if (b.mailbox[index2index(i, k * r, k * f)].color == static_cast<board::Color>(-1 * static_cast<int>(b.toMove)))
+			if (b.mailbox[index2index(i, k * r, k * f)].color == board::oppositeColor(b.toMove))
 				break;
 		}
 	}
@@ -130,7 +139,7 @@ namespace movegen
 	{
 		std::vector<board::Move> ml = {};
 
-		if (b.mailbox[i].piece != board::Piece::rook)
+		if (b.mailbox[i].piece != board::Piece::bishop)
 			return ml;
 
 		genMoveInDirection(ml, b, i, 1, 1);
@@ -160,7 +169,7 @@ namespace movegen
 	{
 		std::vector<board::Move> ml = {};
 
-		if (b.mailbox[i].piece != board::Piece::rook)
+		if (b.mailbox[i].piece != board::Piece::queen)
 			return ml;
 
 		genMoveInDirection(ml, b, i, 1, 0);
@@ -186,7 +195,7 @@ namespace movegen
 		{
 			for (int f = -1; f != 2; ++f)
 			{
-				if (rank(i) + r > 8 || rank(i) + r < 1 || file(i) + f > 8 || file(i) + f < 1)
+				if (!isIndex(i, r, f))
 					continue;
 				if (r == 0 && f == 0) //skip because this is the current square
 					continue;
@@ -194,7 +203,7 @@ namespace movegen
 				{
 					auto s = board::simpleMove{ i, index2index(i, r,f), b.mailbox[index2index(i, r, f)].piece };
 					b.makeMove(s);
-					if (!isInCheck(b))
+					if (!isInCheck(b, board::oppositeColor(b.toMove)))
 						ml.push_back(s);
 					b.unmakeMove(s);
 				}
@@ -204,22 +213,26 @@ namespace movegen
 		if (b.toMove == board::Color::white)
 		{
 			if (b.gameState.top().wk)
-				if (!isAttacked(b, wk_start) && !isAttacked(b, wk_start + 1) && !isAttacked(b, wk_start + 2)
+				if (!isAttacked(b, board::oppositeColor(b.toMove), wk_start) && !isAttacked(b, board::oppositeColor(b.toMove), wk_start + 1)
+					&& !isAttacked(b, board::oppositeColor(b.toMove), wk_start + 2)
 					&& !b.mailbox[wk_start + 1].occupied && !b.mailbox[wk_start + 2].occupied)
 					ml.push_back(board::castleMove{ board::CastleSide::king });
 			if (b.gameState.top().wq)
-				if (!isAttacked(b, wk_start) && !isAttacked(b, wk_start - 1) && !isAttacked(b, wk_start - 2)
+				if (!isAttacked(b, board::oppositeColor(b.toMove), wk_start) && !isAttacked(b, board::oppositeColor(b.toMove), wk_start - 1)
+					&& !isAttacked(b, board::oppositeColor(b.toMove), wk_start - 2)
 					&& !b.mailbox[wk_start - 1].occupied && !b.mailbox[wk_start - 2].occupied && !b.mailbox[wk_start - 3].occupied)
 					ml.push_back(board::castleMove{board::CastleSide::queen});
 		}
 		else if (b.toMove == board::Color::black)
 		{
 			if (b.gameState.top().bk)
-				if (!isAttacked(b, bk_start) && !isAttacked(b, bk_start + 1) && !isAttacked(b, bk_start + 2)
+				if (!isAttacked(b, board::oppositeColor(b.toMove), bk_start) && !isAttacked(b, board::oppositeColor(b.toMove), bk_start + 1)
+					&& !isAttacked(b, board::oppositeColor(b.toMove), bk_start + 2)
 					&& !b.mailbox[bk_start + 1].occupied && !b.mailbox[bk_start + 2].occupied)
 					ml.push_back(board::castleMove{ board::CastleSide::king });
 			if (b.gameState.top().bq)
-				if (!isAttacked(b, bk_start) && !isAttacked(b, bk_start - 1) && !isAttacked(b, bk_start - 2)
+				if (!isAttacked(b, board::oppositeColor(b.toMove), bk_start) && !isAttacked(b, board::oppositeColor(b.toMove), bk_start - 1)
+					&& !isAttacked(b, board::oppositeColor(b.toMove), bk_start - 2)
 					&& !b.mailbox[bk_start - 1].occupied && !b.mailbox[bk_start - 2].occupied && !b.mailbox[bk_start - 3].occupied)
 					ml.push_back(board::castleMove{ board::CastleSide::queen });
 		}
@@ -239,14 +252,14 @@ namespace movegen
 
 		auto f = [&ml, &b](board::Move m) {
 			b.makeMove(m);
-			if (!isInCheck(b))
+			if (!isInCheck(b, board::oppositeColor(b.toMove)))
 				ml.push_back(m);
 			b.unmakeMove(m);
 		};
 
 		for (int j = -1; j != 2; ++j)
 		{
-			if (j + file(i) > 8 || j + file(i) < 1 || rank(i) + direction > 8 || rank(i) + direction < 1)
+			if (!isIndex(i, direction, j))
 				continue;
 			auto dest = index2index(i, direction, j);
 			if (j == 0 && !b.mailbox[dest].occupied)
@@ -264,7 +277,7 @@ namespace movegen
 					f(s);
 				}
 			}
-			else if ((j == -1 || j == 1) && b.mailbox[dest].color == static_cast<board::Color>(-1*static_cast<int>(b.mailbox[i].color)))
+			else if ((j == -1 || j == 1) && b.mailbox[dest].color == board::oppositeColor(b.mailbox[i].color))
 			{
 				if (seventhRank)
 				{

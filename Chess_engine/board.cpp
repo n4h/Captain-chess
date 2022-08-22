@@ -24,6 +24,11 @@ namespace board
 		return (s1.occupied != s2.occupied || s1.color != s2.color || s1.piece != s2.piece);
 	}
 
+	Color oppositeColor(Color c)
+	{
+		return static_cast<Color>(-1 * static_cast<int>(c));
+	}
+
 	// FEN strings use the symbols r,R,q,Q, etc. to specify chess pieces
 	// with capital letters indicating the white pieces
 	// this function returns a Square that contains the appropriate piece
@@ -228,7 +233,7 @@ namespace board
 
 	void Board::changeColor() noexcept
 	{
-		toMove = static_cast<Color>(-1 * static_cast<int>(toMove));
+		toMove = oppositeColor(toMove);
 	}
 
 	void Board::makeMove(const Move& m) noexcept

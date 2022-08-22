@@ -102,10 +102,10 @@ export namespace aux
 	{
 		return aux::index( rank(index) + r, file(index) + f);
 	}
-
-	constexpr bool isIndex(unsigned int i)
+	// offset i by rank r and file f and check if it is still on the board
+	constexpr bool isIndex(unsigned int i, int r, int f)
 	{
-		return i >= 0 && i <= 63;
+		return !(rank(i) + r > 8 || rank(i) + r < 1 || file(i) + f > 8 || file(i) + f < 1);
 	}
 
 	constexpr bool isWhiteDoublePawnMove(int from, int to)
