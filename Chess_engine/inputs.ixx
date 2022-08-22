@@ -25,6 +25,9 @@ namespace inputs
 			return board::Piece::bishop;
 		case 'r':
 		case 'R':
+			return board::Piece::rook;
+		case 'q':
+		case 'Q':
 			return board::Piece::queen;
 		default:
 			return board::Piece::none;

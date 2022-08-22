@@ -513,8 +513,7 @@ namespace board
 		auto pm = std::get<promoMove>(m);
 
 		mailbox[pm.base.to].piece = Piece::pawn;
-		unmakeSimpleMove(m);
-		gameState.pop();
+		unmakeSimpleMove(pm.base);
 	}
 
 	void Board::printState()

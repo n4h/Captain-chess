@@ -6,7 +6,7 @@ import Inputs;
 
 int main()
 {
-	board::Board b{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
+	board::Board b{ "rnbqkbnr/ppppppPp/8/8/8/8/PPPPPPP1/RNBQKBNR w KQkq - 0 1" };
 	b.printState();
 	std::string s = "n";
 	while (s != "quit")
