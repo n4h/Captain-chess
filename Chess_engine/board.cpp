@@ -98,136 +98,71 @@ namespace board
 		return c;
 	}
 
-	//unfortunately long function that processes a FEN string
-	// and converts it to a board representation
+
+	std::vector<std::string> splitString(std::string s, const char d)
+	{
+		std::vector<std::string> split = {};
+		std::string word = "";
+		for (auto i = s.cbegin(); i != s.cend(); ++i)
+		{
+			if (*i != d)
+			{
+				word += *i;
+				continue;
+			}
+			if (word != "") split.push_back(word);
+			word = "";
+		}
+		if (word != "") split.push_back(word);
+		return split;
+	}
+
+	// see https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
 	Board::Board(const std::string& fen)
 	{
 		irrState is;
-		int currRank = 8;
 		int currFile = 1;
-		bool processingGrid = true;
-		bool next = false;
-		std::string pos = "";
-		std::string last = "";
-		for (auto& i : fen)
+		
+		auto splitfen = splitString(fen, ' ');
+		auto splitboard = splitString(splitfen[0], '/');
+
+		for (int i = 0; i != 8; ++i)
 		{
-			if (currRank == 0)
+			for (auto j : splitboard[i])
 			{
-				processingGrid = false;
-			}
-			if (processingGrid)
-			{
-				// "/" and " " signals that we are done processing a rank
-				if (i == '/' || i == ' ')
+				if (isPiece(j))
 				{
-					--currRank;
-					continue;
-				}
-				// encountering a number at this stage represents consecutive empty squares
-				if (isNumber(i))
-				{
-					const int number = i - '0';
-					for (int j = currFile; j != currFile + number; ++j)
-					{
-						mailbox[index(currRank, j)] = Square{ false,Color::empty,Piece::none };
-					}
-					currFile = incFile(currFile, number);
-				}
-				else // if it is not a number, use makeSquare to generate the right contents
-				{
-					mailbox[index(currRank, currFile)] = makeSquare(i);
+					mailbox[index(8 - i, currFile)] = makeSquare(j);
 					currFile = incFile(currFile, 1);
 				}
-			}
-			else // note: this part only executes when we are done processing the board
-			{
-				switch (i)
+				else if (isNumber(j))
 				{
-				case ' ':
-					last += i;
-					break;
-				case 'w':
-					toMove = Color::white;
-					break;
-					// the appearance of b can refer to either the side to move or
-					// to the b file
-					// The side to move always occurs first, so first check
-					// if toMove is empty, and if so, fill it in with black
-					// if not empty, that is because we have already filled
-					// it in, and we can be certain that "b" refers to a file
-				case 'b':
-					if (toMove == Color::empty)
-						toMove = Color::black;
-					break;
-				case 'k':
-					is.bk = true;
-					break;
-				case 'K':
-					is.wk = true;
-					break;
-				case 'q':
-					is.bq = true;
-					break;
-				case 'Q':
-					is.wq = true;
-					break;
-				default:
-					break;
-				}
-				if (next)
-				{
-					pos += i;
-					next = false;
-					continue; // to avoid the isMoveNumber if statement below
-				}
-				// the en passant square is given in algebraic notation
-				// by file letters and rank numbers e.g. a3, b6, c3, etc.
-				// so first check if i is a file letter (a-h).
-				// if so, set next = true to signal that the next
-				// iteration will be a number. Note: if black is to
-				// move, then the first two characters of pos will
-				// be "b ". This will be checked for and ignored later
-				if (isFile(i))
-				{
-					pos += i;
-					next = true;
-				}
-				if (isMoveNumber(i))
-				{
-					last += i; // the space between the last two numbers is added in the switch statement
+					currFile = incFile(currFile, j - '0');
 				}
 			}
 		}
-		// check that pos has at least two elements and then access the last two elements
-		if (pos.length() >= 2)
+
+		if (splitfen[1] == "w") toMove = Color::white;
+		if (splitfen[1] == "b") toMove = Color::black;
+
+		for (auto i : splitfen[2])
 		{
-			if (isMoveNumber(pos[pos.length() - 1]) && isFile(pos[pos.length() - 2]))
-				is.enP = index(pos[pos.length() - 1] - '0', fileNumber(pos[pos.length() - 2]));
+			if (i == 'K') is.wk = true;
+			if (i == 'k') is.bk = true;
+			if (i == 'q') is.bq = true;
+			if (i == 'Q') is.wq = true;
 		}
-		bool encounteredNumber = false;
-		bool encounteredSpace = false;
-		std::string ply = "";
-		std::string mov = "";
-		// last contains leading spaces and two numbers separated by a space
-		for (auto& i : last)
+
+		if (splitfen[3] != "-")
 		{
-			if (i == ' ' && !encounteredNumber)
-				continue;
-			if (isMoveNumber(i) && !encounteredSpace)
-			{
-				encounteredNumber = true;
-				ply += i;
-				continue;
-			}
-			if (i == ' ')
-				encounteredSpace = true;
-			if (isMoveNumber(i))
-			{
-				mov += i;
-			}
+			int file = fileNumber(splitfen[3][0]);
+			int rank = splitfen[3][1] - '0';
+			is.enP = index(rank, file);
 		}
-		is.ply50 = std::stoi(ply);
-		currMove = std::stoi(mov);
+
+		is.ply50 = std::stoi(splitfen[4]);
+		currMove = std::stoi(splitfen[5]);
+
 		gameState.push(is);
 	}
 

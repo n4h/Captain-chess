@@ -82,6 +82,28 @@ export namespace aux
 		}
 	}
 
+	constexpr bool isPiece(const char i)
+	{
+		switch (i)
+		{
+		case 'r':
+		case 'R':
+		case 'k':
+		case 'K':
+		case 'n':
+		case 'N':
+		case 'q':
+		case 'Q':
+		case 'b':
+		case 'B':
+		case 'p':
+		case 'P':
+			return true;
+		default:
+			return false;
+		}
+	}
+
 	// file and rank satisfy index(rank(x),file(x)) = x;
 	// so we can convert between the index of a 64 elem
 	// array and the rank/file associated with that index

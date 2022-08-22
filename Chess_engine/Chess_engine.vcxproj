@@ -177,6 +177,8 @@
   <ItemGroup>
     <ClCompile Include="auxiliary.ixx" />
     <ClCompile Include="board.cpp" />
+    <ClCompile Include="engine.cpp" />
+    <ClCompile Include="engine.ixx" />
     <ClCompile Include="eval.cpp" />
     <ClCompile Include="eval.ixx" />
     <ClCompile Include="inputs.ixx" />

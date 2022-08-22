@@ -13,7 +13,6 @@ namespace eval
 			switch (i.piece)
 			{
 			case board::Piece::king:
-				eval += static_cast<int>(i.color) * aux::king_val;
 				break;
 			case board::Piece::queen:
 				eval += static_cast<int>(i.color) * aux::queen_val;
