@@ -28,18 +28,22 @@ namespace engine
 	board::Move Engine::rootSearch(board::Board b, unsigned int depth)
 	{
 		std::vector<board::Move> ml = movegen::genMoves(b);
-		double maxScore = -100000;
+		double worstCase = -100000;
 		unsigned int whichMove = 0;
 		double score = -100000;
 		for (int i = 0; i != ml.size(); ++i)
 		{
 			b.makeMove(ml[i]);
-			score = std::max(score, -1*search::alphaBetaSearch(b, -100000, -1*maxScore, depth - 1));
+			score = std::max(score, -1*search::alphaBetaSearch(b, -100000, -1*worstCase, depth - 1));
 			b.unmakeMove(ml[i]);
-			maxScore = std::max(maxScore, score);
-			whichMove = i;
+			if (score > worstCase)
+			{
+				worstCase = score;
+				whichMove = i;
+			}
+		
 		}
-		eval = static_cast<int>(b.toMove)*maxScore;
+		eval = static_cast<int>(b.toMove)*worstCase;
 		return ml[whichMove];
 	}
 

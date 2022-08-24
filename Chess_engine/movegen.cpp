@@ -51,7 +51,7 @@ namespace movegen
 			auto target = board::Square{ true, c,lookingFor };
 			for (int pos = 0; pos != ray.size(); ++pos)
 			{
-				if (b.mailbox[ray[pos]].color == oppositeColor(c))
+				if (b.mailbox[ray[pos]].occupied && b.mailbox[ray[pos]] != target)
 					break;
 				if (b.mailbox[ray[pos]] == target)
 					return true;
@@ -79,6 +79,11 @@ namespace movegen
 				|| searchRayFor(0, m, board::Piece::rook) || searchRayFor(0, m, board::Piece::queen)
 				|| searchJumpFor(m, 0, board::Piece::king) || searchRayFor(0, m, board::Piece::king))
 				return true;
+
+		int direction = static_cast<int>(c); // white pawns attack up the board, black pawns attack down the board
+		if (searchJumpFor(-1 * direction, 1, board::Piece::pawn) || searchJumpFor(-1 * direction, -1, board::Piece::pawn))
+			return true;
+
 		return false;
 	}
 

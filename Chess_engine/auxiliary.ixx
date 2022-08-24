@@ -12,8 +12,8 @@ export namespace aux
 	constexpr int bk_start = 60;
 	constexpr int wkr_start = 7; // white king's rook etc.
 	constexpr int bkr_start = 63;
-	constexpr int wqr_start = 56;
-	constexpr int bqr_start = 0;
+	constexpr int wqr_start = 0;
+	constexpr int bqr_start = 56;
 
 	// Piece values (according to AlphaZero)
 	constexpr double king_val = 500;
