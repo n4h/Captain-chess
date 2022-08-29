@@ -14,11 +14,11 @@ export namespace board
 	{
 		// the numbers correspond to the material value of the pieces
 		pawn = 1,
-		queen = 9,
-		rook = 5,
-		bishop = 4,
-		knight = 3,
-		king = 500, // the king is essentially infinitely valuable
+		queen = 950,
+		rook = 563,
+		bishop = 333,
+		knight = 305,
+		king = 50000, // the king is essentially infinitely valuable
 		none = 0 // no piece = no value
 	};
 
@@ -117,7 +117,7 @@ export namespace board
 	public:
 		Color toMove = Color::empty;
 
-		std::stack<irrState> gameState = {};
+		std::stack<irrState, std::vector<irrState>> gameState = {};
 
 		int currMove = 1; // current move
 	private:

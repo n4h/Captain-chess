@@ -7,20 +7,18 @@ import Board;
 
 export namespace movegen
 {
-	std::vector<unsigned int> genXRay(unsigned int i, int r, int f);
+	bool isInCheck(const board::Board& b, board::Color c);
 
-	bool isInCheck(const board::Board b, board::Color c);
+	bool isAttacked(const board::Board& b, board::Color c, unsigned int i);
 
-	bool isAttacked(board::Board b, board::Color c, unsigned int i);
+	void genMoveInDirection(std::vector<board::Move>& ml, board::Board& b, unsigned int i, int r, int f);
 
-	void genMoveInDirection(std::vector<board::Move>& ml, board::Board b, unsigned int i, int r, int f);
+	std::vector<board::Move> genKnightMoves(board::Board& b, unsigned int i);
+	std::vector<board::Move> genBishopMoves(board::Board& b, unsigned int i);
+	std::vector<board::Move> genRookMoves(board::Board& b, unsigned int i);
+	std::vector<board::Move> genQueenMoves(board::Board& b, unsigned int i);
+	std::vector<board::Move> genKingMoves(board::Board& b, unsigned int i);
+	std::vector<board::Move> genPawnMoves(board::Board& b, unsigned int i);
 
-	std::vector<board::Move> genKnightMoves(board::Board b, unsigned int i);
-	std::vector<board::Move> genBishopMoves(board::Board b, unsigned int i);
-	std::vector<board::Move> genRookMoves(board::Board b, unsigned int i);
-	std::vector<board::Move> genQueenMoves(board::Board b, unsigned int i);
-	std::vector<board::Move> genKingMoves(board::Board b, unsigned int i);
-	std::vector<board::Move> genPawnMoves(board::Board b, unsigned int i);
-
-	std::vector<board::Move> genMoves(const board::Board& b);
+	std::vector<board::Move> genMoves(board::Board& b);
 }

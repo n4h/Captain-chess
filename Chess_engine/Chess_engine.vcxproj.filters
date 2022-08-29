@@ -39,9 +39,6 @@
     <ClCompile Include="eval.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="search.ixx">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="movegen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -53,6 +50,18 @@
     </ClCompile>
     <ClCompile Include="engine.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="perft.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="perft.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="divide.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="precomputed.ixx">
+      <Filter>Modules</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -5,25 +5,12 @@ import <vector>;
 
 import Board;
 import aux;
-
+import Precomputed;
 namespace movegen
 {
 	using namespace aux;
-
-	
-	std::vector<unsigned int> genXRay(unsigned int i, int r, int f)
-	{
-		std::vector<unsigned int> xray = {};
-		if (i >= 64 || i < 0)
-			return xray;
-		for (int k = 1; isIndex(i,k * r , k *f); ++k)
-		{
-			xray.push_back(index2index(i,k*r, k*f));
-		}
-		return xray;
-	}
-
-	bool isInCheck(const board::Board b, board::Color c)
+	using namespace precomputed;
+	bool isInCheck(const board::Board& b, board::Color c)
 	{
 		int i = -1;
 		auto s = board::Square{ true, c, board::Piece::king };
@@ -39,7 +26,7 @@ namespace movegen
 		return isAttacked(b, board::oppositeColor(c), i);
 	}
 
-	bool isAttacked(board::Board b, board::Color c, unsigned int i)
+	bool isAttacked(const board::Board& b, board::Color c, unsigned int i)
 	{
 		// if square S1 is attacked by a bishop onS2, 
 		// this is equivalent to a bishop on S1 attacking
@@ -47,7 +34,7 @@ namespace movegen
 		// is used to tell if square i is attacked
 
 		auto searchRayFor = [&c, &i, &b](int r, int f, board::Piece lookingFor) {
-			auto ray = genXRay(i, r, f);
+			auto& ray = getXRay(i, r, f);
 			auto target = board::Square{ true, c,lookingFor };
 			for (int pos = 0; pos != ray.size(); ++pos)
 			{
@@ -77,7 +64,7 @@ namespace movegen
 		for (int m = -1; m != 3; m += 2)
 			if (searchRayFor(m, 0, board::Piece::rook) || searchRayFor(m, 0, board::Piece::queen)
 				|| searchRayFor(0, m, board::Piece::rook) || searchRayFor(0, m, board::Piece::queen)
-				|| searchJumpFor(m, 0, board::Piece::king) || searchRayFor(0, m, board::Piece::king))
+				|| searchJumpFor(m, 0, board::Piece::king) || searchJumpFor(0, m, board::Piece::king))
 				return true;
 
 		int direction = static_cast<int>(c); // white pawns attack up the board, black pawns attack down the board
@@ -87,7 +74,7 @@ namespace movegen
 		return false;
 	}
 
-	std::vector<board::Move> genKnightMoves(board::Board b, unsigned int i)
+	std::vector<board::Move> genKnightMoves(board::Board& b, unsigned int i)
 	{
 		std::vector<board::Move> ml = {};
 
@@ -119,7 +106,7 @@ namespace movegen
 
 
 	// generate moves by moving (r, f) steps at a time from the position i
-	void genMoveInDirection(std::vector<board::Move>& ml, board::Board b, unsigned int i, int r, int f)
+	void genMoveInDirection(std::vector<board::Move>& ml, board::Board& b, unsigned int i, int r, int f)
 	{
 		for (int k = 1; isIndex(i, k * r, k * f); ++k)
 		{
@@ -140,7 +127,7 @@ namespace movegen
 		}
 	}
 
-	std::vector<board::Move> genBishopMoves(board::Board b, unsigned int i)
+	std::vector<board::Move> genBishopMoves(board::Board& b, unsigned int i)
 	{
 		std::vector<board::Move> ml = {};
 
@@ -155,7 +142,7 @@ namespace movegen
 		return ml;
 	}
 
-	std::vector<board::Move> genRookMoves(board::Board b, unsigned int i)
+	std::vector<board::Move> genRookMoves(board::Board& b, unsigned int i)
 	{
 		std::vector<board::Move> ml = {};
 
@@ -170,7 +157,7 @@ namespace movegen
 		return ml;
 	}
 
-	std::vector<board::Move> genQueenMoves(board::Board b, unsigned int i)
+	std::vector<board::Move> genQueenMoves(board::Board& b, unsigned int i)
 	{
 		std::vector<board::Move> ml = {};
 
@@ -189,7 +176,7 @@ namespace movegen
 		return ml;
 	}
 
-	std::vector<board::Move> genKingMoves(board::Board b, unsigned int i)
+	std::vector<board::Move> genKingMoves(board::Board& b, unsigned int i)
 	{
 		std::vector<board::Move> ml = {};
 		if (b.mailbox[i].piece != board::Piece::king)
@@ -245,7 +232,7 @@ namespace movegen
 		return ml;
 	}
 
-	std::vector<board::Move> genPawnMoves(board::Board b, unsigned int i)
+	std::vector<board::Move> genPawnMoves(board::Board& b, unsigned int i)
 	{
 		std::vector<board::Move> ml = {};
 		
@@ -314,7 +301,7 @@ namespace movegen
 		return ml;
 	}
 
-	std::vector<board::Move> genMoves(const board::Board& b)
+	std::vector<board::Move> genMoves(board::Board& b)
 	{
 		std::vector<board::Move> ml = {};
 		for (int i = 0; i != 64; ++i)
