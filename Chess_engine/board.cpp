@@ -1,103 +1,47 @@
-module Board;
+#include <string>
+#include <iostream>
+#include <cctype>
+#include <vector>
+#include <tuple>
 
-import <string>;
-import <iostream>;
-import <algorithm>;
-import <iterator>;
-import <cctype>;
-import <algorithm>;
-import <variant>;
+#include "board.hpp"
+#include "auxiliary.hpp"
+#include "constants.hpp"
 
-import aux;
 
 namespace board
 {
 	using namespace aux;
+	using namespace constants;
 
-	bool operator==(const Square& s1, const Square& s2)
+	std::tuple<bool, unsigned int> makeSquare(const char i)
 	{
-		return (s1.occupied == s2.occupied && s1.color == s2.color && s1.piece == s2.piece);
-	}
+		bool w = i >= 'A' && i <= 'Z';
 
-	bool operator!=(const Square& s1, const Square& s2)
-	{
-		return (s1.occupied != s2.occupied || s1.color != s2.color || s1.piece != s2.piece);
-	}
-
-	Color oppositeColor(Color c)
-	{
-		return static_cast<Color>(-1 * static_cast<int>(c));
-	}
-
-	// FEN strings use the symbols r,R,q,Q, etc. to specify chess pieces
-	// with capital letters indicating the white pieces
-	// this function returns a Square that contains the appropriate piece
-	// data
-	Square makeSquare(const char& i)
-	{
 		switch (i)
 		{
-		case 'r':
-			return Square{ true, Color::black,Piece::rook };
-		case 'R':
-			return Square{ true, Color::white,Piece::rook };
-		case 'k':
-			return Square{ true, Color::black,Piece::king };
 		case 'K':
-			return Square{ true, Color::white,Piece::king };
-		case 'q':
-			return Square{ true, Color::black,Piece::queen };
+		case 'k':
+			return std::make_tuple(w, king);
 		case 'Q':
-			return Square{ true, Color::white,Piece::queen };
-		case 'b':
-			return Square{ true, Color::black,Piece::bishop };
+		case 'q':
+			return std::make_tuple(w, queens);
+		case 'R':
+		case 'r':
+			return std::make_tuple(w, rooks);
 		case 'B':
-			return Square{ true, Color::white,Piece::bishop };
-		case 'n':
-			return Square{ true, Color::black,Piece::knight };
+		case 'b':
+			return std::make_tuple(w, bishops);
 		case 'N':
-			return Square{ true, Color::white,Piece::knight };
-		case 'p':
-			return Square{ true, Color::black,Piece::pawn };
+		case 'n':
+			return std::make_tuple(w, knights);
 		case 'P':
-			return Square{ true, Color::white,Piece::pawn };
+		case 'p':
+			return std::make_tuple(w, pawns);
 		default:
-			return Square{ false, Color::empty, Piece::none };
+			return std::make_tuple(w, 50); // generates out of bounds error
 		}
 	}
-
-	std::string Square::getSymbol() noexcept
-	{
-		std::string c = ".";
-		switch (piece)
-		{
-		case Piece::bishop:
-			c = "b";
-			break;
-		case Piece::knight:
-			c = "n";
-			break;
-		case Piece::king:
-			c = "k";
-			break;
-		case Piece::pawn:
-			c = "p";
-			break;
-		case Piece::queen:
-			c = "q";
-			break;
-		case Piece::rook:
-			c = "r";
-			break;
-		default:
-			c = ".";
-			break;
-		}
-		if (color == Color::white)
-			std::transform(c.cbegin(), c.cend(), c.begin(), [](char c) {return static_cast<char>(std::toupper(c)); });
-		return c;
-	}
-
 
 	std::vector<std::string> splitString(std::string s, const char d)
 	{
@@ -118,21 +62,31 @@ namespace board
 	}
 
 	// see https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
-	Board::Board(const std::string& fen)
+	Board::Board(std::string fen)
 	{
-		irrState is;
-		int currFile = 1;
+		unsigned int currFile = 0;
 		
 		auto splitfen = splitString(fen, ' ');
 		auto splitboard = splitString(splitfen[0], '/');
 
-		for (int i = 0; i != 8; ++i)
+		for (unsigned int i = 0; i != 8; ++i)
 		{
 			for (auto j : splitboard[i])
 			{
 				if (isPiece(j))
 				{
-					mailbox[index(8 - i, currFile)] = makeSquare(j);
+					auto [color, pieceType] = makeSquare(j);
+					all |= setbit(7 - i, currFile);
+					if (color)
+					{
+						wPieces[pieceType] |= setbit(7 - i, currFile);
+						wAll |= setbit(7 - i, currFile);
+					}
+					else
+					{
+						bPieces[pieceType] |= setbit(7 - i, currFile);
+						bAll |= setbit(7 - i, currFile);
+					}
 					currFile = incFile(currFile, 1);
 				}
 				else if (isNumber(j))
@@ -142,339 +96,124 @@ namespace board
 			}
 		}
 
-		if (splitfen[1] == "w") toMove = Color::white;
-		if (splitfen[1] == "b") toMove = Color::black;
+		if (splitfen[1] == "w") wMoving = true;
+		if (splitfen[1] == "b") wMoving = false;
 
 		for (auto i : splitfen[2])
 		{
-			if (i == 'K') is.wk = true;
-			if (i == 'k') is.bk = true;
-			if (i == 'q') is.bq = true;
-			if (i == 'Q') is.wq = true;
+			if (i == 'K') flags |= wkCastleFlagMask;
+			if (i == 'k') flags |= bkCastleFlagMask;
+			if (i == 'q') flags |= bqCastleFlagMask;
+			if (i == 'Q') flags |= wqCastleFlagMask;
 		}
 
 		if (splitfen[3] != "-")
 		{
-			int file = fileNumber(splitfen[3][0]);
-			int rank = splitfen[3][1] - '0';
-			is.enP = index(rank, file);
+			const std::size_t file = fileNumber(splitfen[3][0]);
+			const std::size_t rank = splitfen[3][1] - '0' - 1;
+			epLoc = setbit(rank, file);
 		}
 
-		is.ply50 = std::stoi(splitfen[4]);
+		flags += (std::uint16_t)(std::stoi(splitfen[4]));
 		currMove = std::stoi(splitfen[5]);
-
-		gameState.push(is);
 	}
 
-	void Board::changeColor() noexcept
+	void Board::clearPosition(std::uint64_t pos) noexcept
 	{
-		toMove = oppositeColor(toMove);
-	}
-
-	void Board::makeMove(const Move& m) noexcept
-	{
-		if (std::holds_alternative<simpleMove>(m))
-			makeSimpleMove(m);
-		if (std::holds_alternative<castleMove>(m))
-			makeCastleMove(m);
-		if (std::holds_alternative<enPMove>(m))
-			makeEnPMove(m);
-		if (std::holds_alternative<promoMove>(m))
-			makePromoMove(m);
-		if (toMove == Color::black)
-			++currMove;
-		changeColor();
-	}
-
-	void Board::unmakeMove(const Move& m) noexcept
-	{
-		if (std::holds_alternative<simpleMove>(m))
-			unmakeSimpleMove(m);
-		if (std::holds_alternative<castleMove>(m))
-			unmakeCastleMove(m);
-		if (std::holds_alternative<enPMove>(m))
-			unmakeEnPMove(m);
-		if (std::holds_alternative<promoMove>(m))
-			unmakePromoMove(m);
-		if (toMove == Color::white)
-			--currMove;
-		changeColor();
-	}
-
-	void Board::makeSimpleMove(const Move& m) noexcept
-	{
-		auto sm = std::get<simpleMove>(m);
-		auto is = gameState.top();
-		// step #1 is to check if this move opens up en passant.
-		// the nice thing about en passant is that the active en
-		// passant square (the square which is passed over) can 
-		// only be on the 3rd rank (white) or 6th rank (black)
-		if (mailbox[sm.from].piece == Piece::pawn)
+		wAll &= ~pos;
+		bAll &= ~pos;
+		all &= ~pos;
+		for (int i = 0; i != 6; ++i)
 		{
-			if (toMove == Color::white && isWhiteDoublePawnMove(sm.from, sm.to))
-				is.enP = index(3, file(sm.from));
-			if (toMove == Color::black && isBlackDoublePawnMove(sm.from, sm.to))
-				is.enP = index(6, file(sm.from));
-			if (!isWhiteDoublePawnMove(sm.from, sm.to) && !isBlackDoublePawnMove(sm.from, sm.to))
-				is.enP = -1;
+			wPieces[i] &= ~pos;
+			bPieces[i] &= ~pos;
 		}
-		else
-		{
-			is.enP = -1;
-		}
-
-		// update moves since last capture or pawn move
-		if (sm.cap == Piece::none && mailbox[sm.from].piece != Piece::pawn)
-		{
-			is.ply50 += 1;
-		}
-		else
-		{
-			is.ply50 = 0;
-		}
-		// finally, make the move
-		mailbox[sm.to] = mailbox[sm.from];
-		mailbox[sm.from] = Square{false, Color::empty, Piece::none};
-
-		// update castling rights
-		if (mailbox[wk_start] != Square{ true, Color::white, Piece::king }) { is.wk = false; is.wq = false; }
-		if (mailbox[wkr_start] != Square{ true, Color::white, Piece::rook }) { is.wk = false; }
-		if (mailbox[wqr_start] != Square{ true, Color::white, Piece::rook }) { is.wq = false; }
-		if (mailbox[bk_start] != Square{ true, Color::black, Piece::king }) { is.bk = false; is.bq = false; }
-		if (mailbox[bkr_start] != Square{ true, Color::black, Piece::rook }) { is.bk = false; }
-		if (mailbox[bqr_start] != Square{ true, Color::black, Piece::rook }) { is.bq = false; }
-
-		gameState.push(is);
 	}
 
-	void Board::makeCastleMove(const Move& m) noexcept
+	pieceType Board::getPieceType(Bitboard at) const noexcept
 	{
-		auto cm = std::get<castleMove>(m);
-		auto is = gameState.top();
-		is.ply50 += 1;
-		is.enP = -1;
-		switch (toMove)
+		for (unsigned int i = 0; i != 6; ++i)
 		{
-		case Color::white:
-			if (cm.side == CastleSide::king)
-			{
-				mailbox[wk_start + 2] = mailbox[wk_start];
-				mailbox[wk_start + 1] = mailbox[wkr_start];
-				mailbox[wk_start] = Square{ false, Color::empty, Piece::none };
-				mailbox[wkr_start] = Square{ false, Color::empty, Piece::none };
-				is.wk = false; is.wq = false;
-			}
-			else if (cm.side == CastleSide::queen)
-			{
-				mailbox[wk_start - 2] = mailbox[wk_start];
-				mailbox[wk_start - 1] = mailbox[wqr_start];
-				mailbox[wk_start] = Square{ false, Color::empty, Piece::none };
-				mailbox[wqr_start] = Square{ false, Color::empty, Piece::none };
-				is.wk = false; is.wq = false;
-			}
-			break;
-		case Color::black:
-			if (cm.side == CastleSide::king)
-			{
-				mailbox[bk_start + 2] = mailbox[bk_start];
-				mailbox[bk_start + 1] = mailbox[bkr_start];
-				mailbox[bk_start] = Square{ false, Color::empty, Piece::none };
-				mailbox[bkr_start] = Square{ false, Color::empty, Piece::none };
-				is.bk = false; is.bq = false;
-			}
-			else if (cm.side == CastleSide::queen)
-			{
-				mailbox[bk_start - 2] = mailbox[bk_start];
-				mailbox[bk_start - 1] = mailbox[bqr_start];
-				mailbox[bk_start] = Square{ false, Color::empty, Piece::none };
-				mailbox[bqr_start] = Square{ false, Color::empty, Piece::none };
-				is.bk = false; is.bq = false;
-			}
-			break;
+			if (((wPieces[i] & at) != 0) || ((bPieces[i] & at) != 0))
+				return (pieceType)i;
 		}
-		gameState.push(is);
+		return none;
 	}
 
-	void Board::makeEnPMove(const Move& m) noexcept
+	void Board::playMoves(const std::vector<Move>& v)
 	{
-		auto epm = std::get<enPMove>(m);
-		auto is = gameState.top();
-
-		is.ply50 = 0;
-		is.enP = -1;
-
-		switch (toMove)
+		for (auto i : v)
 		{
-		case Color::white:
-			if (epm.right)
+			if (wMoving)
 			{
-				mailbox[epm.square] = mailbox[index2index(epm.square, -1, 1)];
-				mailbox[index2index(epm.square, -1)] = Square{false, Color::empty, Piece::none};
-				mailbox[index2index(epm.square, -1, 1)] = Square{ false, Color::empty, Piece::none };
+				makeMove<true>(i);
 			}
 			else
 			{
-				mailbox[epm.square] = mailbox[index2index(epm.square, -1, -1)];
-				mailbox[index2index(epm.square, -1)] = Square{ false, Color::empty, Piece::none };
-				mailbox[index2index(epm.square, -1, -1)] = Square{ false, Color::empty, Piece::none };
+				makeMove<false>(i);
 			}
-			break;
-		case Color::black:
-			if (epm.right)
-			{
-				mailbox[epm.square] = mailbox[index2index(epm.square, 1, 1)];
-				mailbox[index2index(epm.square, 1)] = Square{ false, Color::empty, Piece::none };
-				mailbox[index2index(epm.square, 1, 1)] = Square{ false, Color::empty, Piece::none };
-			}
-			else
-			{
-				mailbox[epm.square] = mailbox[index2index(epm.square, 1, -1)];
-				mailbox[index2index(epm.square, 1)] = Square{ false, Color::empty, Piece::none };
-				mailbox[index2index(epm.square, 1, -1)] = Square{ false, Color::empty, Piece::none };
-			}
-			break;
 		}
-		gameState.push(is);
-	}
-	
-	void Board::makePromoMove(const Move& m) noexcept
-	{
-		auto pm = std::get<promoMove>(m);
-		makeSimpleMove(pm.base);
-		mailbox[pm.base.to].piece = pm.promo;
 	}
 
-	void Board::unmakeSimpleMove(const Move& m) noexcept
-	{
-		auto sm = std::get<simpleMove>(m);
-
-		mailbox[sm.from] = mailbox[sm.to];
-		if (sm.cap == Piece::none)
-		{
-			mailbox[sm.to] = Square{ false, Color::empty, Piece::none };
-		}
-		else
-		{
-			// if a piece was captured, then whoever currently has the turn
-			// must have had their piece captured. Hence, toMove is the color
-			// of the captured piece
-			mailbox[sm.to] = Square{ true, toMove, sm.cap };
-		}
-		gameState.pop();
-	}
-
-	void Board::unmakeCastleMove(const Move& m) noexcept
-	{
-		auto cm = std::get<castleMove>(m);
-
-		switch (toMove)
-		{
-		case Color::black:
-			if (cm.side == CastleSide::king)
-			{
-				mailbox[wk_start] = mailbox[wk_start + 2];
-				mailbox[wkr_start] = mailbox[wk_start + 1];
-				mailbox[wk_start + 1] = Square{ false, Color::empty, Piece::none };
-				mailbox[wk_start + 2] = Square{ false, Color::empty, Piece::none };
-			}
-			else if (cm.side == CastleSide::queen)
-			{
-				mailbox[wk_start] = mailbox[wk_start - 2];
-				mailbox[wqr_start] = mailbox[wk_start - 1];
-				mailbox[wk_start - 1] = Square{ false, Color::empty, Piece::none };
-				mailbox[wk_start - 2] = Square{ false, Color::empty, Piece::none };
-			}
-			break;
-		case Color::white:
-			if (cm.side == CastleSide::king)
-			{
-				mailbox[bk_start] = mailbox[bk_start + 2];
-				mailbox[bkr_start] = mailbox[bk_start + 1];
-				mailbox[bk_start + 1] = Square{ false, Color::empty, Piece::none };
-				mailbox[bk_start + 2] = Square{ false, Color::empty, Piece::none };
-			}
-			else if (cm.side == CastleSide::queen)
-			{
-				mailbox[bk_start] = mailbox[bk_start - 2];
-				mailbox[bqr_start] = mailbox[bk_start - 1];
-				mailbox[bk_start - 1] = Square{ false, Color::empty, Piece::none };
-				mailbox[bk_start - 2] = Square{ false, Color::empty, Piece::none };
-			}
-			break;
-		}
-		gameState.pop();
-	}
-
-	void Board::unmakeEnPMove(const Move& m) noexcept
-	{
-		auto epm = std::get<enPMove>(m);
-
-		switch (toMove)
-		{
-		case Color::black:
-			if (epm.right)
-			{
-				mailbox[index2index(epm.square, -1, 1)] = mailbox[epm.square];
-				mailbox[index2index(epm.square, -1)] = Square{ true, Color::black, Piece::pawn };
-				mailbox[epm.square] = Square{false, Color::empty, Piece::none};
-			}
-			else
-			{
-				mailbox[index2index(epm.square, -1, -1)] = mailbox[epm.square];
-				mailbox[index2index(epm.square, -1)] = Square{ true, Color::black, Piece::pawn };
-				mailbox[epm.square] = Square{ false, Color::empty, Piece::none };
-			}
-			break;
-		case Color::white:
-			if (epm.right)
-			{
-				mailbox[index2index(epm.square, 1, 1)] = mailbox[epm.square];
-				mailbox[index2index(epm.square, 1)] = Square{ true, Color::white, Piece::pawn };
-				mailbox[epm.square] = Square{ false, Color::empty, Piece::none };
-			}
-			else
-			{
-				mailbox[index2index(epm.square, 1, -1)] = mailbox[epm.square];
-				mailbox[index2index(epm.square, 1)] = Square{ true, Color::white, Piece::pawn };
-				mailbox[epm.square] = Square{ false, Color::empty, Piece::none };
-			}
-			break;
-		}
-		gameState.pop();
-	}
-
-	void Board::unmakePromoMove(const Move& m) noexcept
-	{
-		auto pm = std::get<promoMove>(m);
-
-		mailbox[pm.base.to].piece = Piece::pawn;
-		unmakeSimpleMove(pm.base);
-	}
-
-	void Board::printState()
+	std::ostream& operator<<(std::ostream& os, const Board& b)
 	{
 		// First, print the board
 		// we start by printing the top border
-		std::cout << "O===============O" << std::endl;
-		for (int j = 8; j != 0; --j)
+		os << "O===============O\n";
+		for (unsigned int j = 8; j >= 1; --j)
 		{
-			std::cout << "|"; // left border of jth rank
-			for (int i = 1; i != 9; ++i)
+			os << "|"; // left border of jth rank
+			for (unsigned int i = 0; i != 8; ++i)
 			{
-				std::cout << mailbox[index(j, i)].getSymbol() << "|";
+				unsigned int capitalOffset = 0;
+				const auto pos = setbit(j - 1U, i);
+				if (pos & b.all)
+				{
+					if (pos & b.wAll) capitalOffset = 0;
+					if (pos & b.bAll) capitalOffset = 32;
+					if ((b.wPieces[pawns] | b.bPieces[pawns]) & pos)
+						os << (char)('P' + (char)capitalOffset) << "|";
+					if ((b.wPieces[knights] | b.bPieces[knights]) & pos)
+						os << (char)('N' + (char)capitalOffset) << "|";
+					if ((b.wPieces[bishops] | b.bPieces[bishops]) & pos)
+						os << (char)('B' + (char)capitalOffset) << "|";
+					if ((b.wPieces[rooks] | b.bPieces[rooks]) & pos)
+						os << (char)('R' + (char)capitalOffset) << "|";
+					if ((b.wPieces[queens] | b.bPieces[queens]) & pos)
+						os << (char)('Q' + (char)capitalOffset) << "|";
+					if ((b.wPieces[king] | b.bPieces[king]) & pos)
+						os << (char)('K' + (char)capitalOffset) << "|";
+				}
+				else
+				{
+					os << "." << "|";
+				}
 			}
-			std::cout << std::endl;
+			os << "\n";
 		}
 		// bottom border
-		std::cout << "O===============O" << std::endl;
-		std::cout << "Current move: " << currMove << ". ";
-		switch (toMove)
-		{
-		case Color::black:
-			std::cout << "Black to move." << std::endl;
-			break;
-		case Color::white:
-			std::cout << "White to move." << std::endl;
-		}
+		os << "O===============O";
+		return os;
+	}
+
+	bool operator==(const Board& l, const Board& r) noexcept
+	{
+		return (l.all == r.all)
+			&& (l.wAll == r.wAll)
+			&& (l.bAll == r.bAll)
+			&& (l.flags == r.flags)
+			&& (l.epLoc == r.epLoc)
+			&& (l.wPieces[0] == r.wPieces[0])
+			&& (l.bPieces[0] == r.bPieces[0])
+			&& (l.wPieces[1] == r.wPieces[1])
+			&& (l.bPieces[1] == r.bPieces[1])
+			&& (l.wPieces[2] == r.wPieces[2])
+			&& (l.bPieces[2] == r.bPieces[2])
+			&& (l.wPieces[3] == r.wPieces[3])
+			&& (l.bPieces[3] == r.bPieces[3])
+			&& (l.wPieces[4] == r.wPieces[4])
+			&& (l.bPieces[4] == r.bPieces[4])
+			&& (l.wPieces[5] == r.wPieces[5])
+			&& (l.bPieces[5] == r.bPieces[5]);
 	}
 }

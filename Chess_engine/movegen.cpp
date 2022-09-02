@@ -1,345 +1,238 @@
-module Movegen;
+#include <immintrin.h>
+#include <intrin.h>
 
-import <variant>;
-import <vector>;
+#pragma intrinsic(__popcnt64)
+#pragma intrinsic(_BitScanForward64)
+#pragma intrinsic(_pdep_u64)
+#pragma intrinsic(_pext_u64)
 
-import Board;
-import aux;
-import Precomputed;
+#include <cstddef>
+
+#include "movegen.hpp"
+#include "board.hpp"
+#include "auxiliary.hpp"
+
 namespace movegen
 {
-	using namespace aux;
-	using namespace precomputed;
-	bool isInCheck(const board::Board& b, board::Color c)
+	using aux::getDiag;
+	using aux::getAntiDiag;
+	using aux::setbit;
+
+	attackMap bishopAttacks[bishopAttacksSize()];
+	board::Bitboard bishopMasks[64];
+	std::size_t bishopOffsets[64];
+
+	attackMap rookAttacks[rookAttacksSize()];
+	board::Bitboard rookMasks[64];
+	std::size_t rookOffsets[64];
+
+	attackMap kingAttacks[64];
+	attackMap knightAttacks[64];
+	attackMap wpawnAttacks[64];
+	attackMap bpawnAttacks[64];
+
+
+	board::Bitboard dumbFill(board::Bitboard loc, board::Bitboard occ, int r, int f)
 	{
-		int i = -1;
-		auto s = board::Square{ true, c, board::Piece::king };
-		for (int j = 0; j != 64; ++j)
+		unsigned long index = 0;
+		_BitScanForward64(&index, loc);
+
+		auto initRank = aux::rank(index);
+		auto initFile = aux::file(index);
+
+		board::Bitboard fill = 0;
+		for (int i = 1; (initRank + i*r >= 0) && (initRank + i*r <= 7) && (initFile + i*f >= 0) && (initFile + i*f <= 7); ++i)
 		{
-			if (b.mailbox[j] == s)
+			board::Bitboard bitToCheck = setbit(initRank + i * r, initFile + i * f);
+			if (bitToCheck & occ)
 			{
-				i = j;
-				break;
-			}
-		}
-		if (i == -1) return false;
-		return isAttacked(b, board::oppositeColor(c), i);
-	}
-
-	bool isAttacked(const board::Board& b, board::Color c, unsigned int i)
-	{
-		// if square S1 is attacked by a bishop onS2, 
-		// this is equivalent to a bishop on S1 attacking
-		// S2. This symmetry (+ special cases for pawns)
-		// is used to tell if square i is attacked
-
-		auto searchRayFor = [&c, &i, &b](int r, int f, board::Piece lookingFor) {
-			auto& ray = getXRay(i, r, f);
-			auto target = board::Square{ true, c,lookingFor };
-			for (int pos = 0; pos != ray.size(); ++pos)
-			{
-				if (b.mailbox[ray[pos]].occupied && b.mailbox[ray[pos]] != target)
-					break;
-				if (b.mailbox[ray[pos]] == target)
-					return true;
-			}
-			return false;
-		};
-
-		auto searchJumpFor = [&c, &i, &b](int r, int f, board::Piece lookingFor) {
-			auto target = board::Square{ true, c, lookingFor };
-			auto k = index2index(i, r, f);
-			if (isIndex(i, r, f) && b.mailbox[k] == target)
-				return true;
-			return false;
-		};
-
-		for (int m = -1; m != 3; m += 2)
-			for (int j = -1; j != 3; j += 2)
-				if (searchRayFor(m, j, board::Piece::bishop) || searchRayFor(m, j, board::Piece::queen)
-					|| searchJumpFor(m, j, board::Piece::king) || searchJumpFor(2 * m, j, board::Piece::knight)
-					|| searchJumpFor(m, 2 * j, board::Piece::knight))
-					return true;
-
-		for (int m = -1; m != 3; m += 2)
-			if (searchRayFor(m, 0, board::Piece::rook) || searchRayFor(m, 0, board::Piece::queen)
-				|| searchRayFor(0, m, board::Piece::rook) || searchRayFor(0, m, board::Piece::queen)
-				|| searchJumpFor(m, 0, board::Piece::king) || searchJumpFor(0, m, board::Piece::king))
-				return true;
-
-		int direction = static_cast<int>(c); // white pawns attack up the board, black pawns attack down the board
-		if (searchJumpFor(-1 * direction, 1, board::Piece::pawn) || searchJumpFor(-1 * direction, -1, board::Piece::pawn))
-			return true;
-
-		return false;
-	}
-
-	std::vector<board::Move> genKnightMoves(board::Board& b, unsigned int i)
-	{
-		std::vector<board::Move> ml = {};
-
-		if (b.mailbox[i].piece != board::Piece::knight)
-			return ml;
-
-		auto f = [&ml, &b, i](int r, int f) {
-			auto k = index2index(i, r, f);
-			if (isIndex(i, r, f) && b.mailbox[k].color != b.toMove)
-			{
-				auto s = board::simpleMove{ i, k, b.mailbox[k].piece };
-				b.makeMove(s);
-				if (!isInCheck(b, board::oppositeColor(b.toMove)))
-				{
-					ml.push_back(s);
-				}
-				b.unmakeMove(s);
-			}
-		};
-
-		// knight move offsets: knight moves 2 moves
-		// in one of the cardinal directions and then
-		// 1 move orthogonal to that cardinal direction
-		f(2, 1); f(2, -1); f(-2, 1); f(-2, -1);
-		f(1, 2); f(-1, 2); f(1, -2); f(-1, -2);
-
-		return ml;
-	}
-
-
-	// generate moves by moving (r, f) steps at a time from the position i
-	void genMoveInDirection(std::vector<board::Move>& ml, board::Board& b, unsigned int i, int r, int f)
-	{
-		for (int k = 1; isIndex(i, k * r, k * f); ++k)
-		{
-			if (b.mailbox[index2index(i, k * r, k * f)].color == b.toMove)
-			{
-				break;
+				fill |= bitToCheck;
+				return fill;
 			}
 			else
 			{
-				auto s = board::simpleMove{ i, index2index(i, k * r, k * f), b.mailbox[index2index(i, k * r, k * f)].piece };
-				b.makeMove(s);
-				if (!isInCheck(b, board::oppositeColor(b.toMove)))
-					ml.push_back(s);
-				b.unmakeMove(s);
-			}
-			if (b.mailbox[index2index(i, k * r, k * f)].color == board::oppositeColor(b.toMove))
-				break;
-		}
-	}
-
-	std::vector<board::Move> genBishopMoves(board::Board& b, unsigned int i)
-	{
-		std::vector<board::Move> ml = {};
-
-		if (b.mailbox[i].piece != board::Piece::bishop)
-			return ml;
-
-		genMoveInDirection(ml, b, i, 1, 1);
-		genMoveInDirection(ml, b, i, 1, -1);
-		genMoveInDirection(ml, b, i, -1, 1);
-		genMoveInDirection(ml, b, i, -1, -1);
-
-		return ml;
-	}
-
-	std::vector<board::Move> genRookMoves(board::Board& b, unsigned int i)
-	{
-		std::vector<board::Move> ml = {};
-
-		if (b.mailbox[i].piece != board::Piece::rook)
-			return ml;
-
-		genMoveInDirection(ml, b, i, 1, 0);
-		genMoveInDirection(ml, b, i, -1, 0);
-		genMoveInDirection(ml, b, i, 0, 1);
-		genMoveInDirection(ml, b, i, 0, -1);
-
-		return ml;
-	}
-
-	std::vector<board::Move> genQueenMoves(board::Board& b, unsigned int i)
-	{
-		std::vector<board::Move> ml = {};
-
-		if (b.mailbox[i].piece != board::Piece::queen)
-			return ml;
-
-		genMoveInDirection(ml, b, i, 1, 0);
-		genMoveInDirection(ml, b, i, -1, 0);
-		genMoveInDirection(ml, b, i, 0, 1);
-		genMoveInDirection(ml, b, i, 0, -1);
-		genMoveInDirection(ml, b, i, 1, 1);
-		genMoveInDirection(ml, b, i, 1, -1);
-		genMoveInDirection(ml, b, i, -1, 1);
-		genMoveInDirection(ml, b, i, -1, -1);
-
-		return ml;
-	}
-
-	std::vector<board::Move> genKingMoves(board::Board& b, unsigned int i)
-	{
-		std::vector<board::Move> ml = {};
-		if (b.mailbox[i].piece != board::Piece::king)
-			return ml;
-
-		// king can move one square around itself (r and f are rank and file offsets)
-		for (int r = -1; r != 2; ++r)
-		{
-			for (int f = -1; f != 2; ++f)
-			{
-				if (!isIndex(i, r, f))
-					continue;
-				if (r == 0 && f == 0) //skip because this is the current square
-					continue;
-				if (b.mailbox[index2index(i, r, f)].color != b.toMove)
-				{
-					auto s = board::simpleMove{ i, index2index(i, r,f), b.mailbox[index2index(i, r, f)].piece };
-					b.makeMove(s);
-					if (!isInCheck(b, board::oppositeColor(b.toMove)))
-						ml.push_back(s);
-					b.unmakeMove(s);
-				}
+				fill |= bitToCheck;
 			}
 		}
-
-		if (b.toMove == board::Color::white)
-		{
-			if (b.gameState.top().wk)
-				if (!isAttacked(b, board::oppositeColor(b.toMove), wk_start) && !isAttacked(b, board::oppositeColor(b.toMove), wk_start + 1)
-					&& !isAttacked(b, board::oppositeColor(b.toMove), wk_start + 2)
-					&& !b.mailbox[wk_start + 1].occupied && !b.mailbox[wk_start + 2].occupied)
-					ml.push_back(board::castleMove{ board::CastleSide::king });
-			if (b.gameState.top().wq)
-				if (!isAttacked(b, board::oppositeColor(b.toMove), wk_start) && !isAttacked(b, board::oppositeColor(b.toMove), wk_start - 1)
-					&& !isAttacked(b, board::oppositeColor(b.toMove), wk_start - 2)
-					&& !b.mailbox[wk_start - 1].occupied && !b.mailbox[wk_start - 2].occupied && !b.mailbox[wk_start - 3].occupied)
-					ml.push_back(board::castleMove{board::CastleSide::queen});
-		}
-		else if (b.toMove == board::Color::black)
-		{
-			if (b.gameState.top().bk)
-				if (!isAttacked(b, board::oppositeColor(b.toMove), bk_start) && !isAttacked(b, board::oppositeColor(b.toMove), bk_start + 1)
-					&& !isAttacked(b, board::oppositeColor(b.toMove), bk_start + 2)
-					&& !b.mailbox[bk_start + 1].occupied && !b.mailbox[bk_start + 2].occupied)
-					ml.push_back(board::castleMove{ board::CastleSide::king });
-			if (b.gameState.top().bq)
-				if (!isAttacked(b, board::oppositeColor(b.toMove), bk_start) && !isAttacked(b, board::oppositeColor(b.toMove), bk_start - 1)
-					&& !isAttacked(b, board::oppositeColor(b.toMove), bk_start - 2)
-					&& !b.mailbox[bk_start - 1].occupied && !b.mailbox[bk_start - 2].occupied && !b.mailbox[bk_start - 3].occupied)
-					ml.push_back(board::castleMove{ board::CastleSide::queen });
-		}
-
-		return ml;
+		return fill;
 	}
 
-	std::vector<board::Move> genPawnMoves(board::Board& b, unsigned int i)
+	board::Bitboard filterEdgesRook(board::Bitboard rookMoves, std::size_t pos)
 	{
-		std::vector<board::Move> ml = {};
-		
-		// 1 (up the board) if pawn is white, -1 (down the board) if pawn is
-		// black
-		const int direction = static_cast<int>(b.mailbox[i].color);
+		auto leftEdge = board::fileMask[0];
+		auto rightEdge = board::fileMask[7];
+		auto topEdge = board::rankMask[7];
+		auto botEdge = board::rankMask[0];
+		auto edge = leftEdge | rightEdge | topEdge | botEdge;
 
-		const bool seventhRank = (direction == 1 && rank(i) == 7) || (direction == -1 && rank(i) == 2);
+		rookMoves &= ~setbit(pos);
 
-		auto f = [&ml, &b](board::Move m) {
-			b.makeMove(m);
-			if (!isInCheck(b, board::oppositeColor(b.toMove)))
-				ml.push_back(m);
-			b.unmakeMove(m);
-		};
-
-		for (int j = -1; j != 2; ++j)
+		if (board::isInterior(pos))
 		{
-			if (!isIndex(i, direction, j))
-				continue;
-			auto dest = index2index(i, direction, j);
-			if (j == 0 && !b.mailbox[dest].occupied)
-			{
-				if (seventhRank)
-				{
-					auto p = board::promoMove{ board::simpleMove{i, dest}, board::Piece::knight}; f(p);
-					p.promo = board::Piece::bishop; f(p);
-					p.promo = board::Piece::rook; f(p);
-					p.promo = board::Piece::queen; f(p);
-				}
-				else
-				{
-					auto s = board::simpleMove{ i, dest };
-					f(s);
-				}
-			}
-			else if ((j == -1 || j == 1) && b.mailbox[dest].color == board::oppositeColor(b.mailbox[i].color))
-			{
-				if (seventhRank)
-				{
-					auto p = board::promoMove{ board::simpleMove{i, dest, b.mailbox[dest].piece}, board::Piece::knight}; f(p);
-					p.promo = board::Piece::bishop; f(p);
-					p.promo = board::Piece::rook; f(p);
-					p.promo = board::Piece::queen; f(p);
-				}
-				else
-				{
-					auto s = board::simpleMove{ i, dest, b.mailbox[dest].piece};
-					f(s);
-				}
-			}
-			else if ((j == -1 || j == 1) && b.mailbox[dest].color == board::Color::empty && unsigned(b.gameState.top().enP) == dest)
-			{
-				auto s = board::enPMove{ int(dest), file(i) > file(dest) };
-				f(s);
-			}
+			rookMoves &= ~edge;
+			return rookMoves;
 		}
-
-		// a pawn on the starting rank can move two squares forward
-		if ((rank(i) == 2 && direction == 1) || (rank(i) == 7 && direction == -1))
+		switch (pos)
 		{
-			auto s2 = board::simpleMove{ i, index2index(i,2 * direction), b.mailbox[index2index(i,2*direction)].piece}; // move 2 squares forward
-			if (!b.mailbox[index2index(i, 2 * direction)].occupied && !b.mailbox[index2index(i,direction)].occupied)
-				f(s2);
+		case board::a1:
+			rookMoves &= ~(topEdge | rightEdge);
+			return rookMoves;
+		case board::h1:
+			rookMoves &= ~(topEdge | leftEdge);
+			return rookMoves;
+		case board::a8:
+			rookMoves &= ~(botEdge | rightEdge);
+			return rookMoves;
+		case board::h8:
+			rookMoves &= ~(botEdge | leftEdge);
+			return rookMoves;
+		default:
+			if (board::isLeftEdge(pos)) rookMoves &= ~(topEdge | botEdge | rightEdge);
+			if (board::isRightEdge(pos)) rookMoves &= ~(topEdge | botEdge | leftEdge);
+			if (board::isTopEdge(pos)) rookMoves &= ~(rightEdge | botEdge | leftEdge);
+			if (board::isBottomEdge(pos)) rookMoves &= ~(rightEdge | topEdge | leftEdge);
+			return rookMoves;
 		}
-		return ml;
 	}
 
-	std::vector<board::Move> genMoves(board::Board& b)
+	void initRookBishopAttacks()
 	{
-		std::vector<board::Move> ml = {};
-		for (int i = 0; i != 64; ++i)
+		auto edge = board::fileMask[0] | board::fileMask[7] | board::rankMask[7] | board::rankMask[0];
+		std::size_t offsetBishop = 0;
+		std::size_t offsetRook = 0;
+
+		for (std::size_t i = 0; i != 64; ++i)
 		{
-			std::vector<board::Move> moves = {};
-			if (b.mailbox[i].color != b.toMove)
-				continue;
-			switch (b.mailbox[i].piece)
+			bishopOffsets[i] = offsetBishop;
+			rookOffsets[i] = offsetRook;
+
+			auto diagonals = board::diagMask[getDiag(i)] | board::antidiagMask[getAntiDiag(i)];
+			bishopMasks[i] = diagonals & ~setbit(i) & ~edge;
+			std::size_t numToReserve = 1ULL << __popcnt64(bishopMasks[i]);
+			for (int j = 0; j != numToReserve; ++j)
 			{
-			case board::Piece::pawn:
-				moves = genPawnMoves(b, i);
-				ml.insert(ml.end(), moves.begin(), moves.end());
+				bishopAttacks[bishopOffsets[i] + j] = 0;
+				auto occ = _pdep_u64(j, bishopMasks[i]);
+				bishopAttacks[bishopOffsets[i] + j] |= dumbFill(setbit(i), occ, 1, -1);
+				bishopAttacks[bishopOffsets[i] + j] |= dumbFill(setbit(i), occ, 1, 1);
+				bishopAttacks[bishopOffsets[i] + j] |= dumbFill(setbit(i), occ, -1, 1);
+				bishopAttacks[bishopOffsets[i] + j] |= dumbFill(setbit(i), occ, -1, -1);
+			}
+			offsetBishop += numToReserve;
+
+			auto rookMoves = board::rankMask[aux::rank(i)] | board::fileMask[aux::file(i)];
+			rookMasks[i] = filterEdgesRook(rookMoves, i);
+
+			numToReserve = 1ULL << __popcnt64(rookMasks[i]);
+			for (int j = 0; j != numToReserve; ++j)
+			{
+				rookAttacks[rookOffsets[i] + j] = 0;
+				auto occ = _pdep_u64(j, rookMasks[i]);
+				rookAttacks[rookOffsets[i] + j] |= dumbFill(setbit(i), occ, 1, 0);
+				rookAttacks[rookOffsets[i] + j] |= dumbFill(setbit(i), occ, -1, 0);
+				rookAttacks[rookOffsets[i] + j] |= dumbFill(setbit(i), occ, 0, 1);
+				rookAttacks[rookOffsets[i] + j] |= dumbFill(setbit(i), occ, 0, -1);
+			}
+			offsetRook += numToReserve;
+		}
+	}
+
+	void initPawnAttacks()
+	{
+		for (std::size_t i = 0; i != 64; ++i)
+		{
+			wpawnAttacks[i] = (setbit(i) << 9) | (setbit(i) << 7);
+			bpawnAttacks[i] = (setbit(i) >> 9) | (setbit(i) >> 7);
+
+			if (board::isLeftEdge(i))
+			{
+				wpawnAttacks[i] = setbit(i) << 9;
+				bpawnAttacks[i] = setbit(i) >> 7;
+			}
+
+			if (board::isRightEdge(i))
+			{
+				wpawnAttacks[i] = setbit(i) << 7;
+				bpawnAttacks[i] = setbit(i) >> 9;
+			}
+			
+			if (board::isBottomEdge(i))
+			{
+				bpawnAttacks[i] = 0;
+			}
+			if (board::isTopEdge(i))
+			{
+				wpawnAttacks[i] = 0;
+			}
+		}
+	}
+
+	void initKingAttacks()
+	{
+		for (std::size_t i = 0; i != 64; ++i)
+		{
+			switch (i)
+			{
+			case board::square::a1:
+				kingAttacks[i] = setbit(board::square::a2) | setbit(board::square::b1) | setbit(board::square::b2);
 				break;
-			case board::Piece::bishop:
-				moves = genBishopMoves(b, i);
-				ml.insert(ml.end(), moves.begin(), moves.end());
+			case board::square::h1:
+				kingAttacks[i] = setbit(board::square::h2) | setbit(board::square::g1) | setbit(board::square::g2);
 				break;
-			case board::Piece::knight:
-				moves = genKnightMoves(b, i);
-				ml.insert(ml.end(), moves.begin(), moves.end());
+			case board::square::a8:
+				kingAttacks[i] = setbit(board::square::a7) | setbit(board::square::b8) | setbit(board::square::b7);
 				break;
-			case board::Piece::rook:
-				moves = genRookMoves(b, i);
-				ml.insert(ml.end(), moves.begin(), moves.end());
-				break;
-			case board::Piece::queen:
-				moves = genQueenMoves(b, i);
-				ml.insert(ml.end(), moves.begin(), moves.end());
-				break;
-			case board::Piece::king:
-				moves = genKingMoves(b, i);
-				ml.insert(ml.end(), moves.begin(), moves.end());
+			case board::square::h8:
+				kingAttacks[i] = setbit(board::square::h7) | setbit(board::square::g8) | setbit(board::square::g7);
 				break;
 			default:
+				auto k = setbit(i);
+				if (board::isInterior(i))
+					kingAttacks[i] = k << 1 | k >> 1 | k << 8 | k >> 8 | k >> 9 | k << 9 | k << 7 | k >> 7;
+				if (board::isBottomEdge(i))
+					kingAttacks[i] = k << 1 | k >> 1 | k << 8 | k << 9 | k << 7;
+				if (board::isTopEdge(i))
+					kingAttacks[i] = k << 1 | k >> 1 | k >> 8 | k >> 9 | k >> 7;
+				if (board::isLeftEdge(i))
+					kingAttacks[i] = k << 1 | k << 8 | k >> 8 | k << 9 | k >> 7;
+				if (board::isRightEdge(i))
+					kingAttacks[i] = k >> 1 | k << 8 | k >> 8 | k >> 9 | k << 7;
 				break;
 			}
 		}
-		return ml;
 	}
+
+	void initKnightAttacks()
+	{
+		auto checkJump = [](std::size_t i, int r, int f) {
+			auto r_i = aux::rank(i);
+			auto f_i = aux::file(i);
+
+			return (r_i + r <= 7) && (r_i + r >= 0) && (f_i + f <= 7) && (f_i + f >= 0);
+		};
+
+		for (std::size_t i = 0; i != 64; ++i)
+		{
+			const board::Bitboard loc = setbit(i);
+
+			if (checkJump(i, 2, 1)) knightAttacks[i] |= loc << 17;
+			if (checkJump(i, 2, -1)) knightAttacks[i] |= loc << 15;
+			if (checkJump(i, 1, 2)) knightAttacks[i] |= loc << 10;
+			if (checkJump(i, 1, -2)) knightAttacks[i] |= loc << 6;
+			if (checkJump(i, -2, 1)) knightAttacks[i] |= loc >> 15;
+			if (checkJump(i, -2, -1)) knightAttacks[i] |= loc >> 17;
+			if (checkJump(i, -1, 2)) knightAttacks[i] |= loc >> 6;
+			if (checkJump(i, -1, -2)) knightAttacks[i] |= loc >> 10;
+		}
+	}
+
+	void initAttacks()
+	{
+		initRookBishopAttacks();
+		initPawnAttacks();
+		initKingAttacks();
+		initKnightAttacks();
+	}
+
 
 }

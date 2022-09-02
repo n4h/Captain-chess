@@ -13,28 +13,13 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Modules">
-      <UniqueIdentifier>{a3bfadf9-bcef-4aa0-b33f-e5dbdc2aceed}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="board.ixx">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="board.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="movegen.ixx">
-      <Filter>Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="auxiliary.ixx">
-      <Filter>Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="eval.ixx">
-      <Filter>Modules</Filter>
     </ClCompile>
     <ClCompile Include="eval.cpp">
       <Filter>Source Files</Filter>
@@ -42,26 +27,52 @@
     <ClCompile Include="movegen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="inputs.ixx">
-      <Filter>Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="engine.ixx">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="engine.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="perft.ixx">
-      <Filter>Modules</Filter>
     </ClCompile>
     <ClCompile Include="perft.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="divide.ixx">
-      <Filter>Modules</Filter>
+    <ClCompile Include="divide.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="precomputed.ixx">
-      <Filter>Modules</Filter>
+    <ClCompile Include="uci.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="searchflags.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="divide.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="engine.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="eval.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="board.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="movegen.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="perft.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="auxiliary.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="constants.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="uci.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="searchflags.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

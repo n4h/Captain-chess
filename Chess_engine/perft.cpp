@@ -1,36 +1,25 @@
-module Perft;
+#include <cstddef>
+
+#include "perft.hpp"
+#include "board.hpp"
+
 
 namespace perft
 {
 	Perft::Perft(){}
 
-	Perft::Perft(board::Board& b, unsigned int t, unsigned int mm)
+	Perft::Perft(board::Board& b, std::size_t t, bool w)
 	{
-		perft(b, t, mm);
+		w ? perft<true>(b, t, (std::size_t)0) : perft<false>(b, t, (std::size_t)0);
 	}
 
-	unsigned int Perft::getResult()
+	std::size_t Perft::getResult()
 	{
 		return perftResult;
 	}
 
-	void Perft::perft(board::Board& b, unsigned int t, unsigned int movesMade)
+	void Perft::reset()
 	{
-		if (movesMade >= t)
-		{
-			++perftResult;
-			return;
-		}
-
-		auto ml = movegen::genMoves(b);
-		if (ml.size() == 0)
-			++perftResult;
-
-		for (auto i : ml)
-		{
-			b.makeMove(i);
-			perft(b, t, movesMade + 1);
-			b.unmakeMove(i);
-		}
+		perftResult = 0;
 	}
 }
