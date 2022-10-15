@@ -32,6 +32,7 @@
     <ProjectGuid>{ea752b01-9acf-4d4f-8324-727ecbe30181}</ProjectGuid>
     <RootNamespace>Chessengine</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Captain</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -301,6 +302,9 @@
     </ClInclude>
     <ClInclude Include="searchflags.hpp" />
     <ClInclude Include="uci.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="COPYING.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
