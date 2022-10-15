@@ -39,6 +39,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace movegen
 {
+	// the idea of templatizing the move generation function
+	// by the color-to-move is due to the Gigantua move generator
+	// https://github.com/Gigantua/Gigantua
+
 	using attackMap = std::uint64_t;
 
 	constexpr bool kingSideCastle = true;
