@@ -30,7 +30,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{ea752b01-9acf-4d4f-8324-727ecbe30181}</ProjectGuid>
-    <RootNamespace>Chessengine</RootNamespace>
+    <RootNamespace>Captain</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>Captain</ProjectName>
   </PropertyGroup>

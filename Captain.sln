@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Chess_engine", "Chess_engine\Chess_engine.vcxproj", "{EA752B01-9ACF-4D4F-8324-727ECBE30181}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Captain", "Captain\Captain.vcxproj", "{EA752B01-9ACF-4D4F-8324-727ECBE30181}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
