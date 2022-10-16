@@ -60,7 +60,7 @@ namespace perft
 		Perft(board::Board& b, std::size_t t, bool wToMove = true);
 	private:
 		std::size_t perftResult = 0;
-		board::Move moveList[2048];
+		std::array<board::Move, 1024> moveList;
 
 	};
 }

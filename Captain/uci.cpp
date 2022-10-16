@@ -24,7 +24,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <chrono>
 #include <future>
 #include <utility>
-#include <mutex>
+#include <functional>
+#include <cstdlib>
 
 #include "uci.hpp"
 #include "board.hpp"
@@ -50,6 +51,7 @@ namespace uci
 	{
 		sync_cout << "id name " << UCIName << sync_endl;
 		sync_cout << "id author " << UCIAuthor << sync_endl;
+		sync_cout << "option name Hash type spin default 1 min 1 max 32" << sync_endl;
 		sync_cout << "uciok" << sync_endl;
 	}
 
@@ -69,13 +71,19 @@ namespace uci
 			if (UCIMessage[0] == "isready")
 				sync_cout << "readyok" << sync_endl;
 			if (UCIMessage[0] == "quit")
-				std::terminate();
+				std::exit(EXIT_SUCCESS);
+			if (UCIMessage[0] == "setoption")
+				UCISetOptionCommand(UCIMessage);
 			if (UCIMessage[0] == "ucinewgame")
 			{
-				if (!bitboardsInitialized)
-					movegen::initAttacks();
-				bitboardsInitialized = true;
 				UCIStopCommand();
+				if (!initialized)
+				{
+					movegen::initAttacks();
+					e.setTTable(&tt);
+					initialized = true;
+				}
+				tt.clear();
 			}
 			if (UCIMessage[0] == "position" && UCIMessage.size() >= 2)
 			{
@@ -94,9 +102,13 @@ namespace uci
 
 	void UCIProtocol::UCIPositionCommand(const std::vector<std::string>& command)
 	{
-		if (!bitboardsInitialized)
+		if (!initialized)
+		{
 			movegen::initAttacks();
-		bitboardsInitialized = true;
+			e.setTTable(&tt);
+			initialized = true;
+		}
+		e.setTTable(&tt);
 
 		if (command[1] == "startpos")
 		{
@@ -162,7 +174,7 @@ namespace uci
 		e.setSettings(ss);
 
 		sf.searching.test_and_set();
-		auto tmp = std::async(&engine::Engine::playBestMove, &e, b, startTime);
+		auto tmp = std::async(&engine::Engine::playBestMove, &e, std::cref(b), startTime);
 		engineResult = std::move(tmp);
 	}
 
@@ -171,6 +183,20 @@ namespace uci
 		sf.searching.clear();
 		if (engineResult.valid())
 			engineResult.get();
+	}
+
+	void UCIProtocol::UCISetOptionCommand(const std::vector<std::string>& command)
+	{
+		for (std::size_t index = 0; auto i : command)
+		{
+			if (i == "name")
+				if (command[index + 1] == "Hash" && command[index + 2] == "value")
+				{
+					tt.resize( (1024*1024*std::stoi(command[index + 3])) / sizeof(TTable::Entry));
+					tt.clear();
+				}
+			++index;
+		}
 	}
 
 	// we're assuming that the GUI isn't sending us garbage moves

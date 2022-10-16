@@ -25,12 +25,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstdint>
 #include <chrono>
 #include <atomic>
+#include <iterator>
+#include <array>
 
 #include "board.hpp"
 #include "movegen.hpp"
 #include "eval.hpp"
 #include "auxiliary.hpp"
 #include "searchFlags.hpp"
+#include "transpositiontable.hpp"
 
 namespace engine
 {
@@ -52,20 +55,27 @@ namespace engine
 	class Engine
 	{
 	public:
-		void playBestMove(board::Board b, std::chrono::time_point<std::chrono::steady_clock> s);
+		void playBestMove(const board::Board& bCopy, std::chrono::time_point<std::chrono::steady_clock> s);
 		double getEval();
 		Engine() {}
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
+		void setTTable(TTable::TTable*);
 	private:
 		SearchSettings settings;
 		std::chrono::time_point<std::chrono::steady_clock> searchStart;
 		std::size_t nodes = 0;
+		std::size_t idDepth = 0;
+		std::size_t hash = 0;
 		bool engineW = true;
+		board::Board b;
+		TTable::TTable* tt = nullptr;
 		bool shouldStop() noexcept;
+		void initialHash();
 
+		enum SearchType {ABSearch, QSearch};
 
 		template<bool wToMove>
-		board::Move rootSearch(board::Board& b)
+		board::Move rootSearch()
 		{
 			std::size_t j = movegen::genMoves<wToMove>(b, rootMoves, 0);
 
@@ -79,6 +89,7 @@ namespace engine
 
 			for (unsigned int k = 1; k <= std::numeric_limits<unsigned int>::max(); ++k)
 			{
+				idDepth = k;
 				worstCase = std::numeric_limits<std::int32_t>::min();
 				std::int32_t score = std::numeric_limits<std::int32_t>::min();
 
@@ -87,92 +98,105 @@ namespace engine
 					if (!searchFlags::searching.test())
 						return rootScoredMoves[0].first;
 					b.makeMove<wToMove>(rootScoredMoves[i].first);
-					score = std::max(score, rootScoredMoves[i].second = -1 * alphaBetaSearch<!wToMove>(b, std::numeric_limits<std::int32_t>::min(), -1 * worstCase, 1, 0));
+					if (movegen::isInCheck<wToMove>(b))
+					{
+						b.unmakeMove<wToMove>(rootScoredMoves[i].first);
+						continue;
+					}
+					score = std::max(score, rootScoredMoves[i].second = -1 * alphaBetaSearch<!wToMove, ABSearch>(std::numeric_limits<std::int32_t>::min(), -1 * worstCase, 1, 0));
 					b.unmakeMove<wToMove>(rootScoredMoves[i].first);
 					if (score > worstCase)
 						worstCase = score;
 				}
 
-				std::stable_sort(&rootScoredMoves[0], &rootScoredMoves[j], [](const auto& a, const auto& b) {
+				std::stable_sort(rootScoredMoves.begin(), rootScoredMoves.begin() + j, [](const auto& a, const auto& b) {
 					return a.second > b.second;
 					});
 			}
 			return rootScoredMoves[0].first;
 		}
 
-		template<bool wToMove>
-		std::int32_t quiesceSearch(board::Board& b, std::int32_t alpha, std::int32_t beta, int depth, std::size_t i)
+		template<bool wToMove, SearchType s>
+		std::int32_t alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth, std::size_t i)
 		{
 			if (shouldStop())
 				searchFlags::searching.clear();
-			const auto checkPos = eval::evaluate<wToMove>(b);
-			if (checkPos > beta)
-				return checkPos;
-
-			alpha = std::max(alpha, checkPos);
+			std::int32_t checkPos;
+			if constexpr (s == ABSearch)
+			{
+				if (depth >= idDepth)
+					return alphaBetaSearch<wToMove, QSearch>(alpha, beta, depth + 1, i);
+			}
+			else // s == QSearch
+			{
+				checkPos = eval::evaluate<wToMove>(b);
+				if (checkPos > beta)
+					return checkPos;
+			}
 
 			std::size_t j = movegen::genMoves<wToMove>(b, internalMoves, i);
-			auto new_j = std::remove_if(&internalMoves[i], &internalMoves[j], [](auto k) {return !board::isCapture(k); });
-			j = i + (new_j - &internalMoves[i]);
 
-			std::sort(&internalMoves[i], &internalMoves[j], [&b](const board::Move& a, const board::Move& c) {
-				const auto atA = aux::setbit(board::getMoveInfo<constants::fromMask>(a));
-				const auto atC = aux::setbit(board::getMoveInfo<constants::fromMask>(c));
+			if constexpr (s == ABSearch)
+			{
+				std::sort(internalMoves.begin() + i, internalMoves.begin() + j, [](const board::Move& a, const board::Move& b) {
+					return a > b;
+					});
+			}
+			else // s == QSearch
+			{
+				auto new_j = std::remove_if(internalMoves.begin() + i, internalMoves.begin() + j, [](auto k) {return !board::isCapture(k); });
+				j = std::distance(internalMoves.begin(), new_j);
 
-				return (eval::getCaptureValue(a) - board::getPieceValue(b.getPieceType(atA)))
+				std::sort(internalMoves.begin() + i, internalMoves.begin() + j, [this](const board::Move& a, const board::Move& c) {
+					const auto atA = aux::setbit(board::getMoveInfo<constants::fromMask>(a));
+					const auto atC = aux::setbit(board::getMoveInfo<constants::fromMask>(c));
+
+					return (eval::getCaptureValue(a) - board::getPieceValue(b.getPieceType(atA)))
 					> (eval::getCaptureValue(c) - board::getPieceValue(b.getPieceType(atC)));
-				});
+					});
+			}
 
-			auto currEval = alpha;
+			std::int32_t currEval;
+			if constexpr (s == ABSearch)
+			{
+				currEval = std::numeric_limits<std::int32_t>::min();
+			}
+			else // s == QSearch
+			{
+				currEval = alpha;
+			}
 
 			for (; i != j; ++i)
 			{
 				if (!searchFlags::searching.test())
 				{
-					return std::max(checkPos, currEval);
+					if constexpr (s == ABSearch)
+					{
+						return std::max(alpha, currEval);
+					}
+					else
+					{
+						return std::max(checkPos, currEval);
+					}
 				}
-				if ((checkPos + (std::int32_t)eval::getCaptureValue(internalMoves[i])) < alpha)
+
+				if constexpr (s == QSearch)
+				{
+					if ((checkPos + (std::int32_t)eval::getCaptureValue(internalMoves[i])) < alpha)
+						continue;
+				}
+
+				b.makeMove<wToMove>(internalMoves[i]);
+				if (movegen::isInCheck<wToMove>(b))
+				{
+					b.unmakeMove<wToMove>(internalMoves[i]);
 					continue;
-
-				b.makeMove<wToMove>(internalMoves[i]);
-				currEval = std::max(currEval, -1 * quiesceSearch<!wToMove>(b, -1 * beta, -1 * alpha, depth + 1, j));
-				b.unmakeMove<wToMove>(internalMoves[i]);
-
-				alpha = std::max(alpha, currEval);
-
-				if (alpha > beta)
-					return currEval;
-			}
-			
-			return currEval;
-		}
-
-		template<bool wToMove>
-		std::int32_t alphaBetaSearch(board::Board& b, std::int32_t alpha, std::int32_t beta, int depth, std::size_t i)
-		{
-			if (shouldStop())
-				searchFlags::searching.clear();
-			if (depth >= 5)
-				return quiesceSearch<wToMove>(b, alpha, beta, 1, i);
-
-			std::size_t j = movegen::genMoves<wToMove>(b, internalMoves, i);
-
-			std::sort(&internalMoves[i], &internalMoves[j], [](const board::Move& a, const board::Move& b) {
-				return a > b;
-				});
-
-			std::int32_t currEval = std::numeric_limits<std::int32_t>::min();
-
-			for (; i != j; ++i)
-			{
-				if (!searchFlags::searching.test())
-					return std::max(alpha, currEval);
-				b.makeMove<wToMove>(internalMoves[i]);
-				currEval = std::max(currEval, -1 * alphaBetaSearch<!wToMove>(b, -1 * beta, -1 * alpha, depth + 1, j));
+				}
+				currEval = std::max(currEval, -1 * alphaBetaSearch<!wToMove, ABSearch>(-1 * beta, -1 * alpha, depth + 1, j));
 				b.unmakeMove<wToMove>(internalMoves[i]);
 				alpha = std::max(currEval, alpha);
 				if (alpha > beta)
-					break;
+					return currEval;
 			}
 			return currEval;
 		}
@@ -180,9 +204,9 @@ namespace engine
 		std::int32_t eval = 0;
 		// 218 = current max number of moves in chess position
 		// 256 = leeway for pseudolegal move generation
-		board::Move rootMoves[256];
-		std::pair<board::Move, std::int32_t> rootScoredMoves[256];
-		board::Move internalMoves[2048];
+		std::array<board::Move, 256> rootMoves;
+		std::array<std::pair<board::Move, std::int32_t>, 256> rootScoredMoves;
+		std::array<board::Move, 1024> internalMoves;
 	};
 }
 #endif

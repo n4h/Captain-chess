@@ -32,6 +32,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstddef>
 #include <type_traits>
 #include <cassert>
+#include <array>
 
 #include "board.hpp"
 #include "auxiliary.hpp"
@@ -208,7 +209,7 @@ namespace movegen
 	}
 
 	template<bool wToMove, board::pieceType p, std::size_t N, bool qSearch = false>
-	void genMovesForPiece(board::Board& b, board::Move heading, board::Move(&ml)[N], std::size_t& i)
+	void genMovesForPiece(board::Board& b, board::Move heading, std::array<board::Move, N>& ml, std::size_t& i)
 	{
 		static_assert(p != board::pawns, "Called wrong move generation function for pawns");
 
@@ -299,7 +300,7 @@ namespace movegen
 	}
 
 	template<bool wToMove, std::size_t N, bool qSearch = false>
-	void genPawnMoves(board::Board& b, board::Move heading, board::Move(&ml)[N], std::size_t& i)
+	void genPawnMoves(board::Board& b, board::Move heading, std::array<board::Move, N>& ml, std::size_t& i)
 	{
 		auto checkMoveAndAdd = [&b, &ml, &i](board::Move m) constexpr {
 			//b.makeMove<wToMove>(m);
@@ -429,7 +430,7 @@ namespace movegen
 	}
 
 	template<bool wToMove, std::size_t N, bool qSearch = false>
-	std::size_t genMoves(board::Board& b, board::Move(&ml)[N], std::size_t i)
+	std::size_t genMoves(board::Board& b, std::array<board::Move, N>& ml, std::size_t i)
 	{
 		board::Move heading = b.getHeading();
 

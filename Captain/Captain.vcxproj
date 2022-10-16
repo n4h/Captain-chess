@@ -268,6 +268,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="searchflags.cpp" />
+    <ClCompile Include="transpositiontable.cpp" />
     <ClCompile Include="uci.cpp" />
     <ClInclude Include="auxiliary.hpp">
       <FileType>Document</FileType>
@@ -301,6 +302,7 @@
       <FileType>Document</FileType>
     </ClInclude>
     <ClInclude Include="searchflags.hpp" />
+    <ClInclude Include="transpositiontable.hpp" />
     <ClInclude Include="uci.hpp" />
   </ItemGroup>
   <ItemGroup>

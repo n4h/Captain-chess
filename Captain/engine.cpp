@@ -16,6 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 */
 
+#include <immintrin.h>
+
+#pragma intrinsic(_BitScanForward64)
+
 #include <algorithm>
 #include <iostream>
 #include <chrono>
@@ -35,18 +39,28 @@ namespace engine
 		return eval;
 	}
 
-	void Engine::playBestMove(board::Board b, std::chrono::time_point<std::chrono::steady_clock> s)
+	void Engine::setTTable(TTable::TTable* x)
+	{
+		tt = x;
+	}
+
+	void Engine::playBestMove(const board::Board& bCopy, std::chrono::time_point<std::chrono::steady_clock> s)
 	{
 		searchStart = s;
 		engineW = b.wMoving;
 		board::Move m = 0;
+		b = bCopy;
+		if (tt)
+			initialHash();
+		else
+			hash = 0;
 		if (b.wMoving)
 		{
-			m = rootSearch<true>(b);
+			m = rootSearch<true>();
 		}
 		else
 		{
-			m = rootSearch<false>(b);
+			m = rootSearch<false>();
 		}
 		std::ostringstream oss;
 		oss << aux::file2char(aux::file(board::getMoveInfo<constants::fromMask>(m)));
@@ -70,5 +84,45 @@ namespace engine
 			overtime = (elapsed > settings.binc + 0.1 * settings.bmsec) || (elapsed > settings.maxTime);
 
 		return overtime || (nodes > settings.maxNodes);
+	}
+	void Engine::initialHash()
+	{
+		hash = 0;
+
+		if (b.wMoving)
+			hash ^= tt->wToMove;
+
+		if (b.flags & board::Board::wkCastleFlagMask)
+			hash ^= tt->castling[0];
+		if (b.flags & board::Board::wqCastleFlagMask)
+			hash ^= tt->castling[1];
+		if (b.flags & board::Board::bkCastleFlagMask)
+			hash ^= tt->castling[2];
+		if (b.flags & board::Board::bqCastleFlagMask)
+			hash ^= tt->castling[3];
+
+		if (b.epLoc)
+		{
+			unsigned long index;
+			_BitScanForward64(&index, b.epLoc);
+			hash ^= tt->enPassant[aux::file(index)];
+		}
+
+		for (std::size_t i = 0; i != 6; ++i)
+		{
+			board::Bitboard wb = b.wPieces[i];
+			board::Bitboard bb = b.bPieces[i];
+			unsigned long index;
+			while (_BitScanForward64(&index, wb))
+			{
+				wb ^= aux::setbit(index);
+				hash ^= tt->wPieces[i][index];
+			}
+			while (_BitScanForward64(&index, bb))
+			{
+				bb ^= aux::setbit(index);
+				hash ^= tt->bPieces[i][index];
+			}
+		}
 	}
 }

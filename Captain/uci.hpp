@@ -27,6 +27,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "board.hpp"
 #include "engine.hpp"
 #include "searchflags.hpp"
+#include "transpositiontable.hpp"
 
 
 // from Stockfish
@@ -42,16 +43,22 @@ namespace uci
 	public:
 		void UCIStartup();
 		void UCIStartLoop();
-		UCIProtocol() {};
+		UCIProtocol()
+		{
+			tt.resize((1024*1024) / sizeof(TTable::Entry));
+			e.setTTable(&tt);
+		};
 	private:
 		void UCIPositionCommand(const std::vector<std::string>&);
 		void UCIGoCommand(const std::vector<std::string>&);
 		void UCIStopCommand();
+		void UCISetOptionCommand(const std::vector<std::string>&);
 		std::string UCIName = "Captain";
 		std::string UCIAuthor = "Narbeh Mouradian";
-		bool bitboardsInitialized = false;
+		bool initialized = false;
 		board::Board b;
 		engine::Engine e;
+		TTable::TTable tt;
 		std::future<void> engineResult;
 		searchFlags sf;
 

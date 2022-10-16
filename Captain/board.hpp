@@ -29,6 +29,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "constants.hpp"
 #include "auxiliary.hpp"
+#include "transpositiontable.hpp"
 
 namespace board
 {
@@ -347,6 +348,7 @@ namespace board
 		static constexpr std::uint16_t wqCastleFlagMask = 0b10000000U;
 		static constexpr std::uint16_t bkCastleFlagMask = 0b100000000U;
 		static constexpr std::uint16_t bqCastleFlagMask = 0b1000000000U;
+
 		std::size_t currMove = 0;
 		bool wMoving = true;
 
