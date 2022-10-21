@@ -27,6 +27,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <atomic>
 #include <iterator>
 #include <array>
+#include <string>
 
 #include "board.hpp"
 #include "movegen.hpp"
@@ -38,6 +39,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 namespace engine
 {
 	using namespace std::literals::chrono_literals;
+
+	constexpr auto negInf = std::numeric_limits<std::int32_t>::min() + 1;
+	constexpr auto posInf = std::numeric_limits<std::int32_t>::max();
+
 	struct SearchSettings
 	{
 		std::size_t maxDepth = std::numeric_limits<std::size_t>::max();
@@ -61,13 +66,14 @@ namespace engine
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
 		void setTTable(TTable::TTable*);
 	private:
+		std::string move2uciFormat(board::Move);
 		SearchSettings settings;
 		std::chrono::time_point<std::chrono::steady_clock> searchStart;
 		std::size_t nodes = 0;
-		std::size_t idDepth = 0;
 		std::size_t hash = 0;
 		bool engineW = true;
 		board::Board b;
+		std::chrono::milliseconds moveTime = 0ms;
 		TTable::TTable* tt = nullptr;
 		bool shouldStop() noexcept;
 		void initialHash();
@@ -77,77 +83,107 @@ namespace engine
 		template<bool wToMove>
 		board::Move rootSearch()
 		{
-			std::size_t j = movegen::genMoves<wToMove>(b, rootMoves, 0);
+			std::array<board::Move, 256> moves;
+			std::size_t j = movegen::genMoves<wToMove>(b, moves, 0);
 
 			for (std::size_t i = 0; i != j; ++i)
 			{
-				rootScoredMoves[i].first = rootMoves[i];
-				rootScoredMoves[i].second = std::numeric_limits<std::int32_t>::min();
+				rootMoves[i].first = moves[i];
+				rootMoves[i].second = negInf;
 			}
 
-			std::int32_t worstCase = std::numeric_limits<std::int32_t>::min();
+			std::int32_t worstCase = negInf;
 
-			for (unsigned int k = 1; k <= std::numeric_limits<unsigned int>::max(); ++k)
+			for (unsigned int k = 1; k <= posInf; ++k)
 			{
-				idDepth = k;
-				worstCase = std::numeric_limits<std::int32_t>::min();
-				std::int32_t score = std::numeric_limits<std::int32_t>::min();
+				sync_cout << "info string iterative deepening " << k << sync_endl;
+				worstCase = negInf;
+				std::int32_t score = negInf;
+
+
 
 				for (std::size_t i = 0; i != j; ++i)
 				{
 					if (!searchFlags::searching.test())
-						return rootScoredMoves[0].first;
-					b.makeMove<wToMove>(rootScoredMoves[i].first);
+					{
+						// if the search ends too early then rootMoves[0].first
+						// may not be a legal move, so loop through until first legal
+						// move
+						for (std::size_t mv = 0; mv != j; ++mv)
+						{
+							b.makeMove<wToMove>(rootMoves[mv].first);
+							if (movegen::isInCheck<wToMove>(b))
+							{
+								b.unmakeMove<wToMove>(rootMoves[mv].first);
+							}
+							else
+							{
+								return rootMoves[mv].first;
+							}
+						}
+					}
+
+					b.makeMove<wToMove>(rootMoves[i].first);
 					if (movegen::isInCheck<wToMove>(b))
 					{
-						b.unmakeMove<wToMove>(rootScoredMoves[i].first);
+						b.unmakeMove<wToMove>(rootMoves[i].first);
 						continue;
 					}
-					score = std::max(score, rootScoredMoves[i].second = -1 * alphaBetaSearch<!wToMove, ABSearch>(std::numeric_limits<std::int32_t>::min(), -1 * worstCase, 1, 0));
-					b.unmakeMove<wToMove>(rootScoredMoves[i].first);
+
+					sync_cout << "info currmove " << move2uciFormat(rootMoves[i].first) << sync_endl;
+					sync_cout << "info nodes " << nodes << sync_endl;
+					rootMoves[i].second = -1 * alphaBetaSearch<!wToMove, ABSearch>(negInf, -1 * worstCase, k - 1);
+					score = std::max(score, rootMoves[i].second);
+					b.unmakeMove<wToMove>(rootMoves[i].first);
 					if (score > worstCase)
 						worstCase = score;
 				}
 
-				std::stable_sort(rootScoredMoves.begin(), rootScoredMoves.begin() + j, [](const auto& a, const auto& b) {
+				std::stable_sort(rootMoves.begin(), rootMoves.begin() + j, [](const auto& a, const auto& b) {
 					return a.second > b.second;
 					});
 			}
-			return rootScoredMoves[0].first;
+			return rootMoves[0].first;
 		}
 
-		template<bool wToMove, SearchType s>
-		std::int32_t alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth, std::size_t i)
+		template<bool wToMove, SearchType s, bool prevMoveNull = false>
+		std::int32_t alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth)
 		{
+			++nodes;
 			if (shouldStop())
 				searchFlags::searching.clear();
 			std::int32_t checkPos;
+			if ((b.flags & board::Board::ply50FlagMask) == 50)
+				return 0;
 			if constexpr (s == ABSearch)
 			{
-				if (depth >= idDepth)
-					return alphaBetaSearch<wToMove, QSearch>(alpha, beta, depth + 1, i);
+				if (depth <= 0)
+					return alphaBetaSearch<wToMove, QSearch>(alpha, beta, depth - 1);
 			}
 			else // s == QSearch
 			{
 				checkPos = eval::evaluate<wToMove>(b);
 				if (checkPos > beta)
 					return checkPos;
+				alpha = std::max(alpha, checkPos);
 			}
 
-			std::size_t j = movegen::genMoves<wToMove>(b, internalMoves, i);
+			std::array<board::Move, 256> moves;
+
+			std::size_t j = movegen::genMoves<wToMove>(b, moves, 0);
 
 			if constexpr (s == ABSearch)
 			{
-				std::sort(internalMoves.begin() + i, internalMoves.begin() + j, [](const board::Move& a, const board::Move& b) {
+				std::sort(moves.begin(), moves.begin() + j, [](const auto& a, const auto& b) {
 					return a > b;
 					});
 			}
 			else // s == QSearch
 			{
-				auto new_j = std::remove_if(internalMoves.begin() + i, internalMoves.begin() + j, [](auto k) {return !board::isCapture(k); });
-				j = std::distance(internalMoves.begin(), new_j);
+				auto new_j = std::remove_if(moves.begin(), moves.begin() + j, [](auto k) {return !board::isCapture(k); });
+				j = std::distance(moves.begin(), new_j);
 
-				std::sort(internalMoves.begin() + i, internalMoves.begin() + j, [this](const board::Move& a, const board::Move& c) {
+				std::sort(moves.begin(), moves.begin() + j, [this](const auto& a, const auto& c) {
 					const auto atA = aux::setbit(board::getMoveInfo<constants::fromMask>(a));
 					const auto atC = aux::setbit(board::getMoveInfo<constants::fromMask>(c));
 
@@ -159,20 +195,34 @@ namespace engine
 			std::int32_t currEval;
 			if constexpr (s == ABSearch)
 			{
-				currEval = std::numeric_limits<std::int32_t>::min();
+				currEval = negInf;
 			}
 			else // s == QSearch
 			{
 				currEval = alpha;
 			}
+			
+			if constexpr (s == ABSearch && !prevMoveNull)
+			{
+				if (!movegen::isInCheck<wToMove>(b))
+				{
+					board::Move m = b.getHeading();
+					b.makeMove<wToMove, true>(m);
+					currEval = std::max(currEval, -1 * alphaBetaSearch<!wToMove, ABSearch, true>(-1 * beta, -1 * alpha, depth - 2));
+					b.unmakeMove<wToMove, true>(m);
+					alpha = std::max(alpha, currEval);
+					if (alpha > beta)
+						return currEval;
+				}
+			}
 
-			for (; i != j; ++i)
+			for (std::size_t i = 0; i != j; ++i)
 			{
 				if (!searchFlags::searching.test())
 				{
 					if constexpr (s == ABSearch)
 					{
-						return std::max(alpha, currEval);
+						return eval::evaluate<wToMove>(b);
 					}
 					else
 					{
@@ -182,18 +232,19 @@ namespace engine
 
 				if constexpr (s == QSearch)
 				{
-					if ((checkPos + (std::int32_t)eval::getCaptureValue(internalMoves[i])) < alpha)
+					if ((checkPos + (std::int32_t)eval::getCaptureValue(moves[i])) < alpha)
 						continue;
 				}
-
-				b.makeMove<wToMove>(internalMoves[i]);
+				
+				b.makeMove<wToMove>(moves[i]);
 				if (movegen::isInCheck<wToMove>(b))
 				{
-					b.unmakeMove<wToMove>(internalMoves[i]);
+					b.unmakeMove<wToMove>(moves[i]);
 					continue;
 				}
-				currEval = std::max(currEval, -1 * alphaBetaSearch<!wToMove, ABSearch>(-1 * beta, -1 * alpha, depth + 1, j));
-				b.unmakeMove<wToMove>(internalMoves[i]);
+				currEval = std::max(currEval, -1 * alphaBetaSearch<!wToMove, s>(-1 * beta, -1 * alpha, depth - 1));
+				b.unmakeMove<wToMove>(moves[i]);
+
 				alpha = std::max(currEval, alpha);
 				if (alpha > beta)
 					return currEval;
@@ -204,9 +255,8 @@ namespace engine
 		std::int32_t eval = 0;
 		// 218 = current max number of moves in chess position
 		// 256 = leeway for pseudolegal move generation
-		std::array<board::Move, 256> rootMoves;
-		std::array<std::pair<board::Move, std::int32_t>, 256> rootScoredMoves;
-		std::array<board::Move, 1024> internalMoves;
+		std::array<std::pair<board::Move, std::int32_t>, 256> rootMoves;
+		std::array<board::Move, 256> currline;
 	};
 }
 #endif

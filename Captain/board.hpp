@@ -29,7 +29,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "constants.hpp"
 #include "auxiliary.hpp"
-#include "transpositiontable.hpp"
 
 namespace board
 {
@@ -159,9 +158,77 @@ namespace board
 		case knightPromo:
 			return knights;
 		default:
-			// should not reach this point, but promoting to king will
-			// make it clear that something is wrong
 			return king;
+		}
+	}
+
+	constexpr char promoFlag2char(Move m)
+	{
+		switch (getMoveInfo<moveTypeMask>(m))
+		{
+		case queenPromoCapQ:
+		case queenPromoCapR:
+		case queenPromoCapB:
+		case queenPromoCapN:
+		case queenPromo:
+			return 'q';
+		case rookPromoCapQ:
+		case rookPromoCapR:
+		case rookPromoCapB:
+		case rookPromoCapN:
+		case rookPromo:
+			return 'r';
+		case bishopPromoCapQ:
+		case bishopPromoCapR:
+		case bishopPromoCapB:
+		case bishopPromoCapN:
+		case bishopPromo:
+			return 'b';
+		case knightPromoCapQ:
+		case knightPromoCapR:
+		case knightPromoCapB:
+		case knightPromoCapN:
+		case knightPromo:
+			return 'n';
+		default:
+			// to notify GUI of any bug
+			return 'X';
+		}
+	}
+
+	constexpr pieceType moveType2capPieceType(board::Move m)
+	{
+		switch (board::getMoveInfo<constants::moveTypeMask>(m))
+		{
+		case enPCap:
+		case capP:
+			return pawns;
+		case knightPromoCapN:
+		case bishopPromoCapN:
+		case rookPromoCapN:
+		case queenPromoCapN:
+		case capN:
+			return knights;
+		case knightPromoCapB:
+		case bishopPromoCapB:
+		case rookPromoCapB:
+		case queenPromoCapB:
+		case capB:
+			return bishops;
+		case knightPromoCapR:
+		case bishopPromoCapR:
+		case rookPromoCapR:
+		case queenPromoCapR:
+		case capR:
+			return rooks;
+		case knightPromoCapQ:
+		case bishopPromoCapQ:
+		case rookPromoCapQ:
+		case queenPromoCapQ:
+		case capQ:
+			return queens;
+		default:
+			return none;
 		}
 	}
 
@@ -452,9 +519,18 @@ namespace board
 
 		friend std::ostream& operator<<(std::ostream& os, const Board& b);
 
-		template<bool wToMove>
+		template<bool wToMove, bool nullMove = false>
 		void makeMove(const Move m)
 		{
+			if constexpr (nullMove)
+			{
+				epLoc = 0;
+				wMoving = !wMoving;
+				if constexpr (!wToMove)
+					++currMove;
+				return;
+			}
+			else { // the rest of the function
 			const auto fromBit = setbit(getMoveInfo<fromMask>(m));
 			const auto toBit = setbit(getMoveInfo<toMask>(m));
 			const bool pawnMove = ((wPieces[pawns] | bPieces[pawns]) & fromBit) != 0;
@@ -525,14 +601,34 @@ namespace board
 				flags &= (std::uint16_t)0b1111000000U;
 			else
 				flags += 1;
+
 			if constexpr (!wToMove)
 				++currMove;
 			wMoving = !wMoving;
+			} // for the else block when if constexpr (nullMove) is false
 		}
 
-		template <bool wToMove> // wToMove means we are unmaking a move played by w
+		template <bool wToMove, bool nullMove = false> // wToMove means we are unmaking a move played by w
 		void unmakeMove(const Move m)
 		{
+			if constexpr (nullMove)
+			{
+				if constexpr (wToMove)
+				{
+					if (getMoveInfo<enPExistsMask>(m)) epLoc = setbit(5U, getMoveInfo<enPFileMask>(m));
+					else epLoc = 0;
+				}
+				else
+				{
+					if (getMoveInfo<enPExistsMask>(m)) epLoc = setbit(2U, getMoveInfo<enPFileMask>(m));
+					else epLoc = 0;
+				}
+				wMoving = !wMoving;
+				if constexpr (!wToMove)
+					--currMove;
+				return;
+			}
+			else { 
 			const auto fromBit = setbit(getMoveInfo<fromMask>(m));
 			const auto toBit = setbit(getMoveInfo<toMask>(m));
 
@@ -631,6 +727,7 @@ namespace board
 			if constexpr (!wToMove)
 				--currMove;
 			wMoving = !wMoving;
+			} // for the else block when if constexpr (nullMove) is false
 		}
 	};
 	bool operator==(const Board& l, const Board& r) noexcept;

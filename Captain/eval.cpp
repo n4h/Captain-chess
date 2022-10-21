@@ -16,6 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 */
 
+#include <intrin.h>
+
+#pragma intrinsic(_BitScanForward64)
+
 #include "eval.hpp"
 #include "board.hpp"
 #include "auxiliary.hpp"
@@ -26,10 +30,27 @@ namespace eval
 	using namespace aux;
 	using namespace constants;
 
+	std::int32_t computeMaterialValue(board::Bitboard bb, const std::array<std::int32_t, 64>& PSQT)
+	{
+		std::int32_t mval = 0;
+
+		unsigned long index;
+
+		while (_BitScanForward64(&index, bb))
+		{
+			bb ^= setbit(index);
+
+			mval += PSQT[index];
+		}
+		return mval;
+	}
+
+
 	unsigned int getCaptureValue(board::Move m)
 	{
 		switch (board::getMoveInfo<constants::moveTypeMask>(m))
 		{
+		case enPCap:
 		case capP:
 			return pawn_val;
 		case knightPromoCapN:

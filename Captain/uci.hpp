@@ -29,13 +29,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "searchflags.hpp"
 #include "transpositiontable.hpp"
 
-
-// from Stockfish
-enum SyncCout {ioLock, ioUnlock};
-std::ostream& operator<<(std::ostream&, SyncCout);
-#define sync_cout std::cout << ioLock
-#define sync_endl std::endl << ioUnlock
-
 namespace uci
 {
 	class UCIProtocol

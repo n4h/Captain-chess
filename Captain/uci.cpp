@@ -33,16 +33,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "auxiliary.hpp"
 #include "constants.hpp"
 
-// from Stockfish
-std::ostream& operator<<(std::ostream& o, SyncCout s)
-{
-	static std::mutex m;
-	if (s == ioLock)
-		m.lock();
-	if (s == ioUnlock)
-		m.unlock();
-	return o;
-}
 namespace uci
 {
 	using namespace std::literals::chrono_literals;
@@ -115,12 +105,10 @@ namespace uci
 			b = board::Board{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
 			if (command.size() >= 3 && command[2] == "moves")
 			{
-				std::vector<board::Move> mvs = {};
 				for (std::size_t i = 3; i < command.size(); ++i)
 				{
-					mvs.push_back(uciMove2boardMove(b, command[i]));
+					b.playMoves({ uciMove2boardMove(b, command[i]) });
 				}
-				b.playMoves(mvs);
 			}
 		}
 		else if (command[1] == "fen" && command.size() >= 8)
@@ -131,12 +119,10 @@ namespace uci
 
 			if (command.size() >= 9 && command[8] == "moves")
 			{
-				std::vector<board::Move> mvs = {};
 				for (std::size_t i = 9; i < command.size(); ++i)
 				{
-					mvs.push_back(uciMove2boardMove(b, command[i]));
+					b.playMoves({ uciMove2boardMove(b, command[i]) });
 				}
-				b.playMoves(mvs);
 			}
 		}
 	}
@@ -169,6 +155,8 @@ namespace uci
 				ss.movestogo = (std::size_t)std::stoi(command[index + 1]);
 			if (i == "ponder")
 				ss.ponder = true;
+			if (i == "infinite")
+				ss.infiniteSearch = true;
 			++index;
 		}
 		e.setSettings(ss);
@@ -254,14 +242,14 @@ namespace uci
 		// king moves
 		if (fromPieceType == board::king)
 		{
-			if ((from == board::square::e1 && to == board::square::g1)
-				|| (from == board::square::e8 && to == board::square::g8))
+			if ((fromIndex == board::square::e1 && toIndex == board::square::g1)
+				|| (fromIndex == board::square::e8 && toIndex == board::square::g8))
 			{
 				m |= constants::KSCastle;
 				return m;
 			}
-			if ((from == board::square::e1 && to == board::square::c1)
-				|| (from == board::square::e8 && to == board::square::c8))
+			if ((fromIndex == board::square::e1 && toIndex == board::square::c1)
+				|| (fromIndex == board::square::e8 && toIndex == board::square::c8))
 			{
 				m |= constants::QSCastle;
 				return m;

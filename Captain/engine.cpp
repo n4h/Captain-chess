@@ -23,6 +23,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <algorithm>
 #include <iostream>
 #include <chrono>
+#include <string>
+#include <sstream>
 
 #include "engine.hpp"
 #include "board.hpp"
@@ -44,12 +46,45 @@ namespace engine
 		tt = x;
 	}
 
+	std::string Engine::move2uciFormat(board::Move m)
+	{
+		std::ostringstream oss;
+		oss << aux::file2char(aux::file(board::getMoveInfo<constants::fromMask>(m)));
+		oss << aux::rank(board::getMoveInfo<constants::fromMask>(m)) + 1;
+		oss << aux::file2char(aux::file(board::getMoveInfo<constants::toMask>(m)));
+		oss << aux::rank(board::getMoveInfo<constants::toMask>(m)) + 1;
+		if (board::getPromoPiece(m) != board::king)
+		{
+			oss << board::promoFlag2char(m);
+		}
+		return oss.str();
+	}
+
 	void Engine::playBestMove(const board::Board& bCopy, std::chrono::time_point<std::chrono::steady_clock> s)
 	{
 		searchStart = s;
-		engineW = b.wMoving;
+		engineW = bCopy.wMoving;
 		board::Move m = 0;
 		b = bCopy;
+		
+		if (b.currMove <= 40)
+		{
+			auto movesLeft = 40 - b.currMove + 1;
+
+			if (engineW)
+				moveTime = std::chrono::duration_cast<std::chrono::milliseconds>(0.7 * settings.winc + settings.wmsec / movesLeft);
+			else
+				moveTime = std::chrono::duration_cast<std::chrono::milliseconds>(0.7 * settings.binc + settings.bmsec / movesLeft);
+		}
+		else
+		{
+			if (engineW)
+				moveTime = std::chrono::duration_cast<std::chrono::milliseconds>(settings.winc + 0.1 * settings.wmsec);
+			else
+				moveTime = std::chrono::duration_cast<std::chrono::milliseconds>(settings.binc + 0.1 * settings.bmsec);
+		}
+
+		nodes = 0;
 		if (tt)
 			initialHash();
 		else
@@ -62,26 +97,19 @@ namespace engine
 		{
 			m = rootSearch<false>();
 		}
-		std::ostringstream oss;
-		oss << aux::file2char(aux::file(board::getMoveInfo<constants::fromMask>(m)));
-		oss << aux::rank(board::getMoveInfo<constants::fromMask>(m)) + 1;
-		oss << aux::file2char(aux::file(board::getMoveInfo<constants::toMask>(m)));
-		oss << aux::rank(board::getMoveInfo<constants::toMask>(m)) + 1;
-		sync_cout << "bestmove " << oss.str() << sync_endl;
+
+		sync_cout << "bestmove " << move2uciFormat(m) << sync_endl;
 		searchFlags::searching.clear();
 	}
 
 	bool Engine::shouldStop() noexcept
 	{
-		if (settings.infiniteSearch || settings.ponder)
+		if (settings.ponder)
 			return false;
 
 		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - searchStart);
-		bool overtime = false;
-		if (engineW)
-			overtime = (elapsed > settings.winc + 0.1 * settings.wmsec) || (elapsed > settings.maxTime);
-		else
-			overtime = (elapsed > settings.binc + 0.1 * settings.bmsec) || (elapsed > settings.maxTime);
+
+		bool overtime = !settings.infiniteSearch && (elapsed > moveTime || elapsed > settings.maxTime);
 
 		return overtime || (nodes > settings.maxNodes);
 	}

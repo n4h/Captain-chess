@@ -267,6 +267,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="auxiliary.cpp" />
     <ClCompile Include="searchflags.cpp" />
     <ClCompile Include="transpositiontable.cpp" />
     <ClCompile Include="uci.cpp" />

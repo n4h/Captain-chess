@@ -28,6 +28,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <string_view>
 #include <type_traits>
 
+
+// from Stockfish
+enum SyncCout { ioLock, ioUnlock };
+std::ostream& operator<<(std::ostream&, SyncCout);
+#define sync_cout std::cout << ioLock
+#define sync_endl std::endl << ioUnlock
+
 // auxiliary functions that have broad applicability throughout
 // the codebase, such as functions for converting between array
 // indices and rank and file numbers.

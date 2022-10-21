@@ -3,16 +3,31 @@
 
 #include <cstdint>
 
+#include "board.hpp"
+
 namespace TTable
 {
 	struct Entry
 	{
-		// upper 2 bits store node type
-        // lower 6 bits store from and to squares
-		std::uint8_t typefromTo = 0;
-		std::uint8_t depth = 0;
 		std::int32_t eval = 0;
+		std::uint16_t key = 0;
+		// upper 2 bits of move store node type
+		// 0 = all node
+		// 1 = cut node
+		// 2 = pv node
+		std::uint8_t move = 0;
+		std::uint8_t depth = 0;
+		
+		constexpr std::uint8_t getNodeType()
+		{
+			return move & 0b11000000U;
+		}
+		constexpr std::uint8_t getMove()
+		{
+			return move & 0b00111111U;
+		}
 	};
+
 
 	class TTable
 	{
@@ -24,7 +39,7 @@ namespace TTable
 		std::uint64_t wPieces[6][64];
 		std::uint64_t bPieces[6][64];
 		std::uint64_t wToMove;
-		std::uint64_t castling[4];
+		std::uint64_t castling[16];
 		std::uint64_t enPassant[8];
 
 		TTable(std::size_t);
@@ -40,6 +55,8 @@ namespace TTable
 		bool replace(Entry current, Entry candidate) noexcept;
 
 		void resize(std::size_t);
+
+		std::uint64_t incrementalUpdate(board::Move m, const board::Board& b);
 
 		TTable(const TTable&) = delete;
 		TTable& operator=(const TTable&) = delete;

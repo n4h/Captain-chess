@@ -2,6 +2,7 @@
 #include <cstddef>
 
 #include "transpositiontable.hpp"
+#include "board.hpp"
 
 
 namespace TTable
@@ -23,7 +24,7 @@ namespace TTable
 
 		wToMove = rnum();
 
-		for (std::size_t i = 0; i != 4; ++i)
+		for (std::size_t i = 0; i != 16; ++i)
 		{
 			castling[i] = rnum();
 		}
@@ -58,9 +59,10 @@ namespace TTable
 	{
 		for (std::size_t i = 0; i != sz; ++i)
 		{
-			table[i].typefromTo = 0;
+			table[i].move = 0;
 			table[i].depth = 0;
 			table[i].eval = 0;
+			table[i].key = 0;
 		}
 	}
 
@@ -95,6 +97,17 @@ namespace TTable
 			table = nullptr;
 			sz = 0;
 		}
+	}
+
+	std::uint64_t TTable::incrementalUpdate(board::Move m, const board::Board& b)
+	{
+		std::uint64_t update = 0;
+		b; m;
+		//auto capType = board::moveType2capPieceType(m);
+
+
+
+		return update;
 	}
 
 }
