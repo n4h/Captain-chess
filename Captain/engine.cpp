@@ -72,9 +72,15 @@ namespace engine
 			auto movesLeft = 40 - b.currMove + 1;
 
 			if (engineW)
+			{
 				moveTime = std::chrono::duration_cast<std::chrono::milliseconds>(0.7 * settings.winc + settings.wmsec / movesLeft);
+				moveTime = std::min(moveTime, std::chrono::duration_cast<std::chrono::milliseconds>(0.95 * settings.wmsec));
+			}
 			else
+			{
 				moveTime = std::chrono::duration_cast<std::chrono::milliseconds>(0.7 * settings.binc + settings.bmsec / movesLeft);
+				moveTime = std::min(moveTime, std::chrono::duration_cast<std::chrono::milliseconds>(0.95 * settings.bmsec));
+			}
 		}
 		else
 		{
