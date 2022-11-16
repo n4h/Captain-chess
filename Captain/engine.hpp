@@ -177,7 +177,7 @@ namespace engine
 
 			if (tt != nullptr)
 				if ((*tt)[hash].key == hash)
-					if ((*tt)[hash].depth >= depth || depth >= 0)
+					if ((*tt)[hash].depth >= depth || depth <= 0)
 					{
 						if constexpr (wToMove)
 							return (*tt)[hash].eval;
