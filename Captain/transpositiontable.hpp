@@ -9,23 +9,9 @@ namespace TTable
 {
 	struct Entry
 	{
+		std::uint64_t key = 0;
 		std::int32_t eval = 0;
-		std::uint16_t key = 0;
-		// upper 2 bits of move store node type
-		// 0 = all node
-		// 1 = cut node
-		// 2 = pv node
-		std::uint8_t move = 0;
-		std::uint8_t depth = 0;
-		
-		constexpr std::uint8_t getNodeType()
-		{
-			return move & 0b11000000U;
-		}
-		constexpr std::uint8_t getMove()
-		{
-			return move & 0b00111111U;
-		}
+		int depth = 0;
 	};
 
 
@@ -39,6 +25,7 @@ namespace TTable
 		std::uint64_t wPieces[6][64];
 		std::uint64_t bPieces[6][64];
 		std::uint64_t wToMove;
+		std::uint64_t castling_first[4];
 		std::uint64_t castling[16];
 		std::uint64_t enPassant[8];
 
@@ -47,17 +34,13 @@ namespace TTable
 		~TTable();
 		
 		void clear();
-		
-		bool checkEntry(std::uint64_t hash) noexcept;
 
 		Entry& operator[](std::uint64_t hash) noexcept;
 
-		bool replace(Entry current, Entry candidate) noexcept;
-
 		void resize(std::size_t);
 
-		std::uint64_t incrementalUpdate(board::Move m, const board::Board& b);
-
+		std::uint64_t incrementalUpdatePre(board::Move m, const board::Board& b, bool nullMove);
+		std::uint64_t incrementalUpdatePost(board::Move m, const board::Board& b, bool nullMove);
 		TTable(const TTable&) = delete;
 		TTable& operator=(const TTable&) = delete;
 		TTable(TTable&&) = delete;

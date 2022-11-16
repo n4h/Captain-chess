@@ -36,6 +36,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "searchFlags.hpp"
 #include "transpositiontable.hpp"
 
+#define MAKE_MOVE_AND_UPDATE_HASH(Move, Board, Null) hash ^= tt->incrementalUpdatePre(Move, Board, Null);\
+Board.makeMove<wToMove, Null>(Move);\
+hash ^= tt->incrementalUpdatePost(Move, Board, Null);
+
 namespace engine
 {
 	using namespace std::literals::chrono_literals;
@@ -168,6 +172,19 @@ namespace engine
 				alpha = std::max(alpha, checkPos);
 			}
 
+			if constexpr (ABSearch)
+			{
+				if (tt != nullptr)
+					if ((*tt)[hash].key == hash)
+						if ((*tt)[hash].depth >= depth)
+						{
+							if constexpr (wToMove)
+								return (*tt)[hash].eval;
+							else
+								return (*tt)[hash].eval * -1;
+						}
+			}
+
 			std::array<board::Move, 256> moves;
 
 			std::size_t j = movegen::genMoves<wToMove>(b, moves, 0);
@@ -207,9 +224,11 @@ namespace engine
 				if (!movegen::isInCheck<wToMove>(b))
 				{
 					board::Move m = b.getHeading();
-					b.makeMove<wToMove, true>(m);
+					auto oldHash = hash;
+					MAKE_MOVE_AND_UPDATE_HASH(m, b, true);
 					currEval = std::max(currEval, -1 * alphaBetaSearch<!wToMove, ABSearch, true>(-1 * beta, -1 * alpha, depth - 2));
 					b.unmakeMove<wToMove, true>(m);
+					hash = oldHash;
 					alpha = std::max(alpha, currEval);
 					if (alpha > beta)
 						return currEval;
@@ -235,19 +254,40 @@ namespace engine
 					if ((checkPos + (std::int32_t)eval::getCaptureValue(moves[i])) < alpha)
 						continue;
 				}
-				
-				b.makeMove<wToMove>(moves[i]);
+				auto oldHash = hash;
+				MAKE_MOVE_AND_UPDATE_HASH(moves[i], b, false);
 				if (movegen::isInCheck<wToMove>(b))
 				{
 					b.unmakeMove<wToMove>(moves[i]);
+					hash = oldHash;
 					continue;
 				}
 				currEval = std::max(currEval, -1 * alphaBetaSearch<!wToMove, s>(-1 * beta, -1 * alpha, depth - 1));
 				b.unmakeMove<wToMove>(moves[i]);
-
+				hash = oldHash;
 				alpha = std::max(currEval, alpha);
 				if (alpha > beta)
+				{
+					if (tt != nullptr)
+					{
+						(*tt)[hash].key = hash;
+						(*tt)[hash].depth = depth;
+						if constexpr (wToMove)
+							(*tt)[hash].eval = currEval;
+						else
+							(*tt)[hash].eval = -1 * currEval;
+					}
 					return currEval;
+				}
+			}
+			if (tt != nullptr)
+			{
+				(*tt)[hash].key = hash;
+				(*tt)[hash].depth = depth;
+				if constexpr (wToMove)
+					(*tt)[hash].eval = currEval;
+				else
+					(*tt)[hash].eval = -1 * currEval;
 			}
 			return currEval;
 		}

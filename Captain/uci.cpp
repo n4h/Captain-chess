@@ -41,7 +41,7 @@ namespace uci
 	{
 		sync_cout << "id name " << UCIName << sync_endl;
 		sync_cout << "id author " << UCIAuthor << sync_endl;
-		sync_cout << "option name Hash type spin default 1 min 1 max 32" << sync_endl;
+		sync_cout << "option name Hash type spin default 1 min 1 max 256" << sync_endl;
 		sync_cout << "uciok" << sync_endl;
 	}
 

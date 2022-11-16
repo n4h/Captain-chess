@@ -127,13 +127,13 @@ namespace engine
 			hash ^= tt->wToMove;
 
 		if (b.flags & board::Board::wkCastleFlagMask)
-			hash ^= tt->castling[0];
+			hash ^= tt->castling_first[0];
 		if (b.flags & board::Board::wqCastleFlagMask)
-			hash ^= tt->castling[1];
+			hash ^= tt->castling_first[1];
 		if (b.flags & board::Board::bkCastleFlagMask)
-			hash ^= tt->castling[2];
+			hash ^= tt->castling_first[2];
 		if (b.flags & board::Board::bqCastleFlagMask)
-			hash ^= tt->castling[3];
+			hash ^= tt->castling_first[3];
 
 		if (b.epLoc)
 		{
