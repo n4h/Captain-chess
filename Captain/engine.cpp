@@ -91,7 +91,7 @@ namespace engine
 		}
 
 		nodes = 0;
-		if (tt)
+		if (tt != nullptr)
 			initialHash();
 		else
 			hash = 0;
@@ -117,7 +117,7 @@ namespace engine
 
 		bool overtime = !settings.infiniteSearch && (elapsed > moveTime || elapsed > settings.maxTime);
 
-		return overtime || (nodes > settings.maxNodes);
+		return overtime || (nodes > settings.maxNodes) || (elapsed > settings.maxTime);
 	}
 	void Engine::initialHash()
 	{

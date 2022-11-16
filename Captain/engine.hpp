@@ -175,18 +175,16 @@ namespace engine
 				alpha = std::max(alpha, checkPos);
 			}
 
-			if constexpr (ABSearch)
-			{
-				if (tt != nullptr)
-					if ((*tt)[hash].key == hash)
-						if ((*tt)[hash].depth >= depth)
-						{
-							if constexpr (wToMove)
-								return (*tt)[hash].eval;
-							else
-								return (*tt)[hash].eval * -1;
-						}
-			}
+			if (tt != nullptr)
+				if ((*tt)[hash].key == hash)
+					if ((*tt)[hash].depth >= depth)
+					{
+						if constexpr (wToMove)
+							return (*tt)[hash].eval;
+						else
+							return (*tt)[hash].eval * -1;
+					}
+
 
 			std::array<board::Move, 256> moves;
 
