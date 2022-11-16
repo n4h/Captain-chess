@@ -125,12 +125,14 @@ namespace engine
 								return rootMoves[mv].first;
 							}
 						}
+						return rootMoves[0].first;
 					}
-
-					b.makeMove<wToMove>(rootMoves[i].first);
+					auto oldHash = hash;
+					MAKE_MOVE_AND_UPDATE_HASH(rootMoves[i].first, b, false);
 					if (movegen::isInCheck<wToMove>(b))
 					{
 						b.unmakeMove<wToMove>(rootMoves[i].first);
+						hash = oldHash;
 						continue;
 					}
 
@@ -139,6 +141,7 @@ namespace engine
 					rootMoves[i].second = -1 * alphaBetaSearch<!wToMove, ABSearch>(negInf, -1 * worstCase, k - 1);
 					score = std::max(score, rootMoves[i].second);
 					b.unmakeMove<wToMove>(rootMoves[i].first);
+					hash = oldHash;
 					if (score > worstCase)
 						worstCase = score;
 				}
