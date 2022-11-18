@@ -157,6 +157,7 @@ namespace engine
 		std::int32_t alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth)
 		{
 			++nodes;
+			const auto oldAlpha = alpha;
 			if (shouldStop())
 				searchFlags::searching.clear();
 			std::int32_t checkPos;
@@ -177,12 +178,28 @@ namespace engine
 
 			if (tt != nullptr)
 				if ((*tt)[hash].key == hash)
-					if ((*tt)[hash].depth >= depth || depth <= 0)
+					if ((*tt)[hash].depth > depth)
 					{
+						auto nt = (*tt)[hash].nodeType;
+						auto e = (*tt)[hash].eval;
 						if constexpr (wToMove)
-							return (*tt)[hash].eval;
+						{
+							if (nt == 0)
+								return e;
+							else if (nt == 1 && e < alpha)
+								return e;
+							else if (nt == 2 && e > beta)
+								return e;
+						}
 						else
-							return (*tt)[hash].eval * -1;
+						{
+							if (nt == 0)
+								return -1 * e;
+							else if (nt == 1 && e < alpha)
+								alpha = -1 * e;
+							else if (nt == 2 && e > beta)
+								beta = -1 * e;
+						}
 					}
 
 
@@ -269,7 +286,7 @@ namespace engine
 				alpha = std::max(currEval, alpha);
 				if (alpha > beta)
 				{
-					if (tt != nullptr)
+					if (tt != nullptr && s == ABSearch)
 					{
 						(*tt)[hash].key = hash;
 						(*tt)[hash].depth = depth;
@@ -277,11 +294,12 @@ namespace engine
 							(*tt)[hash].eval = currEval;
 						else
 							(*tt)[hash].eval = -1 * currEval;
+						(*tt)[hash].nodeType = 2;
 					}
 					return currEval;
 				}
 			}
-			if (tt != nullptr)
+			if (tt != nullptr && s == ABSearch)
 			{
 				(*tt)[hash].key = hash;
 				(*tt)[hash].depth = depth;
@@ -289,6 +307,7 @@ namespace engine
 					(*tt)[hash].eval = currEval;
 				else
 					(*tt)[hash].eval = -1 * currEval;
+				(*tt)[hash].nodeType = alpha > oldAlpha ? 0 : 1;
 			}
 			return currEval;
 		}

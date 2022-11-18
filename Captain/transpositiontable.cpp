@@ -75,6 +75,7 @@ namespace TTable
 			table[i].eval = 0;
 			table[i].key = 0;
 			table[i].depth = 0;
+			table[i].nodeType = 0;
 		}
 	}
 

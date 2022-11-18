@@ -12,6 +12,7 @@ namespace TTable
 		std::uint64_t key = 0;
 		std::int32_t eval = 0;
 		int depth = 0;
+		char nodeType = 0; // 0 = PV (exact score), 1 = all (upper bound), 2 = cut (lower bound)
 	};
 
 
