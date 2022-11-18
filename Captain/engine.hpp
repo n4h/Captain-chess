@@ -252,7 +252,9 @@ namespace engine
 						return currEval;
 				}
 			}
-			bool legalMoveFound = false;
+			bool legalMoveFound;
+			if constexpr (s == ABSearch) legalMoveFound = false;
+			else legalMoveFound = true;
 			for (std::size_t i = 0; i != j; ++i)
 			{
 				if (!searchFlags::searching.test())
