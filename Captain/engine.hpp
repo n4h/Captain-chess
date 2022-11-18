@@ -44,8 +44,9 @@ namespace engine
 {
 	using namespace std::literals::chrono_literals;
 
-	constexpr auto negInf = std::numeric_limits<std::int32_t>::min() + 1;
-	constexpr auto posInf = std::numeric_limits<std::int32_t>::max();
+	// 500000 is arbitrary 
+	constexpr auto negInf = -500000;
+	constexpr auto posInf = 500000;
 
 	struct SearchSettings
 	{
@@ -103,8 +104,6 @@ namespace engine
 				sync_cout << "info string iterative deepening " << k << sync_endl;
 				worstCase = negInf;
 				std::int32_t score = negInf;
-
-
 
 				for (std::size_t i = 0; i != j; ++i)
 				{
