@@ -65,6 +65,7 @@ namespace engine
 		searchStart = s;
 		engineW = bCopy.wMoving;
 		board::Move m = 0;
+		currIDdepth = 0;
 		b = bCopy;
 		
 		if (b.currMove <= 40)

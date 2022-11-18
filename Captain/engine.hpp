@@ -76,6 +76,7 @@ namespace engine
 		std::chrono::time_point<std::chrono::steady_clock> searchStart;
 		std::size_t nodes = 0;
 		std::size_t hash = 0;
+		std::size_t currIDdepth = 0;
 		bool engineW = true;
 		board::Board b;
 		std::chrono::milliseconds moveTime = 0ms;
@@ -102,6 +103,7 @@ namespace engine
 			for (unsigned int k = 1; k <= posInf; ++k)
 			{
 				sync_cout << "info string iterative deepening " << k << sync_endl;
+				currIDdepth = k;
 				worstCase = negInf;
 				std::int32_t score = negInf;
 
@@ -195,9 +197,9 @@ namespace engine
 							if (nt == 0)
 								return -1 * e;
 							else if (nt == 1 && e < alpha)
-								alpha = -1 * e;
+								return -1 * e;
 							else if (nt == 2 && e > beta)
-								beta = -1 * e;
+								return -1 * e;
 						}
 					}
 
@@ -235,7 +237,6 @@ namespace engine
 			{
 				currEval = alpha;
 			}
-			
 			if constexpr (s == ABSearch && !prevMoveNull)
 			{
 				if (!movegen::isInCheck<wToMove>(b))
@@ -251,7 +252,7 @@ namespace engine
 						return currEval;
 				}
 			}
-
+			bool legalMoveFound = false;
 			for (std::size_t i = 0; i != j; ++i)
 			{
 				if (!searchFlags::searching.test())
@@ -279,6 +280,7 @@ namespace engine
 					hash = oldHash;
 					continue;
 				}
+				legalMoveFound = true;
 				currEval = std::max(currEval, -1 * alphaBetaSearch<!wToMove, s>(-1 * beta, -1 * alpha, depth - 1));
 				b.unmakeMove<wToMove>(moves[i]);
 				hash = oldHash;
@@ -298,6 +300,8 @@ namespace engine
 					return currEval;
 				}
 			}
+			if (!legalMoveFound)
+				currEval = movegen::isInCheck<wToMove>(b) ? negInf + (std::int32_t)(currIDdepth - depth) : 0;
 			if (tt != nullptr && s == ABSearch)
 			{
 				(*tt)[hash].key = hash;
