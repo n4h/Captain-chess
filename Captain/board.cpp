@@ -234,4 +234,32 @@ namespace board
 			&& (l.wPieces[5] == r.wPieces[5])
 			&& (l.bPieces[5] == r.bPieces[5]);
 	}
+	QBB::QBB(const Board& b)
+	{
+		qbb[0] = b.wMoving ? b.wAll : b.bAll;
+
+		qbb[1] = b.wPieces[pawns] | b.wPieces[bishops] | b.wPieces[queens]
+			| b.bPieces[pawns] | b.bPieces[bishops] | b.bPieces[queens];
+
+		qbb[2] = b.wPieces[knights] | b.wPieces[bishops] | b.wPieces[king]
+			| b.bPieces[knights] | b.bPieces[bishops] | b.bPieces[king];
+
+		qbb[3] = b.wPieces[rooks] | b.wPieces[queens] | b.wPieces[king]
+			| b.bPieces[queens] | b.bPieces[queens] | b.bPieces[king];
+
+		epc = b.epLoc;
+
+		if (b.flags & Board::wkCastleFlagMask)
+			epc |= setbit(e1) | setbit(h1);
+		if (b.flags & Board::wqCastleFlagMask)
+			epc |= setbit(e1) | setbit(a1);
+		if (b.flags & Board::bkCastleFlagMask)
+			epc |= setbit(e8) | setbit(h8);
+		if (b.flags & Board::bqCastleFlagMask)
+			epc |= setbit(e8) | setbit(a8);
+
+		if (!b.wMoving)
+			;// TODO vertically mirror
+	}
+	QBB::QBB(const std::string& s) : QBB(Board{ s }) {}
 }

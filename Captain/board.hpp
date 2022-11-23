@@ -731,5 +731,17 @@ namespace board
 		}
 	};
 	bool operator==(const Board& l, const Board& r) noexcept;
+
+	class QBB
+	{
+		std::uint64_t qbb[4] = {0, 0, 0, 0};
+		// epc contains the en passant location and castling rights
+		// castling rights are encoded by setting the kings' and rooks'
+		// starting square's bit if and only if the respective piece
+		// has never moved
+		std::uint64_t epc = 0;
+		QBB(const Board&);
+		QBB(const std::string&);
+	};
 }
 #endif
