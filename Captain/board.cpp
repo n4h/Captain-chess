@@ -236,16 +236,19 @@ namespace board
 	}
 	QBB::QBB(const Board& b)
 	{
-		qbb[0] = b.wMoving ? b.wAll : b.bAll;
+		std::uint64_t qbbArray[4] = {0, 0, 0, 0};
+		qbbArray[0] = b.wMoving ? b.wAll : b.bAll;
 
-		qbb[1] = b.wPieces[pawns] | b.wPieces[bishops] | b.wPieces[queens]
+		qbbArray[1] = b.wPieces[pawns] | b.wPieces[bishops] | b.wPieces[queens]
 			| b.bPieces[pawns] | b.bPieces[bishops] | b.bPieces[queens];
 
-		qbb[2] = b.wPieces[knights] | b.wPieces[bishops] | b.wPieces[king]
+		qbbArray[2] = b.wPieces[knights] | b.wPieces[bishops] | b.wPieces[king]
 			| b.bPieces[knights] | b.bPieces[bishops] | b.bPieces[king];
 
-		qbb[3] = b.wPieces[rooks] | b.wPieces[queens] | b.wPieces[king]
-			| b.bPieces[queens] | b.bPieces[queens] | b.bPieces[king];
+		qbbArray[3] = b.wPieces[rooks] | b.wPieces[queens] | b.wPieces[king]
+			| b.bPieces[rooks] | b.bPieces[queens] | b.bPieces[king];
+
+		qbb = _mm256_set_epi64x(qbbArray[3], qbbArray[2], qbbArray[1], qbbArray[0]);
 
 		epc = b.epLoc;
 
@@ -259,7 +262,7 @@ namespace board
 			epc |= setbit(e8) | setbit(a8);
 
 		if (!b.wMoving)
-			;// TODO vertically mirror
+			this->flipQBB();
 	}
 	QBB::QBB(const std::string& s) : QBB(Board{ s }) {}
 }

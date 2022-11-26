@@ -26,6 +26,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <iostream>
 #include <cassert>
 #include <vector>
+#include <array>
 
 #include "constants.hpp"
 #include "auxiliary.hpp"
@@ -731,10 +732,10 @@ namespace board
 		}
 	};
 	bool operator==(const Board& l, const Board& r) noexcept;
-
-	class QBB
+#include <xmmintrin.h>
+	struct QBB
 	{
-		std::uint64_t qbb[4] = {0, 0, 0, 0};
+		__m256i qbb;
 		// epc contains the en passant location and castling rights
 		// castling rights are encoded by setting the kings' and rooks'
 		// starting square's bit if and only if the respective piece
@@ -742,6 +743,46 @@ namespace board
 		std::uint64_t epc = 0;
 		QBB(const Board&);
 		QBB(const std::string&);
+		
+		
+		void makeMove(Move);
+		void unmakeMove(Move);
+		unsigned getPieceType(square) const;
+
+		constexpr bool canCastleShort() const
+		{
+			return epc & 0x90U;
+		}
+		constexpr bool canCastleLong() const
+		{
+			return epc & 0x11U;
+		}
+	private:
+		void flipQBB();
+		using QBBDelta = std::array<std::uint64_t, 4>;
+		
+		static constexpr std::array<QBBDelta, 64*6*8> genMakeMoveArray()
+		{
+			constexpr auto index = [](std::size_t sq, std::size_t pt, std::size_t mt) -> std::size_t {
+				return 64 * sq + 6 * pt + mt;
+			};
+
+
+			std::array<QBBDelta, 64 * 6 * 8> val = {};
+
+			for (std::size_t i = 0; i != 64; ++i)
+				for (std::size_t j = 0; j != 6; ++j)
+					for (std::size_t k = 0; k != 8; ++k)
+					{
+						val[index(i, j, k)][0] = ;
+						val[index(i, j, k)][1] = ;
+						val[index(i, j, k)][2] = ;
+						val[index(i, j, k)][3] = ;
+					}
+			return val;
+		}
+
+		static constexpr std::array<QBBDelta, 64 * 6 * 8> moveDelta = genMakeMoveArray();
 	};
 }
 #endif
