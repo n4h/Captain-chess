@@ -334,27 +334,31 @@ namespace board
 			if (pt == pawnCode)
 				if (mt == knightPromo || mt == bishopPromo)
 					return setbit(sq);
-				else if (pt == knightCode || pt == bishopCode || pt == kingCode)
-					return setbit(sq);
 				else
 					return 0U;
+			else if (pt == knightCode || pt == bishopCode || pt == kingCode)
+				return setbit(sq);
+			else
+				return 0;
 		};
 
 		constexpr auto bb3 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
 			if (pt == pawnCode)
 				if (mt == rookPromo || mt == queenPromo)
 					return setbit(sq);
-				else if (pt == kingCode)
-					if (mt == KSCastle)
-						return setbit(sq) | setbit(h1) | setbit(f1);
-					else if (mt == QSCastle)
-						return setbit(sq) | setbit(a1) | setbit(d1);
-					else
-						return setbit(sq);
-				else if (pt == rookCode || pt == queenCode)
-					return setbit(sq);
 				else
 					return 0U;
+			else if (pt == kingCode)
+				if (mt == KSCastle)
+					return setbit(sq) | setbit(h1) | setbit(f1);
+				else if (mt == QSCastle)
+					return setbit(sq) | setbit(a1) | setbit(d1);
+				else
+					return setbit(sq);
+			else if (pt == rookCode || pt == queenCode)
+				return setbit(sq);
+			else
+				return 0;
 		};
 
 		std::array<QBBDelta, 64 * 6 * 8> val = {};

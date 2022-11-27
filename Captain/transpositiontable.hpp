@@ -40,8 +40,8 @@ namespace TTable
 
 		void resize(std::size_t);
 
-		std::uint64_t incrementalUpdatePre(board::Move m, const board::Board& b, bool nullMove);
-		std::uint64_t incrementalUpdatePost(board::Move m, const board::Board& b, bool nullMove);
+		std::uint64_t incrementalUpdatePre(board::Move m, const board::QBB& b, bool nullMove);
+		std::uint64_t incrementalUpdatePost(board::Move m, const board::QBB& b, bool nullMove);
 		TTable(const TTable&) = delete;
 		TTable& operator=(const TTable&) = delete;
 		TTable(TTable&&) = delete;

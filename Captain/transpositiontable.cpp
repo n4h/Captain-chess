@@ -100,7 +100,7 @@ namespace TTable
 		}
 	}
 
-	std::uint64_t TTable::incrementalUpdatePre(board::Move m, const board::Board& b, bool nullMove)
+	std::uint64_t TTable::incrementalUpdatePre(board::Move m, const board::QBB& b, bool nullMove)
 	{
 		std::uint64_t update = this->wToMove;
 		if (nullMove)
@@ -158,7 +158,7 @@ namespace TTable
 		return update;
 	}
 
-	std::uint64_t TTable::incrementalUpdatePost(board::Move m, const board::Board& b, bool nullMove)
+	std::uint64_t TTable::incrementalUpdatePost(board::Move m, const board::QBB& b, bool nullMove)
 	{
 		const auto mcastling = (board::getMoveInfo<constants::castleFlagMask>(m) >> constants::castleFlagsOffset);
 		const auto bcastling = (b.flags & 0b1111000000U) >> 6;
