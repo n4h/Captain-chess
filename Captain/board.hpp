@@ -761,23 +761,71 @@ namespace board
 		void flipQBB();
 		using QBBDelta = std::array<std::uint64_t, 4>;
 		
+		// TODO magic numbers
 		static constexpr std::array<QBBDelta, 64*6*8> genMakeMoveArray()
 		{
-			constexpr auto index = [](std::size_t sq, std::size_t pt, std::size_t mt) -> std::size_t {
+			constexpr auto index = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::size_t {
 				return 64 * sq + 6 * pt + mt;
 			};
 
+			constexpr auto bb0 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
+				std::uint64_t ret = setbit(sq);
+				if (pt == kingCode && mt == KSCastle)
+					ret |= 0xA0U;
+				else if (pt == kingCode && mt == QSCastle)
+					ret |= 0x9U;
+				return ret;
+			};
+
+			constexpr auto bb1 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
+				if (pt == pawnCode)
+					if (mt == enPCap)
+						return setbit(sq) | (setbit(sq) >> 8);
+					else if (mt == queenPromo || mt == bishopPromo)
+						return setbit(sq);
+				else if (pt == queenCode || pt == bishopCode)
+					return setbit(sq);
+				else
+					return 0U;
+			};
+
+			constexpr auto bb2 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
+				if (pt == pawnCode)
+					if (mt == knightPromo || mt == bishopPromo)
+						return setbit(sq);
+				else if (pt == knightCode || pt == bishopCode || pt == kingCode)
+					return setbit(sq);
+				else
+					return 0U;
+			};
+
+			constexpr auto bb3 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
+				if (pt == pawnCode)
+					if (mt == rookPromo || mt == queenPromo)
+						return setbit(sq);
+				else if (pt == kingCode)
+					if (mt == KSCastle)
+						return setbit(sq) | setbit(h1) | setbit(f1);
+					else if (mt == QSCastle)
+						return setbit(sq) | setbit(a1) | setbit(d1);
+					else
+						return setbit(sq);
+				else if (pt == rookCode || pt == queenCode)
+					return setbit(sq);
+				else
+					return 0U;
+			};
 
 			std::array<QBBDelta, 64 * 6 * 8> val = {};
 
 			for (std::size_t i = 0; i != 64; ++i)
-				for (std::size_t j = 0; j != 6; ++j)
-					for (std::size_t k = 0; k != 8; ++k)
+				for (std::uint32_t j = 0; j != 6; ++j) // TODO iteration range
+					for (std::uint32_t k = 0; k != 8; ++k)
 					{
-						val[index(i, j, k)][0] = ;
-						val[index(i, j, k)][1] = ;
-						val[index(i, j, k)][2] = ;
-						val[index(i, j, k)][3] = ;
+						val[index(i, j, k)][0] = bb0(i, j + 1, k);
+						val[index(i, j, k)][1] = bb1(i, j + 1, k);
+						val[index(i, j, k)][2] = bb2(i, j + 1, k);
+						val[index(i, j, k)][3] = bb3(i, j + 1, k);
 					}
 			return val;
 		}
