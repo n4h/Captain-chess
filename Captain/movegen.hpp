@@ -91,18 +91,6 @@ namespace movegen
 	extern attackMap wpawnAttacks[64];
 	extern attackMap bpawnAttacks[64];
 
-	constexpr std::uint32_t knightPromoCaps[5] = {constants::knightPromo, constants::knightPromoCapN, 
-		constants::knightPromoCapB, constants::knightPromoCapR, constants::knightPromoCapQ};
-
-	constexpr std::uint32_t bishopPromoCaps[5] = {constants::bishopPromo, constants::bishopPromoCapN,
-		constants::bishopPromoCapB, constants::bishopPromoCapR, constants::bishopPromoCapQ};
-
-	constexpr std::uint32_t rookPromoCaps[5] = { constants::rookPromo, constants::rookPromoCapN,
-		constants::rookPromoCapB, constants::rookPromoCapR, constants::rookPromoCapQ };
-
-	constexpr std::uint32_t queenPromoCaps[5] = { constants::queenPromo, constants::queenPromoCapN,
-	constants::queenPromoCapB, constants::queenPromoCapR, constants::queenPromoCapQ };
-
 	template<bool wToMove, board::pieceType p = board::none>
 	constexpr attackMap getAttacks(board::Bitboard all, board::square s)
 	{

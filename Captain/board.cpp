@@ -63,6 +63,7 @@ namespace board
 
 	std::vector<std::string> splitString(std::string s, const char d)
 	{
+		// TODO better string split
 		std::vector<std::string> split = {};
 		std::string word = "";
 		for (auto i = s.cbegin(); i != s.cend(); ++i)
@@ -136,18 +137,6 @@ namespace board
 		currMove = std::stoi(splitfen[5]);
 	}
 
-	void Board::clearPosition(std::uint64_t pos) noexcept
-	{
-		wAll &= ~pos;
-		bAll &= ~pos;
-		all &= ~pos;
-		for (int i = 0; i != 6; ++i)
-		{
-			wPieces[i] &= ~pos;
-			bPieces[i] &= ~pos;
-		}
-	}
-
 	pieceType Board::getPieceType(Bitboard at) const noexcept
 	{
 		for (unsigned int i = 0; i != 6; ++i)
@@ -158,82 +147,6 @@ namespace board
 		return none;
 	}
 
-	void Board::playMoves(const std::vector<Move>& v)
-	{
-		for (auto i : v)
-		{
-			if (wMoving)
-			{
-				makeMove<true>(i);
-			}
-			else
-			{
-				makeMove<false>(i);
-			}
-		}
-	}
-
-	std::ostream& operator<<(std::ostream& os, const Board& b)
-	{
-		// First, print the board
-		// we start by printing the top border
-		os << "O===============O\n";
-		for (unsigned int j = 8; j >= 1; --j)
-		{
-			os << "|"; // left border of jth rank
-			for (unsigned int i = 0; i != 8; ++i)
-			{
-				unsigned int capitalOffset = 0;
-				const auto pos = setbit(j - 1U, i);
-				if (pos & b.all)
-				{
-					if (pos & b.wAll) capitalOffset = 0;
-					if (pos & b.bAll) capitalOffset = 32;
-					if ((b.wPieces[pawns] | b.bPieces[pawns]) & pos)
-						os << (char)('P' + (char)capitalOffset) << "|";
-					if ((b.wPieces[knights] | b.bPieces[knights]) & pos)
-						os << (char)('N' + (char)capitalOffset) << "|";
-					if ((b.wPieces[bishops] | b.bPieces[bishops]) & pos)
-						os << (char)('B' + (char)capitalOffset) << "|";
-					if ((b.wPieces[rooks] | b.bPieces[rooks]) & pos)
-						os << (char)('R' + (char)capitalOffset) << "|";
-					if ((b.wPieces[queens] | b.bPieces[queens]) & pos)
-						os << (char)('Q' + (char)capitalOffset) << "|";
-					if ((b.wPieces[king] | b.bPieces[king]) & pos)
-						os << (char)('K' + (char)capitalOffset) << "|";
-				}
-				else
-				{
-					os << "." << "|";
-				}
-			}
-			os << "\n";
-		}
-		// bottom border
-		os << "O===============O";
-		return os;
-	}
-
-	bool operator==(const Board& l, const Board& r) noexcept
-	{
-		return (l.all == r.all)
-			&& (l.wAll == r.wAll)
-			&& (l.bAll == r.bAll)
-			&& (l.flags == r.flags)
-			&& (l.epLoc == r.epLoc)
-			&& (l.wPieces[0] == r.wPieces[0])
-			&& (l.bPieces[0] == r.bPieces[0])
-			&& (l.wPieces[1] == r.wPieces[1])
-			&& (l.bPieces[1] == r.bPieces[1])
-			&& (l.wPieces[2] == r.wPieces[2])
-			&& (l.bPieces[2] == r.bPieces[2])
-			&& (l.wPieces[3] == r.wPieces[3])
-			&& (l.bPieces[3] == r.bPieces[3])
-			&& (l.wPieces[4] == r.wPieces[4])
-			&& (l.bPieces[4] == r.bPieces[4])
-			&& (l.wPieces[5] == r.wPieces[5])
-			&& (l.bPieces[5] == r.bPieces[5]);
-	}
 	QBB::QBB(const Board& b)
 	{
 		std::uint64_t qbbArray[4] = {0, 0, 0, 0};

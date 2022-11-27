@@ -283,17 +283,21 @@ namespace board
 		
 		
 		void makeMove(Move);
-		void unmakeMove(Move);
+
+		void unmakeMove(__m256i delta, std::uint64_t oldepc);
+
 		unsigned getPieceType(square) const;
 
 		constexpr bool canCastleShort() const
 		{
 			return epc & 0x90U;
 		}
+
 		constexpr bool canCastleLong() const
 		{
 			return epc & 0x11U;
 		}
+
 	private:
 		void flipQBB();
 
@@ -361,7 +365,7 @@ namespace board
 				return 0;
 		};
 
-		std::array<QBBDelta, 64 * 6 * 8> val = {};
+		std::array<QBBDelta, 64 * 6 * 8> val{};
 
 		for (std::size_t i = 0; i != 64; ++i)
 			for (std::uint32_t j = 0; j != 6; ++j) // TODO iteration range
@@ -377,8 +381,8 @@ namespace board
 
 	constexpr std::array<QBBDelta, 64 * 14> genSquareXPieceArray()
 	{
-		constexpr auto index = [](auto i, auto j) {return 64 * i + 14 * j; };
-		std::array<QBBDelta, 64 * 14> val = {};
+		constexpr auto index = [](std::size_t i, std::uint32_t j) {return 64U * i + 14U * j; };
+		std::array<QBBDelta, 64 * 14> val{};
 		for (std::size_t i = 0; i != 64; ++i)
 			for (std::uint32_t j = 0; j != 14U; ++j)
 			{
