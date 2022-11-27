@@ -39,16 +39,11 @@ namespace board
 	using std::unsigned_integral;
 
 	using Bitboard = std::uint64_t;
-	using BoardFlags = std::uint16_t;
-
 
 	/*Lowest 6 bits: index of from square
 	  Next 6 bits: index of to square
-	  Next 6: half move count
-	  Next 4: castling flags
-	  Next 4: flags for en passant
-	  Next 5: move type flag
-	  using 31 bits total*/
+	  Last 4: move type (8 possible move types)
+	*/
 	using Move = std::uint32_t;
 
 	template<std::uint32_t mask>
@@ -62,14 +57,9 @@ namespace board
 		return (m & toMask) >> 6;
 	}
 	template<>
-	constexpr std::uint32_t getMoveInfo<halfMoveCntMask>(Move m)
+	constexpr std::uint32_t getMoveInfo<moveTypeMask>(Move m)
 	{
-		return (m & halfMoveCntMask) >> 12;
-	}
-	template<>
-	constexpr std::uint32_t getMoveInfo<enPFileMask>(Move m)
-	{
-		return (m & enPFileMask) >> 22;
+		return (m & moveTypeMask) >> 12;
 	}
 
 	enum pieceType : unsigned int
@@ -109,53 +99,16 @@ namespace board
 		return pieceValues[p];
 	}
 
-	constexpr std::uint32_t getCapType(pieceType p)
-	{
-		switch (p)
-		{
-		case pawns:
-			return capP;
-		case knights:
-			return capN;
-		case bishops:
-			return capB;
-		case rooks:
-			return capR;
-		case queens:
-			return capQ;
-		case king:
-		case none:
-		default:
-			return QMove;
-		}
-	}
-
 	constexpr unsigned int getPromoPiece(Move m)
 	{
 		switch (getMoveInfo<moveTypeMask>(m))
 		{
-		case queenPromoCapQ:
-		case queenPromoCapR:
-		case queenPromoCapB:
-		case queenPromoCapN:
 		case queenPromo:
 			return queens;
-		case rookPromoCapQ:
-		case rookPromoCapR:
-		case rookPromoCapB:
-		case rookPromoCapN:
 		case rookPromo:
 			return rooks;
-		case bishopPromoCapQ:
-		case bishopPromoCapR:
-		case bishopPromoCapB:
-		case bishopPromoCapN:
 		case bishopPromo:
 			return bishops;
-		case knightPromoCapQ:
-		case knightPromoCapR:
-		case knightPromoCapB:
-		case knightPromoCapN:
 		case knightPromo:
 			return knights;
 		default:
@@ -167,28 +120,12 @@ namespace board
 	{
 		switch (getMoveInfo<moveTypeMask>(m))
 		{
-		case queenPromoCapQ:
-		case queenPromoCapR:
-		case queenPromoCapB:
-		case queenPromoCapN:
 		case queenPromo:
 			return 'q';
-		case rookPromoCapQ:
-		case rookPromoCapR:
-		case rookPromoCapB:
-		case rookPromoCapN:
 		case rookPromo:
 			return 'r';
-		case bishopPromoCapQ:
-		case bishopPromoCapR:
-		case bishopPromoCapB:
-		case bishopPromoCapN:
 		case bishopPromo:
 			return 'b';
-		case knightPromoCapQ:
-		case knightPromoCapR:
-		case knightPromoCapB:
-		case knightPromoCapN:
 		case knightPromo:
 			return 'n';
 		default:
@@ -197,71 +134,14 @@ namespace board
 		}
 	}
 
-	constexpr pieceType moveType2capPieceType(board::Move m)
+	constexpr std::uint32_t getPromoType(pieceType promoPiece)
 	{
-		switch (board::getMoveInfo<constants::moveTypeMask>(m))
-		{
-		case enPCap:
-		case capP:
-			return pawns;
-		case knightPromoCapN:
-		case bishopPromoCapN:
-		case rookPromoCapN:
-		case queenPromoCapN:
-		case capN:
-			return knights;
-		case knightPromoCapB:
-		case bishopPromoCapB:
-		case rookPromoCapB:
-		case queenPromoCapB:
-		case capB:
-			return bishops;
-		case knightPromoCapR:
-		case bishopPromoCapR:
-		case rookPromoCapR:
-		case queenPromoCapR:
-		case capR:
-			return rooks;
-		case knightPromoCapQ:
-		case bishopPromoCapQ:
-		case rookPromoCapQ:
-		case queenPromoCapQ:
-		case capQ:
-			return queens;
-		default:
-			return none;
-		}
-	}
-
-	constexpr std::uint32_t getPromoType(pieceType promoPiece, pieceType capType)
-	{
-		if (promoPiece == queens && capType == none) return queenPromo;
-		if (promoPiece == queens && capType == knights) return queenPromoCapN;
-		if (promoPiece == queens && capType == bishops) return queenPromoCapB;
-		if (promoPiece == queens && capType == rooks) return queenPromoCapR;
-		if (promoPiece == queens && capType == queens) return queenPromoCapQ;
-		if (promoPiece == rooks && capType == none) return rookPromo;
-		if (promoPiece == rooks && capType == knights) return rookPromoCapN;
-		if (promoPiece == rooks && capType == bishops) return rookPromoCapB;
-		if (promoPiece == rooks && capType == rooks) return rookPromoCapR;
-		if (promoPiece == rooks && capType == queens) return rookPromoCapQ;
-		if (promoPiece == bishops && capType == none) return bishopPromo;
-		if (promoPiece == bishops && capType == knights) return bishopPromoCapN;
-		if (promoPiece == bishops && capType == bishops) return bishopPromoCapB;
-		if (promoPiece == bishops && capType == rooks) return bishopPromoCapR;
-		if (promoPiece == bishops && capType == queens) return bishopPromoCapQ;
-		if (promoPiece == knights && capType == none) return knightPromo;
-		if (promoPiece == knights && capType == knights) return knightPromoCapN;
-		if (promoPiece == knights && capType == bishops) return knightPromoCapB;
-		if (promoPiece == knights && capType == rooks) return knightPromoCapR;
-		if (promoPiece == knights && capType == queens) return knightPromoCapQ;
+		// TODO make a switch statement
+		if (promoPiece == queens) return queenPromo;
+		if (promoPiece == rooks) return rookPromo;
+		if (promoPiece == bishops) return bishopPromo;
+		if (promoPiece == knights) return knightPromo;
 		return QMove;
-	}
-
-	constexpr bool isCapture(Move m)
-	{
-		const auto x = getMoveInfo<moveTypeMask>(m);
-		return (x >= enPCap && x <= capQ) || (x >= knightPromoCapN && x <= rookPromoCapB) || (x >= rookPromoCapR && x <= queenPromoCapQ);
 	}
 
 	std::tuple<bool, unsigned int> makeSquare(const char i);
@@ -389,350 +269,8 @@ namespace board
 	{
 		return i == a1 || i == h1 || i == a8 || i == h8;
 	}
-
-	class Board
-	{
-	public:
-
-		// bitboards by piece type
-		Bitboard wPieces[6] = { 0, 0, 0, 0, 0, 0 };
-		Bitboard bPieces[6] = { 0, 0, 0, 0, 0, 0 };
-
-		// bitboards for all white and all black pieces only
-		Bitboard wAll = 0;
-		Bitboard bAll = 0;
-		
-		// bitboard for all pieces
-		Bitboard all = 0;
-
-		Bitboard epLoc = 0;
-
-		/* Lowest 6 bits: 50 move rule counter
-		   Next 4: castling status indicator (white king, white queen, black king, black queen)
-		   */
-		BoardFlags flags = 0;
-		static constexpr std::uint16_t ply50FlagMask = 0b111111U;
-		static constexpr std::uint16_t wkCastleFlagMask = 0b1000000U;
-		static constexpr std::uint16_t wqCastleFlagMask = 0b10000000U;
-		static constexpr std::uint16_t bkCastleFlagMask = 0b100000000U;
-		static constexpr std::uint16_t bqCastleFlagMask = 0b1000000000U;
-
-		std::size_t currMove = 0;
-		bool wMoving = true;
-
-		Board(std::string fen);
-		Board() {};
-	
-	private:
-		template <bool wToMove>
-		void movePiece(const std::uint64_t fromBit, const std::uint64_t toBit, unsigned int pieceType, unsigned int toType)
-		{
-			all ^= fromBit;
-			all |= toBit;
-			if constexpr (wToMove)
-			{
-				wAll ^= (fromBit ^ toBit);
-				bAll &= ~toBit;
-				wPieces[pieceType] &= ~fromBit;
-				wPieces[pieceType] ^= toBit;
-				if (toType != none) bPieces[toType] &= ~toBit;
-			}
-			else
-			{
-				bAll ^= (fromBit ^ toBit);
-				wAll &= ~toBit;
-				bPieces[pieceType] &= ~fromBit;
-				bPieces[pieceType] ^= toBit;
-				if (toType != none) wPieces[toType] &= ~toBit;
-			}
-		}
-
-		// used in unmake move to move a piece from toBit to fromBit
-		template <bool wToMove>
-		constexpr void moveBack(std::uint64_t fromBit, std::uint64_t toBit, unsigned int pieceType)
-		{
-			all |= fromBit;
-			all &= ~toBit;
-			if constexpr (wToMove)
-			{
-				wAll ^= (fromBit ^ toBit);
-				wPieces[pieceType] ^= (fromBit ^ toBit);
-			}
-			else
-			{
-				bAll ^= (fromBit ^ toBit);
-				bPieces[pieceType] ^= (fromBit ^ toBit);
-			}
-		}
-
-		template<bool w>
-		constexpr void restorePiece(Bitboard at, pieceType type)
-		{
-			all ^= at;
-			if constexpr (w)
-			{
-				wAll ^= at;
-				wPieces[type] ^= at;
-			}
-			else
-			{
-				bAll ^= at;
-				bPieces[type] ^= at;
-			}
-		}
-
-		void clearPosition(std::uint64_t pos) noexcept;
-
-	public:
-		constexpr Move getHeading() const
-		{
-			board::Move heading = 0;
-
-			heading |= ((std::uint32_t)flags) << constants::flagsOffset;
-
-			if (epLoc)
-			{
-				heading |= constants::enPExistsMask;
-				unsigned long index;
-				_BitScanForward64(&index, epLoc);
-				heading |= aux::file(index) << constants::enPMaskOffset;
-			}
-			return heading;
-		}
-
-		pieceType getPieceType(Bitboard at) const noexcept;
-
-		void playMoves(const std::vector<Move>& v);
-		
-		template <bool wToMove>
-		constexpr bool canCastleK() const
-		{
-			if constexpr (wToMove) return flags & wkCastleFlagMask;
-			else return flags & bkCastleFlagMask;
-		}
-
-		template <bool wToMove>
-		constexpr bool canCastleQ() const
-		{
-			if constexpr (wToMove) return flags & wqCastleFlagMask;
-			else return flags & bqCastleFlagMask;
-		}
-
-		friend std::ostream& operator<<(std::ostream& os, const Board& b);
-
-		template<bool wToMove, bool nullMove = false>
-		void makeMove(const Move m)
-		{
-			if constexpr (nullMove)
-			{
-				epLoc = 0;
-				wMoving = !wMoving;
-				if constexpr (!wToMove)
-					++currMove;
-				return;
-			}
-			else { // the rest of the function
-			const auto fromBit = setbit(getMoveInfo<fromMask>(m));
-			const auto toBit = setbit(getMoveInfo<toMask>(m));
-			const bool pawnMove = ((wPieces[pawns] | bPieces[pawns]) & fromBit) != 0;
-
-			epLoc = 0;
-
-			if constexpr (wToMove)
-			{
-				if (fromBit == setbit(wk_start) || fromBit == setbit(wkr_start)) flags &= ~wkCastleFlagMask;
-				if (fromBit == setbit(wk_start) || fromBit == setbit(wqr_start)) flags &= ~wqCastleFlagMask;
-				if (toBit == setbit(bk_start) || toBit == setbit(bkr_start)) flags &= ~bkCastleFlagMask;
-				if (toBit == setbit(bk_start) || toBit == setbit(bqr_start)) flags &= ~bqCastleFlagMask;
-			}
-			else
-			{
-				if (toBit == setbit(wk_start) || toBit == setbit(wkr_start)) flags &= ~wkCastleFlagMask;
-				if (toBit == setbit(wk_start) || toBit == setbit(wqr_start)) flags &= ~wqCastleFlagMask;
-				if (fromBit == setbit(bk_start) || fromBit == setbit(bkr_start)) flags &= ~bkCastleFlagMask;
-				if (fromBit == setbit(bk_start) || fromBit == setbit(bqr_start)) flags &= ~bqCastleFlagMask;
-			}
-
-			movePiece<wToMove>(fromBit, toBit, getPieceType(fromBit), getPieceType(toBit));
-
-			const auto moveType = getMoveInfo<moveTypeMask>(m);
-			switch (moveType)
-			{
-			case dblPawnMove:
-				if constexpr (wToMove)
-					epLoc = toBit >> 8;
-				else
-					epLoc = toBit << 8;
-				break;
-			case QSCastle:
-				if constexpr (wToMove)
-					movePiece<wToMove>(setbit(wqr_start), setbit(wqr_start + 3), rooks, none);
-				else
-					movePiece<wToMove>(setbit(bqr_start), setbit(bqr_start + 3), rooks, none);
-				break;
-			case KSCastle:
-				if constexpr (wToMove)
-					movePiece<wToMove>(setbit(wkr_start), setbit(wkr_start - 2), rooks, none);
-				else
-					movePiece<wToMove>(setbit(bkr_start), setbit(bkr_start - 2), rooks, none);
-				break;
-			case enPCap:
-				if constexpr (wToMove)
-					clearPosition(toBit >> 8);
-				else
-					clearPosition(toBit << 8);
-				break;
-			}
-
-			if (getPromoPiece(m) != king) // the moveType is a promo
-			{
-				if constexpr (wToMove)
-				{
-					wPieces[pawns] ^= toBit;
-					wPieces[getPromoPiece(m)] ^= toBit;
-				}
-				else
-				{
-					bPieces[pawns] ^= toBit;
-					bPieces[getPromoPiece(m)] ^= toBit;
-				}
-			}
-
-			if (isCapture(m) || pawnMove)
-				flags &= (std::uint16_t)0b1111000000U;
-			else
-				flags += 1;
-
-			if constexpr (!wToMove)
-				++currMove;
-			wMoving = !wMoving;
-			} // for the else block when if constexpr (nullMove) is false
-		}
-
-		template <bool wToMove, bool nullMove = false> // wToMove means we are unmaking a move played by w
-		void unmakeMove(const Move m)
-		{
-			if constexpr (nullMove)
-			{
-				if constexpr (wToMove)
-				{
-					if (getMoveInfo<enPExistsMask>(m)) epLoc = setbit(5U, getMoveInfo<enPFileMask>(m));
-					else epLoc = 0;
-				}
-				else
-				{
-					if (getMoveInfo<enPExistsMask>(m)) epLoc = setbit(2U, getMoveInfo<enPFileMask>(m));
-					else epLoc = 0;
-				}
-				wMoving = !wMoving;
-				if constexpr (!wToMove)
-					--currMove;
-				return;
-			}
-			else { 
-			const auto fromBit = setbit(getMoveInfo<fromMask>(m));
-			const auto toBit = setbit(getMoveInfo<toMask>(m));
-
-			const auto moveType = getMoveInfo<moveTypeMask>(m);
-			// change the promoted piece back into a pawn
-			// before handling anything else, to ensure moveBack
-			// works correctly
-			if (moveType >= knightPromo)
-			{
-				if constexpr (wToMove)
-				{
-					wPieces[pawns] ^= toBit;
-					wPieces[getPromoPiece(m)] ^= toBit;
-				}
-				else
-				{
-					bPieces[pawns] ^= toBit;
-					bPieces[getPromoPiece(m)] ^= toBit;
-				}
-			}
-
-			moveBack<wToMove>(fromBit, toBit, getPieceType(toBit));
-
-			switch (moveType)
-			{
-			case QSCastle:
-				if constexpr (wToMove)
-					moveBack<wToMove>(setbit(wqr_start), setbit(wqr_start + 3), rooks);
-				else
-					moveBack<wToMove>(setbit(bqr_start), setbit(bqr_start + 3), rooks);
-				break;
-			case KSCastle:
-				if constexpr (wToMove)
-					moveBack<wToMove>(setbit(wkr_start), setbit(wkr_start - 2), rooks);
-				else
-					moveBack<wToMove>(setbit(bkr_start), setbit(bkr_start - 2), rooks);
-				break;
-			case enPCap:
-				if constexpr (wToMove)
-				{
-					bPieces[pawns] |= (toBit >> 8);
-					bAll |= (toBit >> 8);
-					all |= (toBit >> 8);
-				}
-				else
-				{
-					wPieces[pawns] |= (toBit << 8);
-					wAll |= (toBit << 8);
-					all |= (toBit << 8);
-				}
-				break;
-			case capP:
-				restorePiece<!wToMove>(toBit, pawns);
-				break;
-			case knightPromoCapN:
-			case bishopPromoCapN:
-			case rookPromoCapN:
-			case queenPromoCapN:
-			case capN:
-				restorePiece<!wToMove>(toBit, knights);
-				break;
-			case knightPromoCapB:
-			case bishopPromoCapB:
-			case rookPromoCapB:
-			case queenPromoCapB:
-			case capB:
-				restorePiece<!wToMove>(toBit, bishops);
-				break;
-			case knightPromoCapR:
-			case bishopPromoCapR:
-			case rookPromoCapR:
-			case queenPromoCapR:
-			case capR:
-				restorePiece<!wToMove>(toBit, rooks);
-				break;
-			case knightPromoCapQ:
-			case bishopPromoCapQ:
-			case rookPromoCapQ:
-			case queenPromoCapQ:
-			case capQ:
-				restorePiece<!wToMove>(toBit, queens);
-				break;
-			}
-
-			flags = static_cast<std::uint16_t>(getMoveInfo<halfMoveCntMask>(m) | (getMoveInfo<castleFlagMask>(m) >> flagsOffset));
-			if constexpr (wToMove)
-			{
-				if (getMoveInfo<enPExistsMask>(m)) epLoc = setbit(5U, getMoveInfo<enPFileMask>(m));
-				else epLoc = 0;
-			}
-			else
-			{
-				if (getMoveInfo<enPExistsMask>(m)) epLoc = setbit(2U, getMoveInfo<enPFileMask>(m));
-				else epLoc = 0;
-			}
-			if constexpr (!wToMove)
-				--currMove;
-			wMoving = !wMoving;
-			} // for the else block when if constexpr (nullMove) is false
-		}
-	};
-	bool operator==(const Board& l, const Board& r) noexcept;
 #include <xmmintrin.h>
+	using QBBDelta = std::array<std::uint64_t, 4>;
 	struct QBB
 	{
 		__m256i qbb;
@@ -741,7 +279,6 @@ namespace board
 		// starting square's bit if and only if the respective piece
 		// has never moved
 		std::uint64_t epc = 0;
-		QBB(const Board&);
 		QBB(const std::string&);
 		
 		
@@ -759,50 +296,54 @@ namespace board
 		}
 	private:
 		void flipQBB();
-		using QBBDelta = std::array<std::uint64_t, 4>;
-		
-		// TODO magic numbers
-		static constexpr std::array<QBBDelta, 64*6*8> genMakeMoveArray()
-		{
-			constexpr auto index = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::size_t {
-				return 64 * sq + 6 * pt + mt;
-			};
 
-			constexpr auto bb0 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
-				std::uint64_t ret = setbit(sq);
-				if (pt == kingCode && mt == KSCastle)
-					ret |= 0xA0U;
-				else if (pt == kingCode && mt == QSCastle)
-					ret |= 0x9U;
-				return ret;
-			};
+	};
 
-			constexpr auto bb1 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
-				if (pt == pawnCode)
-					if (mt == enPCap)
-						return setbit(sq) | (setbit(sq) >> 8);
-					else if (mt == queenPromo || mt == bishopPromo)
-						return setbit(sq);
-				else if (pt == queenCode || pt == bishopCode)
+	constexpr std::array<QBBDelta, 64 * 6 * 8> genMakeMoveArray()
+	{
+		constexpr auto index = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::size_t {
+			return 64 * sq + 6 * pt + mt;
+		};
+
+		constexpr auto bb0 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
+			std::uint64_t ret = setbit(sq);
+			if (pt == kingCode && mt == KSCastle)
+				ret |= 0xA0U;
+			else if (pt == kingCode && mt == QSCastle)
+				ret |= 0x9U;
+			return ret;
+		};
+
+		constexpr auto bb1 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
+			if (pt == pawnCode)
+				if (mt == enPCap)
+					return setbit(sq) | (setbit(sq) >> 8);
+				else if (mt == queenPromo || mt == bishopPromo)
 					return setbit(sq);
+				else if (mt == knightPromo || mt == rookPromo)
+					return 0;
 				else
-					return 0U;
-			};
+					return setbit(sq);
+			else if (pt == queenCode || pt == bishopCode)
+				return setbit(sq);
+			else
+				return 0U;
+		};
 
-			constexpr auto bb2 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
-				if (pt == pawnCode)
-					if (mt == knightPromo || mt == bishopPromo)
-						return setbit(sq);
+		constexpr auto bb2 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
+			if (pt == pawnCode)
+				if (mt == knightPromo || mt == bishopPromo)
+					return setbit(sq);
 				else if (pt == knightCode || pt == bishopCode || pt == kingCode)
 					return setbit(sq);
 				else
 					return 0U;
-			};
+		};
 
-			constexpr auto bb3 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
-				if (pt == pawnCode)
-					if (mt == rookPromo || mt == queenPromo)
-						return setbit(sq);
+		constexpr auto bb3 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
+			if (pt == pawnCode)
+				if (mt == rookPromo || mt == queenPromo)
+					return setbit(sq);
 				else if (pt == kingCode)
 					if (mt == KSCastle)
 						return setbit(sq) | setbit(h1) | setbit(f1);
@@ -814,23 +355,43 @@ namespace board
 					return setbit(sq);
 				else
 					return 0U;
-			};
+		};
 
-			std::array<QBBDelta, 64 * 6 * 8> val = {};
+		std::array<QBBDelta, 64 * 6 * 8> val = {};
 
-			for (std::size_t i = 0; i != 64; ++i)
-				for (std::uint32_t j = 0; j != 6; ++j) // TODO iteration range
-					for (std::uint32_t k = 0; k != 8; ++k)
-					{
-						val[index(i, j, k)][0] = bb0(i, j + 1, k);
-						val[index(i, j, k)][1] = bb1(i, j + 1, k);
-						val[index(i, j, k)][2] = bb2(i, j + 1, k);
-						val[index(i, j, k)][3] = bb3(i, j + 1, k);
-					}
-			return val;
-		}
+		for (std::size_t i = 0; i != 64; ++i)
+			for (std::uint32_t j = 0; j != 6; ++j) // TODO iteration range
+				for (std::uint32_t k = 0; k != 8; ++k)
+				{
+					val[index(i, j, k)][0] = bb0(i, j + 1, k);
+					val[index(i, j, k)][1] = bb1(i, j + 1, k);
+					val[index(i, j, k)][2] = bb2(i, j + 1, k);
+					val[index(i, j, k)][3] = bb3(i, j + 1, k);
+				}
+		return val;
+	}
 
-		static constexpr std::array<QBBDelta, 64 * 6 * 8> moveDelta = genMakeMoveArray();
-	};
+	constexpr std::array<QBBDelta, 64 * 14> genSquareXPieceArray()
+	{
+		constexpr auto index = [](auto i, auto j) {return 64 * i + 14 * j; };
+		std::array<QBBDelta, 64 * 14> val = {};
+		for (std::size_t i = 0; i != 64; ++i)
+			for (std::uint32_t j = 0; j != 14U; ++j)
+			{
+				bool bb0 = j & 0b1U;
+				bool bb1 = j & 0b10U;
+				bool bb2 = j & 0b100U;
+				bool bb3 = j & 0b1000U;
+				auto bit = setbit(i);
+				val[index(i, j)][0] = bb0 ? bit : 0;
+				val[index(i, j)][1] = bb1 ? bit : 0;
+				val[index(i, j)][2] = bb2 ? bit : 0;
+				val[index(i, j)][3] = bb3 ? bit : 0;
+			}
+		return val;
+	}
+
+	constexpr std::array<QBBDelta, 64 * 6 * 8> makeMoveDeltas = genMakeMoveArray();
+	constexpr std::array<QBBDelta, 64 * 14> squareXpieceQBB = genSquareXPieceArray();
 }
 #endif

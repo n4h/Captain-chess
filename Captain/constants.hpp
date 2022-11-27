@@ -41,7 +41,7 @@ namespace constants
 
 	constexpr std::uint32_t moveTypeOffset = 12U;
 
-	constexpr std::uint32_t none = 0U;
+	constexpr std::uint32_t emptySquare = 0U;
 	constexpr std::uint32_t oppPawn = 0b0010U;
 	constexpr std::uint32_t oppKnight = 0b0100U;
 	constexpr std::uint32_t oppBishop = 0b0110U;
