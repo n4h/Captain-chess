@@ -298,6 +298,8 @@ namespace board
 			return epc & 0x11U;
 		}
 
+		__m256i permute(unsigned, unsigned, unsigned, unsigned);
+
 	private:
 		void flipQBB();
 
@@ -306,7 +308,7 @@ namespace board
 	constexpr std::array<QBBDelta, 64 * 6 * 8> genMakeMoveArray()
 	{
 		constexpr auto index = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::size_t {
-			return 64 * sq + 6 * pt + mt;
+			return 48ULL * sq + 8ULL * pt + mt;
 		};
 
 		constexpr auto bb0 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
@@ -381,7 +383,7 @@ namespace board
 
 	constexpr std::array<QBBDelta, 64 * 14> genSquareXPieceArray()
 	{
-		constexpr auto index = [](std::size_t i, std::uint32_t j) {return 64U * i + 14U * j; };
+		constexpr auto index = [](std::size_t i, std::uint32_t j) {return 14U * i + j; };
 		std::array<QBBDelta, 64 * 14> val{};
 		for (std::size_t i = 0; i != 64; ++i)
 			for (std::uint32_t j = 0; j != 14U; ++j)
@@ -397,6 +399,11 @@ namespace board
 				val[index(i, j)][3] = bb3 ? bit : 0;
 			}
 		return val;
+	}
+
+	constexpr std::array<QBBDelta, 64 * 6> genEpcUpdateArray()
+	{
+		// UNDONE epc update array;
 	}
 
 	constexpr std::array<QBBDelta, 64 * 6 * 8> makeMoveDeltas = genMakeMoveArray();

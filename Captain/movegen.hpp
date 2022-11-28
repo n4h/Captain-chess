@@ -128,7 +128,7 @@ namespace movegen
 	void initAttacks();
 
 	template<bool by> // true = white, false = black
-	constexpr bool isAttacked(const board::Board& b, board::square s)
+	constexpr bool isAttacked(const board::QBB& b, board::square s)
 	{
 		const attackMap bAttacks = getAttacks<by, board::bishops>(b.all, s);
 		const attackMap nAttacks = getAttacks<by, board::knights>(b.all, s);
@@ -155,7 +155,7 @@ namespace movegen
 	}
 
 	template<bool w>
-	constexpr bool isInCheck(const board::Board& b)
+	constexpr bool isInCheck(const board::QBB& b)
 	{
 		unsigned long kingPos;
 
@@ -166,7 +166,7 @@ namespace movegen
 	}
 
 	template<bool w, bool kingSide>
-	constexpr bool castleSquaresFree(const board::Board& b)
+	constexpr bool castleSquaresFree(const board::QBB& b)
 	{
 		if constexpr (w)
 		{
@@ -197,7 +197,7 @@ namespace movegen
 	}
 
 	template<bool wToMove, board::pieceType p, std::size_t N, bool qSearch = false>
-	void genMovesForPiece(board::Board& b, board::Move heading, std::array<board::Move, N>& ml, std::size_t& i)
+	void genMovesForPiece(board::QBB& b, board::Move heading, std::array<board::Move, N>& ml, std::size_t& i)
 	{
 		static_assert(p != board::pawns, "Called wrong move generation function for pawns");
 
@@ -239,15 +239,7 @@ namespace movegen
 				heading &= ~constants::moveTypeMask;
 				heading |= board::getCapType(b.getPieceType(aux::setbit(index)));
 
-				//b.makeMove<wToMove>(heading);
-
-				//if (!isInCheck<wToMove>(b))
-				//{
-					ml[i++] = heading;
-					//++i;
-				//}
-
-				//b.unmakeMove<wToMove>(heading);
+				ml[i++] = heading;
 			}
 		}
 
@@ -288,16 +280,10 @@ namespace movegen
 	}
 
 	template<bool wToMove, std::size_t N, bool qSearch = false>
-	void genPawnMoves(board::Board& b, board::Move heading, std::array<board::Move, N>& ml, std::size_t& i)
+	void genPawnMoves(board::QBB& b, board::Move heading, std::array<board::Move, N>& ml, std::size_t& i)
 	{
 		auto checkMoveAndAdd = [&b, &ml, &i](board::Move m) constexpr {
-			//b.makeMove<wToMove>(m);
-			//if (!isInCheck<wToMove>(b))
-			//{
-				ml[i++] = m;
-				//++i;
-			//}
-			//b.unmakeMove<wToMove>(m);
+			ml[i++] = m;
 		};
 
 		unsigned long index;
@@ -418,7 +404,7 @@ namespace movegen
 	}
 
 	template<bool wToMove, std::size_t N, bool qSearch = false>
-	std::size_t genMoves(board::Board& b, std::array<board::Move, N>& ml, std::size_t i)
+	std::size_t genMoves(board::QBB& b, std::array<board::Move, N>& ml, std::size_t i)
 	{
 		board::Move heading = b.getHeading();
 
