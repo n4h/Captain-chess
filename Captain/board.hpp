@@ -300,6 +300,8 @@ namespace board
 
 		__m256i permute(unsigned, unsigned, unsigned, unsigned);
 
+		std::uint64_t getOccupancy();
+
 	private:
 		void flipQBB();
 
@@ -399,11 +401,6 @@ namespace board
 				val[index(i, j)][3] = bb3 ? bit : 0;
 			}
 		return val;
-	}
-
-	constexpr std::array<QBBDelta, 64 * 6> genEpcUpdateArray()
-	{
-		// UNDONE epc update array;
 	}
 
 	constexpr std::array<QBBDelta, 64 * 6 * 8> makeMoveDeltas = genMakeMoveArray();

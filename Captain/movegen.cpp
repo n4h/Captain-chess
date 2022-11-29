@@ -44,11 +44,6 @@ namespace movegen
 	board::Bitboard rookMasks[64];
 	std::size_t rookOffsets[64];
 
-	attackMap kingAttacks[64];
-	attackMap knightAttacks[64];
-	attackMap wpawnAttacks[64];
-	attackMap bpawnAttacks[64];
-
 
 	board::Bitboard dumbFill(board::Bitboard loc, board::Bitboard occ, int r, int f)
 	{
@@ -152,95 +147,6 @@ namespace movegen
 				rookAttacks[rookOffsets[i] + j] |= dumbFill(setbit(i), occ, 0, -1);
 			}
 			offsetRook += numToReserve;
-		}
-	}
-
-	void initPawnAttacks()
-	{
-		for (std::size_t i = 0; i != 64; ++i)
-		{
-			wpawnAttacks[i] = (setbit(i) << 9) | (setbit(i) << 7);
-			bpawnAttacks[i] = (setbit(i) >> 9) | (setbit(i) >> 7);
-
-			if (board::isLeftEdge(i))
-			{
-				wpawnAttacks[i] = setbit(i) << 9;
-				bpawnAttacks[i] = setbit(i) >> 7;
-			}
-
-			if (board::isRightEdge(i))
-			{
-				wpawnAttacks[i] = setbit(i) << 7;
-				bpawnAttacks[i] = setbit(i) >> 9;
-			}
-			
-			if (board::isBottomEdge(i))
-			{
-				bpawnAttacks[i] = 0;
-			}
-			if (board::isTopEdge(i))
-			{
-				wpawnAttacks[i] = 0;
-			}
-		}
-	}
-
-	void initKingAttacks()
-	{
-		for (std::size_t i = 0; i != 64; ++i)
-		{
-			switch (i)
-			{
-			case board::square::a1:
-				kingAttacks[i] = setbit(board::square::a2) | setbit(board::square::b1) | setbit(board::square::b2);
-				break;
-			case board::square::h1:
-				kingAttacks[i] = setbit(board::square::h2) | setbit(board::square::g1) | setbit(board::square::g2);
-				break;
-			case board::square::a8:
-				kingAttacks[i] = setbit(board::square::a7) | setbit(board::square::b8) | setbit(board::square::b7);
-				break;
-			case board::square::h8:
-				kingAttacks[i] = setbit(board::square::h7) | setbit(board::square::g8) | setbit(board::square::g7);
-				break;
-			default:
-				auto k = setbit(i);
-				if (board::isInterior(i))
-					kingAttacks[i] = k << 1 | k >> 1 | k << 8 | k >> 8 | k >> 9 | k << 9 | k << 7 | k >> 7;
-				if (board::isBottomEdge(i))
-					kingAttacks[i] = k << 1 | k >> 1 | k << 8 | k << 9 | k << 7;
-				if (board::isTopEdge(i))
-					kingAttacks[i] = k << 1 | k >> 1 | k >> 8 | k >> 9 | k >> 7;
-				if (board::isLeftEdge(i))
-					kingAttacks[i] = k << 1 | k << 8 | k >> 8 | k << 9 | k >> 7;
-				if (board::isRightEdge(i))
-					kingAttacks[i] = k >> 1 | k << 8 | k >> 8 | k >> 9 | k << 7;
-				break;
-			}
-		}
-	}
-
-	void initKnightAttacks()
-	{
-		auto checkJump = [](std::size_t i, int r, int f) {
-			auto r_i = aux::rank(i);
-			auto f_i = aux::file(i);
-
-			return (r_i + r <= 7) && (r_i + r >= 0) && (f_i + f <= 7) && (f_i + f >= 0);
-		};
-
-		for (std::size_t i = 0; i != 64; ++i)
-		{
-			const board::Bitboard loc = setbit(i);
-
-			if (checkJump(i, 2, 1)) knightAttacks[i] |= loc << 17;
-			if (checkJump(i, 2, -1)) knightAttacks[i] |= loc << 15;
-			if (checkJump(i, 1, 2)) knightAttacks[i] |= loc << 10;
-			if (checkJump(i, 1, -2)) knightAttacks[i] |= loc << 6;
-			if (checkJump(i, -2, 1)) knightAttacks[i] |= loc >> 15;
-			if (checkJump(i, -2, -1)) knightAttacks[i] |= loc >> 17;
-			if (checkJump(i, -1, 2)) knightAttacks[i] |= loc >> 6;
-			if (checkJump(i, -1, -2)) knightAttacks[i] |= loc >> 10;
 		}
 	}
 

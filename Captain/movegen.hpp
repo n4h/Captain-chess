@@ -86,11 +86,6 @@ namespace movegen
 	extern board::Bitboard rookMasks[64];
 	extern std::size_t rookOffsets[64];
 
-	extern attackMap kingAttacks[64];
-	extern attackMap knightAttacks[64];
-	extern attackMap wpawnAttacks[64];
-	extern attackMap bpawnAttacks[64];
-
 	template<bool wToMove, board::pieceType p = board::none>
 	constexpr attackMap getAttacks(board::Bitboard all, board::square s)
 	{
@@ -122,9 +117,6 @@ namespace movegen
 	board::Bitboard dumbFill(board::Bitboard loc, board::Bitboard occ, int r, int f);
 	board::Bitboard filterEdgesRook(board::Bitboard rookMoves, std::size_t pos);
 	void initRookBishopAttacks();
-	void initPawnAttacks();
-	void initKingAttacks();
-	void initKnightAttacks();
 	void initAttacks();
 
 	template<bool by> // true = white, false = black
