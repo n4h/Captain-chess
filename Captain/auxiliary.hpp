@@ -45,16 +45,6 @@ namespace aux
 	template<typename T>
 	concept uintOrSquare = std::unsigned_integral<T> || std::unsigned_integral<std::underlying_type_t<T>>;
 
-	// piece values given in centipawns
-	constexpr unsigned int king_val = 5000;
-	constexpr unsigned int queen_val = 900;
-	constexpr unsigned int knight_val = 300;
-	constexpr unsigned int bishop_val = 300;
-	constexpr unsigned int rook_val = 500;
-	constexpr unsigned int pawn_val = 100;
-
-	constexpr unsigned int pieceValues[7] = {pawn_val, knight_val, bishop_val, rook_val, queen_val, king_val, 0U};
-
 	constexpr unsigned int wk_start = 4U;
 	constexpr unsigned int wkr_start = 7U;
 	constexpr unsigned int wqr_start = 0U;

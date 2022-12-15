@@ -273,7 +273,10 @@ namespace board
 	using QBBDelta = std::array<std::uint64_t, 4>;
 	struct QBB
 	{
-		__m256i qbb;
+		std::uint64_t side = 0;
+		std::uint64_t pbq = 0;
+		std::uint64_t nbk = 0;
+		std::uint64_t rqk = 0;
 		// epc contains the en passant location and castling rights
 		// castling rights are encoded by setting the kings' and rooks'
 		// starting square's bit if and only if the respective piece
@@ -284,126 +287,26 @@ namespace board
 		
 		void makeMove(Move);
 
-		void unmakeMove(__m256i delta, std::uint64_t oldepc);
+		unsigned getPieceType(square) const noexcept;
 
-		unsigned getPieceType(square) const;
-
-		constexpr bool canCastleShort() const
+		constexpr bool canCastleShort() const noexcept
 		{
 			return epc & 0x90U;
 		}
 
-		constexpr bool canCastleLong() const
+		constexpr bool canCastleLong() const noexcept
 		{
 			return epc & 0x11U;
 		}
 
-		__m256i permute(unsigned, unsigned, unsigned, unsigned);
-
-		std::uint64_t getOccupancy();
+		constexpr std::uint64_t getOccupancy() const noexcept
+		{
+			return rqk | nbk | pbq;
+		}
 
 	private:
 		void flipQBB();
 
 	};
-
-	constexpr std::array<QBBDelta, 64 * 6 * 8> genMakeMoveArray()
-	{
-		constexpr auto index = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::size_t {
-			return 48ULL * sq + 8ULL * pt + mt;
-		};
-
-		constexpr auto bb0 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
-			std::uint64_t ret = setbit(sq);
-			if (pt == kingCode && mt == KSCastle)
-				ret |= 0xA0U;
-			else if (pt == kingCode && mt == QSCastle)
-				ret |= 0x9U;
-			return ret;
-		};
-
-		constexpr auto bb1 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
-			if (pt == pawnCode)
-				if (mt == enPCap)
-					return setbit(sq) | (setbit(sq) >> 8);
-				else if (mt == queenPromo || mt == bishopPromo)
-					return setbit(sq);
-				else if (mt == knightPromo || mt == rookPromo)
-					return 0;
-				else
-					return setbit(sq);
-			else if (pt == queenCode || pt == bishopCode)
-				return setbit(sq);
-			else
-				return 0U;
-		};
-
-		constexpr auto bb2 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
-			if (pt == pawnCode)
-				if (mt == knightPromo || mt == bishopPromo)
-					return setbit(sq);
-				else
-					return 0U;
-			else if (pt == knightCode || pt == bishopCode || pt == kingCode)
-				return setbit(sq);
-			else
-				return 0;
-		};
-
-		constexpr auto bb3 = [](std::size_t sq, std::uint32_t pt, std::uint32_t mt) -> std::uint64_t {
-			if (pt == pawnCode)
-				if (mt == rookPromo || mt == queenPromo)
-					return setbit(sq);
-				else
-					return 0U;
-			else if (pt == kingCode)
-				if (mt == KSCastle)
-					return setbit(sq) | setbit(h1) | setbit(f1);
-				else if (mt == QSCastle)
-					return setbit(sq) | setbit(a1) | setbit(d1);
-				else
-					return setbit(sq);
-			else if (pt == rookCode || pt == queenCode)
-				return setbit(sq);
-			else
-				return 0;
-		};
-
-		std::array<QBBDelta, 64 * 6 * 8> val{};
-
-		for (std::size_t i = 0; i != 64; ++i)
-			for (std::uint32_t j = 0; j != 6; ++j) // TODO iteration range
-				for (std::uint32_t k = 0; k != 8; ++k)
-				{
-					val[index(i, j, k)][0] = bb0(i, j + 1, k);
-					val[index(i, j, k)][1] = bb1(i, j + 1, k);
-					val[index(i, j, k)][2] = bb2(i, j + 1, k);
-					val[index(i, j, k)][3] = bb3(i, j + 1, k);
-				}
-		return val;
-	}
-
-	constexpr std::array<QBBDelta, 64 * 14> genSquareXPieceArray()
-	{
-		constexpr auto index = [](std::size_t i, std::uint32_t j) {return 14U * i + j; };
-		std::array<QBBDelta, 64 * 14> val{};
-		for (std::size_t i = 0; i != 64; ++i)
-			for (std::uint32_t j = 0; j != 14U; ++j)
-			{
-				bool bb0 = j & 0b1U;
-				bool bb1 = j & 0b10U;
-				bool bb2 = j & 0b100U;
-				bool bb3 = j & 0b1000U;
-				auto bit = setbit(i);
-				val[index(i, j)][0] = bb0 ? bit : 0;
-				val[index(i, j)][1] = bb1 ? bit : 0;
-				val[index(i, j)][2] = bb2 ? bit : 0;
-				val[index(i, j)][3] = bb3 ? bit : 0;
-			}
-		return val;
-	}
-
-	constexpr std::array<QBBDelta, 64 * 6 * 8> makeMoveDeltas = genMakeMoveArray();
-	constexpr std::array<QBBDelta, 64 * 14> squareXpieceQBB = genSquareXPieceArray();
 }
 #endif

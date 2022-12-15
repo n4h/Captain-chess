@@ -81,12 +81,14 @@ namespace board
 	}
 
 	// see https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
-	Board::Board(std::string fen)
+	QBB::QBB(const std::string& fen)
 	{
 		unsigned int currFile = 0;
 		
 		auto splitfen = splitString(fen, ' ');
 		auto splitboard = splitString(splitfen[0], '/');
+
+		bool wToMove = splitfen[1] == "w";
 
 		for (unsigned int i = 0; i != 8; ++i)
 		{
@@ -95,17 +97,34 @@ namespace board
 				if (isPiece(j))
 				{
 					auto [color, pieceType] = makeSquare(j);
-					all |= setbit(7 - i, currFile);
-					if (color)
+
+					switch (pieceType)
 					{
-						wPieces[pieceType] |= setbit(7 - i, currFile);
-						wAll |= setbit(7 - i, currFile);
+					case pawns:
+						pbq |= setbit(7 - i, currFile);
+						break;
+					case knights:
+						nbk |= setbit(7 - i, currFile);
+						break;
+					case bishops:
+						pbq |= setbit(7 - i, currFile);
+						nbk |= setbit(7 - i, currFile);
+						break;
+					case rooks:
+						rqk |= setbit(7 - i, currFile);
+						break;
+					case queens:
+						pbq |= setbit(7 - i, currFile);
+						rqk |= setbit(7 - i, currFile);
+						break;
+					case king:
+						rqk |= setbit(7 - i, currFile);
+						nbk |= setbit(7 - i, currFile);
+						break;
 					}
-					else
-					{
-						bPieces[pieceType] |= setbit(7 - i, currFile);
-						bAll |= setbit(7 - i, currFile);
-					}
+					if (wToMove == color)
+						side |= setbit(7 - i, currFile);
+
 					currFile = incFile(currFile, 1);
 				}
 				else if (isNumber(j))
@@ -115,36 +134,36 @@ namespace board
 			}
 		}
 
-		if (splitfen[1] == "w") wMoving = true;
-		if (splitfen[1] == "b") wMoving = false;
-
 		for (auto i : splitfen[2])
 		{
-			if (i == 'K') flags |= wkCastleFlagMask;
-			if (i == 'k') flags |= bkCastleFlagMask;
-			if (i == 'q') flags |= bqCastleFlagMask;
-			if (i == 'Q') flags |= wqCastleFlagMask;
+			if (i == 'K') epc |= setbit(e1) | setbit(h1);
+			if (i == 'k') epc |= setbit(e8) | setbit(h8);
+			if (i == 'q') epc |= setbit(e8) | setbit(a8);
+			if (i == 'Q') epc |= setbit(e1) | setbit(a1);
 		}
 
 		if (splitfen[3] != "-")
 		{
 			const std::size_t file = fileNumber(splitfen[3][0]);
 			const std::size_t rank = splitfen[3][1] - '0' - 1;
-			epLoc = setbit(rank, file);
+			epc |= setbit(rank, file);
 		}
 
-		flags += (std::uint16_t)(std::stoi(splitfen[4]));
-		currMove = std::stoi(splitfen[5]);
+		//if (splitfen[1] == "w") wMoving = true;
+		if (!wToMove) flipQBB();
+
+		//flags += (std::uint16_t)(std::stoi(splitfen[4]));
+		//currMove = std::stoi(splitfen[5]);
 	}
 
-	pieceType Board::getPieceType(Bitboard at) const noexcept
+	// adapted from https://www.chessprogramming.org/AVX2#VerticalNibble
+	unsigned QBB::getPieceType(square s) const noexcept
 	{
-		for (unsigned int i = 0; i != 6; ++i)
-		{
-			if (((wPieces[i] & at) != 0) || ((bPieces[i] & at) != 0))
-				return (pieceType)i;
-		}
-		return none;
+		__m256i qbb = _mm256_set_epi64x(rqk, nbk, pbq, side);
+		__m128i  shift = _mm_cvtsi32_si128(s ^ 63U);
+		qbb = _mm256_sll_epi64(qbb, shift);
+		std::uint32_t qbbsigns = _mm256_movemask_epi8(qbb);
+		return _pext_u32(qbbsigns, 0x80808080);
 	}
 
 	QBB::QBB(const Board& b)
@@ -178,4 +197,8 @@ namespace board
 			this->flipQBB();
 	}
 	QBB::QBB(const std::string& s) : QBB(Board{ s }) {}
+
+	void QBB::makeMove(Move)
+	{
+	}
 }
