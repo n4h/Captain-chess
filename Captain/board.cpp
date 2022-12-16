@@ -21,6 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cctype>
 #include <vector>
 #include <tuple>
+#include <cstdlib>
 
 #include "board.hpp"
 #include "auxiliary.hpp"
@@ -166,39 +167,17 @@ namespace board
 		return _pext_u32(qbbsigns, 0x80808080);
 	}
 
-	QBB::QBB(const Board& b)
+	void QBB::flipQBB()
 	{
-		std::uint64_t qbbArray[4] = {0, 0, 0, 0};
-		qbbArray[0] = b.wMoving ? b.wAll : b.bAll;
-
-		qbbArray[1] = b.wPieces[pawns] | b.wPieces[bishops] | b.wPieces[queens]
-			| b.bPieces[pawns] | b.bPieces[bishops] | b.bPieces[queens];
-
-		qbbArray[2] = b.wPieces[knights] | b.wPieces[bishops] | b.wPieces[king]
-			| b.bPieces[knights] | b.bPieces[bishops] | b.bPieces[king];
-
-		qbbArray[3] = b.wPieces[rooks] | b.wPieces[queens] | b.wPieces[king]
-			| b.bPieces[rooks] | b.bPieces[queens] | b.bPieces[king];
-
-		qbb = _mm256_set_epi64x(qbbArray[3], qbbArray[2], qbbArray[1], qbbArray[0]);
-
-		epc = b.epLoc;
-
-		if (b.flags & Board::wkCastleFlagMask)
-			epc |= setbit(e1) | setbit(h1);
-		if (b.flags & Board::wqCastleFlagMask)
-			epc |= setbit(e1) | setbit(a1);
-		if (b.flags & Board::bkCastleFlagMask)
-			epc |= setbit(e8) | setbit(h8);
-		if (b.flags & Board::bqCastleFlagMask)
-			epc |= setbit(e8) | setbit(a8);
-
-		if (!b.wMoving)
-			this->flipQBB();
+		side = _byteswap_uint64(side);
+		pbq = _byteswap_uint64(pbq);
+		nbk = _byteswap_uint64(nbk);
+		rqk = _byteswap_uint64(rqk);
+		epc = _byteswap_uint64(epc);
 	}
-	QBB::QBB(const std::string& s) : QBB(Board{ s }) {}
 
 	void QBB::makeMove(Move)
 	{
+		// UNDONE makeMove
 	}
 }
