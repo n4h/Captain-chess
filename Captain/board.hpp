@@ -158,82 +158,76 @@ namespace board
 		a8, b8, c8, d8, e8, f8, g8, h8,
 	};
 
-	constexpr Bitboard wkCastleSquares = setbit(f1) | setbit(g1);
-	constexpr Bitboard wqCastleSquares = setbit(b1) | setbit(c1) | setbit(d1);
-	constexpr Bitboard bkCastleSquares = setbit(f8) | setbit(g8);
-	constexpr Bitboard bqCastleSquares = setbit(b8) | setbit(c8) | setbit(d8);
+	namespace masks {
+		constexpr Bitboard rankMask[8] =
+		{
+			setbit(a1) | setbit(b1) | setbit(c1) | setbit(d1) | setbit(e1) | setbit(f1) | setbit(g1) | setbit(h1),
+				setbit(a2) | setbit(b2) | setbit(c2) | setbit(d2) | setbit(e2) | setbit(f2) | setbit(g2) | setbit(h2),
+				setbit(a3) | setbit(b3) | setbit(c3) | setbit(d3) | setbit(e3) | setbit(f3) | setbit(g3) | setbit(h3),
+				setbit(a4) | setbit(b4) | setbit(c4) | setbit(d4) | setbit(e4) | setbit(f4) | setbit(g4) | setbit(h4),
+				setbit(a5) | setbit(b5) | setbit(c5) | setbit(d5) | setbit(e5) | setbit(f5) | setbit(g5) | setbit(h5),
+				setbit(a6) | setbit(b6) | setbit(c6) | setbit(d6) | setbit(e6) | setbit(f6) | setbit(g6) | setbit(h6),
+				setbit(a7) | setbit(b7) | setbit(c7) | setbit(d7) | setbit(e7) | setbit(f7) | setbit(g7) | setbit(h7),
+				setbit(a8) | setbit(b8) | setbit(c8) | setbit(d8) | setbit(e8) | setbit(f8) | setbit(g8) | setbit(h8)
+		};
 
-	constexpr Bitboard wkCastleChecks = setbit(e1) | setbit(f1) | setbit(g1);
-	constexpr Bitboard wqCastleChecks = setbit(c1) | setbit(d1) | setbit(e1);
-	constexpr Bitboard bkCastleChecks = setbit(e8) | setbit(f8) | setbit(g8);
-	constexpr Bitboard bqCastleChecks = setbit(c8) | setbit(d8) | setbit(e8);
+		constexpr Bitboard fileMask[8] =
+		{
+			setbit(a1) | setbit(a2) | setbit(a3) | setbit(a4) | setbit(a5) | setbit(a6) | setbit(a7) | setbit(a8),
+			setbit(b1) | setbit(b2) | setbit(b3) | setbit(b4) | setbit(b5) | setbit(b6) | setbit(b7) | setbit(b8),
+			setbit(c1) | setbit(c2) | setbit(c3) | setbit(c4) | setbit(c5) | setbit(c6) | setbit(c7) | setbit(c8),
+			setbit(d1) | setbit(d2) | setbit(d3) | setbit(d4) | setbit(d5) | setbit(d6) | setbit(d7) | setbit(d8),
+			setbit(e1) | setbit(e2) | setbit(e3) | setbit(e4) | setbit(e5) | setbit(e6) | setbit(e7) | setbit(e8),
+			setbit(f1) | setbit(f2) | setbit(f3) | setbit(f4) | setbit(f5) | setbit(f6) | setbit(f7) | setbit(f8),
+			setbit(g1) | setbit(g2) | setbit(g3) | setbit(g4) | setbit(g5) | setbit(g6) | setbit(g7) | setbit(g8),
+			setbit(h1) | setbit(h2) | setbit(h3) | setbit(h4) | setbit(h5) | setbit(h6) | setbit(h7) | setbit(h8)
+		};
 
-	constexpr Bitboard fastCastleWK = setbit(wkr_start) | setbit(wk_start) | setbit(g1) | setbit(f1);
-	constexpr Bitboard fastCastleBK = setbit(bkr_start) | setbit(bk_start) | setbit(g8) | setbit(f8);
-	constexpr Bitboard fastCastleWQ = setbit(wqr_start) | setbit(wk_start) | setbit(c1) | setbit(d1);
-	constexpr Bitboard fastCastleBQ = setbit(bqr_start) | setbit(bk_start) | setbit(c8) | setbit(d8);
+		constexpr Bitboard diagMask[15] =
+		{
+			setbit(a1),
+			setbit(a2) | setbit(b1),
+			setbit(a3) | setbit(b2) | setbit(c1),
+			setbit(a4) | setbit(b3) | setbit(c2) | setbit(d1),
+			setbit(a5) | setbit(b4) | setbit(c3) | setbit(d2) | setbit(e1),
+			setbit(a6) | setbit(b5) | setbit(c4) | setbit(d3) | setbit(e2) | setbit(f1),
+			setbit(a7) | setbit(b6) | setbit(c5) | setbit(d4) | setbit(e3) | setbit(f2) | setbit(g1),
+			setbit(a8) | setbit(b7) | setbit(c6) | setbit(d5) | setbit(e4) | setbit(f3) | setbit(g2) | setbit(h1),
+			setbit(b8) | setbit(c7) | setbit(d6) | setbit(e5) | setbit(f4) | setbit(g3) | setbit(h2),
+			setbit(c8) | setbit(d7) | setbit(e6) | setbit(f5) | setbit(g4) | setbit(h3),
+			setbit(d8) | setbit(e7) | setbit(f6) | setbit(g5) | setbit(h4),
+			setbit(e8) | setbit(f7) | setbit(g6) | setbit(h5),
+			setbit(f8) | setbit(g7) | setbit(h6),
+			setbit(g8) | setbit(h7),
+			setbit(h8)
+		};
 
-	constexpr Bitboard rankMask[8] =
+		constexpr Bitboard antidiagMask[15] =
+		{
+			setbit(h1),
+			setbit(g1) | setbit(h2),
+			setbit(f1) | setbit(g2) | setbit(h3),
+			setbit(e1) | setbit(f2) | setbit(g3) | setbit(h4),
+			setbit(d1) | setbit(e2) | setbit(f3) | setbit(g4) | setbit(h5),
+			setbit(c1) | setbit(d2) | setbit(e3) | setbit(f4) | setbit(g5) | setbit(h6),
+			setbit(b1) | setbit(c2) | setbit(d3) | setbit(e4) | setbit(f5) | setbit(g6) | setbit(h7),
+			setbit(a1) | setbit(b2) | setbit(c3) | setbit(d4) | setbit(e5) | setbit(f6) | setbit(g7) | setbit(h8),
+			setbit(a2) | setbit(b3) | setbit(c4) | setbit(d5) | setbit(e6) | setbit(f7) | setbit(g8),
+			setbit(a3) | setbit(b4) | setbit(c5) | setbit(d6) | setbit(e7) | setbit(f8),
+			setbit(a4) | setbit(b5) | setbit(c6) | setbit(d7) | setbit(e8),
+			setbit(a5) | setbit(b6) | setbit(c7) | setbit(d8),
+			setbit(a6) | setbit(b7) | setbit(c8),
+			setbit(a7) | setbit(b8),
+			setbit(a8)
+		};
+	}
+
+	constexpr Bitboard rankMask(square s)
 	{
-		setbit(a1) | setbit(b1) | setbit(c1) | setbit(d1) | setbit(e1) | setbit(f1) | setbit(g1) | setbit(h1),
-		setbit(a2) | setbit(b2) | setbit(c2) | setbit(d2) | setbit(e2) | setbit(f2) | setbit(g2) | setbit(h2),
-		setbit(a3) | setbit(b3) | setbit(c3) | setbit(d3) | setbit(e3) | setbit(f3) | setbit(g3) | setbit(h3),
-		setbit(a4) | setbit(b4) | setbit(c4) | setbit(d4) | setbit(e4) | setbit(f4) | setbit(g4) | setbit(h4),
-		setbit(a5) | setbit(b5) | setbit(c5) | setbit(d5) | setbit(e5) | setbit(f5) | setbit(g5) | setbit(h5),
-		setbit(a6) | setbit(b6) | setbit(c6) | setbit(d6) | setbit(e6) | setbit(f6) | setbit(g6) | setbit(h6),
-		setbit(a7) | setbit(b7) | setbit(c7) | setbit(d7) | setbit(e7) | setbit(f7) | setbit(g7) | setbit(h7),
-		setbit(a8) | setbit(b8) | setbit(c8) | setbit(d8) | setbit(e8) | setbit(f8) | setbit(g8) | setbit(h8)
-	};
+		Bitboard mask = setbit(s);
 
-	constexpr Bitboard fileMask[8] =
-	{
-		setbit(a1) | setbit(a2) | setbit(a3) | setbit(a4) | setbit(a5) | setbit(a6) | setbit(a7) | setbit(a8),
-		setbit(b1) | setbit(b2) | setbit(b3) | setbit(b4) | setbit(b5) | setbit(b6) | setbit(b7) | setbit(b8),
-		setbit(c1) | setbit(c2) | setbit(c3) | setbit(c4) | setbit(c5) | setbit(c6) | setbit(c7) | setbit(c8),
-		setbit(d1) | setbit(d2) | setbit(d3) | setbit(d4) | setbit(d5) | setbit(d6) | setbit(d7) | setbit(d8),
-		setbit(e1) | setbit(e2) | setbit(e3) | setbit(e4) | setbit(e5) | setbit(e6) | setbit(e7) | setbit(e8),
-		setbit(f1) | setbit(f2) | setbit(f3) | setbit(f4) | setbit(f5) | setbit(f6) | setbit(f7) | setbit(f8),
-		setbit(g1) | setbit(g2) | setbit(g3) | setbit(g4) | setbit(g5) | setbit(g6) | setbit(g7) | setbit(g8),
-		setbit(h1) | setbit(h2) | setbit(h3) | setbit(h4) | setbit(h5) | setbit(h6) | setbit(h7) | setbit(h8)
-	};
 
-	constexpr Bitboard diagMask[15] =
-	{
-		setbit(a1),
-		setbit(a2) | setbit(b1),
-		setbit(a3) | setbit(b2) | setbit(c1),
-		setbit(a4) | setbit(b3) | setbit(c2) | setbit(d1),
-		setbit(a5) | setbit(b4) | setbit(c3) | setbit(d2) | setbit(e1),
-		setbit(a6) | setbit(b5) | setbit(c4) | setbit(d3) | setbit(e2) | setbit(f1),
-		setbit(a7) | setbit(b6) | setbit(c5) | setbit(d4) | setbit(e3) | setbit(f2) | setbit(g1),
-		setbit(a8) | setbit(b7) | setbit(c6) | setbit(d5) | setbit(e4) | setbit(f3) | setbit(g2) | setbit(h1),
-		setbit(b8) | setbit(c7) | setbit(d6) | setbit(e5) | setbit(f4) | setbit(g3) | setbit(h2),
-		setbit(c8) | setbit(d7) | setbit(e6) | setbit(f5) | setbit(g4) | setbit(h3),
-		setbit(d8) | setbit(e7) | setbit(f6) | setbit(g5) | setbit(h4),
-		setbit(e8) | setbit(f7) | setbit(g6) | setbit(h5),
-		setbit(f8) | setbit(g7) | setbit(h6),
-		setbit(g8) | setbit(h7),
-		setbit(h8)
-	};
-
-	constexpr Bitboard antidiagMask[15] =
-	{
-		setbit(h1),
-		setbit(g1) | setbit(h2),
-		setbit(f1) | setbit(g2) | setbit(h3),
-		setbit(e1) | setbit(f2) | setbit(g3) | setbit(h4),
-		setbit(d1) | setbit(e2) | setbit(f3) | setbit(g4) | setbit(h5),
-		setbit(c1) | setbit(d2) | setbit(e3) | setbit(f4) | setbit(g5) | setbit(h6),
-		setbit(b1) | setbit(c2) | setbit(d3) | setbit(e4) | setbit(f5) | setbit(g6) | setbit(h7),
-		setbit(a1) | setbit(b2) | setbit(c3) | setbit(d4) | setbit(e5) | setbit(f6) | setbit(g7) | setbit(h8),
-		setbit(a2) | setbit(b3) | setbit(c4) | setbit(d5) | setbit(e6) | setbit(f7) | setbit(g8),
-		setbit(a3) | setbit(b4) | setbit(c5) | setbit(d6) | setbit(e7) | setbit(f8),
-		setbit(a4) | setbit(b5) | setbit(c6) | setbit(d7) | setbit(e8),
-		setbit(a5) | setbit(b6) | setbit(c7) | setbit(d8),
-		setbit(a6) | setbit(b7) | setbit(c8),
-		setbit(a7) | setbit(b8),
-		setbit(a8)
-	};
+	}
 
 	constexpr bool isRightEdge(unsigned_integral auto i)
 	{
