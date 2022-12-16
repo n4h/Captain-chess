@@ -176,8 +176,39 @@ namespace board
 		epc = _byteswap_uint64(epc);
 	}
 
-	void QBB::makeMove(Move)
+	void QBB::makeMove(const Move m)
 	{
 		// UNDONE makeMove
+		const auto fromSq = getMoveInfo<fromMask>(m);
+		const auto toSq = getMoveInfo<toMask>(m);
+		const auto fromBB = setbit(fromSq);
+		const auto toBB = setbit(toSq);
+		
+		side &= ~fromBB;
+		side |= toBB;
+		
+		pbq &= ~toBB;
+		pbq |= toBB * ((fromBB & pbq) >> fromSq);
+		pbq ^= (fromBB & pbq);
+
+		nbk &= ~toBB;
+		nbk |= toBB * ((fromBB & nbk) >> fromSq);
+		nbk ^= (fromBB & nbk);
+
+		rqk &= ~toBB;
+		rqk |= toBB * ((fromBB & rqk) >> fromSq);
+		rqk ^= (fromBB & rqk);
+
+		epc &= ~fromBB;
+		epc &= ~toBB;
+		constexpr std::uint64_t rank6 = 0x00'00'FF'00'00'00'00'00U;
+		epc &= ~rank6;
+
+		constexpr std::uint64_t rank3 = 0x00'00'00'00'00'FF'00'00U;
+		const auto fromPcType = getPieceType(static_cast<square>(fromSq)) >> 1;
+		const Bitboard enPassant = (rank3 & (fromBB << 8) & (toBB >> 8)) << 8 * (fromPcType - 1);
+		epc |= enPassant & rank3;
+
+		__m256i promoUpdate = _mm256_set_epi32(,0x00800000,0, 0, 0, 0);
 	}
 }

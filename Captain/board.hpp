@@ -54,12 +54,12 @@ namespace board
 	template<>
 	constexpr std::uint32_t getMoveInfo<toMask>(Move m)
 	{
-		return (m & toMask) >> 6;
+		return (m & toMask) >> toMaskOffset;
 	}
 	template<>
 	constexpr std::uint32_t getMoveInfo<moveTypeMask>(Move m)
 	{
-		return (m & moveTypeMask) >> 12;
+		return (m & moveTypeMask) >> moveTypeOffset;
 	}
 
 	enum pieceType : unsigned int
@@ -285,7 +285,7 @@ namespace board
 		QBB(const std::string&);
 		
 		
-		void makeMove(Move);
+		void makeMove(const Move);
 
 		unsigned getPieceType(square) const noexcept;
 
