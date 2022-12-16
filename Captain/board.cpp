@@ -178,7 +178,6 @@ namespace board
 
 	void QBB::makeMove(const Move m)
 	{
-		// UNDONE makeMove
 		const auto fromSq = getMoveInfo<fromMask>(m);
 		const auto toSq = getMoveInfo<toMask>(m);
 		const auto fromBB = setbit(fromSq);
@@ -201,14 +200,31 @@ namespace board
 
 		epc &= ~fromBB;
 		epc &= ~toBB;
-		constexpr std::uint64_t rank6 = 0x00'00'FF'00'00'00'00'00U;
+		constexpr Bitboard rank6 = 0x00'00'FF'00'00'00'00'00U;
 		epc &= ~rank6;
 
-		constexpr std::uint64_t rank3 = 0x00'00'00'00'00'FF'00'00U;
+		constexpr Bitboard rank3 = 0x00'00'00'00'00'FF'00'00U;
 		const auto fromPcType = getPieceType(static_cast<square>(fromSq)) >> 1;
 		const Bitboard enPassant = (rank3 & (fromBB << 8) & (toBB >> 8)) << 8 * (fromPcType - 1);
 		epc |= enPassant & rank3;
 
-		__m256i promoUpdate = _mm256_set_epi32(,0x00800000,0, 0, 0, 0);
+		const auto moveType = getMoveInfo<moveTypeMask>(m);
+
+		const __m256i promoUpdateRules = _mm256_set_epi32(0x01'00'0000U, 0x01'00'01'00U, 0x00'01'0000U, 0x00'01'01'00U, 0,0,0,0);
+		const std::uint32_t promoUpdate = _mm256_extract_epi32(promoUpdateRules, moveType) << file(toSq);
+
+		rqk ^= _bextr_u64(promoUpdate, 24U, 8U) << 56;
+		nbk ^= _bextr_u64(promoUpdate, 16U, 8U) << 56;
+		pbq ^= _bextr_u64(promoUpdate, 8U, 8U) << 56;
+
+		constexpr std::uint64_t castleUpdate = 0x00'00'00'00'00'90'11'00U;
+		rqk ^= _bextr_u64(castleUpdate, moveType * 8, 8U);
+		side ^= _bextr_u64(castleUpdate, moveType * 8, 8U);
+
+		constexpr std::uint64_t enPUpdate = 0x00'00'00'00'01'00'00'00U;
+		pbq ^= _bextr_u64(enPUpdate, moveType * 8, 8U) << file(toSq);
+
+		side = ~side & (pbq | nbk | rqk);
+		flipQBB();
 	}
 }
