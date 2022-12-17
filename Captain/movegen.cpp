@@ -72,12 +72,12 @@ namespace movegen
 
 	board::Bitboard filterEdgesRook(board::Bitboard rookMoves, std::size_t pos)
 	{
-		auto leftEdge = board::fileMask[0];
-		auto rightEdge = board::fileMask[7];
-		auto topEdge = board::rankMask[7];
-		auto botEdge = board::rankMask[0];
+		auto leftEdge = board::masks::fileMask[0];
+		auto rightEdge = board::masks::fileMask[7];
+		auto topEdge = board::masks::rankMask[7];
+		auto botEdge = board::masks::rankMask[0];
 		auto edge = leftEdge | rightEdge | topEdge | botEdge;
-
+		
 		rookMoves &= ~setbit(pos);
 
 		if (board::isInterior(pos))
@@ -110,7 +110,7 @@ namespace movegen
 
 	void initRookBishopAttacks()
 	{
-		auto edge = board::fileMask[0] | board::fileMask[7] | board::rankMask[7] | board::rankMask[0];
+		auto edge = board::masks::fileMask[0] | board::masks::fileMask[7] | board::masks::rankMask[7] | board::masks::rankMask[0];
 		std::size_t offsetBishop = 0;
 		std::size_t offsetRook = 0;
 
@@ -119,7 +119,7 @@ namespace movegen
 			bishopOffsets[i] = offsetBishop;
 			rookOffsets[i] = offsetRook;
 
-			auto diagonals = board::diagMask[getDiag(i)] | board::antidiagMask[getAntiDiag(i)];
+			auto diagonals = board::masks::diagMask[getDiag(i)] | board::masks::antidiagMask[getAntiDiag(i)];
 			bishopMasks[i] = diagonals & ~setbit(i) & ~edge;
 			std::size_t numToReserve = 1ULL << __popcnt64(bishopMasks[i]);
 			for (int j = 0; j != numToReserve; ++j)
@@ -133,7 +133,7 @@ namespace movegen
 			}
 			offsetBishop += numToReserve;
 
-			auto rookMoves = board::rankMask[aux::rank(i)] | board::fileMask[aux::file(i)];
+			auto rookMoves = board::masks::rankMask[aux::rank(i)] | board::masks::fileMask[aux::file(i)];
 			rookMasks[i] = filterEdgesRook(rookMoves, i);
 
 			numToReserve = 1ULL << __popcnt64(rookMasks[i]);
@@ -153,9 +153,6 @@ namespace movegen
 	void initAttacks()
 	{
 		initRookBishopAttacks();
-		initPawnAttacks();
-		initKingAttacks();
-		initKnightAttacks();
 	}
 
 

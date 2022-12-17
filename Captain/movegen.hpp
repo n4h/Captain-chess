@@ -49,6 +49,16 @@ namespace movegen
 	constexpr bool kingSideCastle = true;
 	constexpr bool queenSideCastle = false;
 
+	struct MoveList
+	{
+		std::array<board::Move, 218> moves;
+		unsigned char mvCnt = 0;
+		board::Move& operator[](unsigned char k)
+		{
+			return moves[k];
+		}
+	};
+
 	constexpr std::size_t bishopAttacksSize()
 	{
 		return 4ULL * 1312ULL;
