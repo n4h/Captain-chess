@@ -222,11 +222,52 @@ namespace board
 		};
 	}
 
+	constexpr Bitboard fileMask(square s)
+	{
+		Bitboard mask = setbit(s);
+		mask |= mask >> 8;
+		mask |= mask << 8;
+		mask |= mask >> 16;
+		mask |= mask << 16;
+		mask |= mask >> 32;
+		mask |= mask << 32;
+		return mask;
+	}
+
 	constexpr Bitboard rankMask(square s)
 	{
 		Bitboard mask = setbit(s);
+		mask |= (mask >> 1) & ~0x8080808080808080U;
+		mask |= (mask << 1) & ~0x101010101010101U;
+		mask |= (mask >> 2) & ~0xC0C0C0C0C0C0C0C0U;
+		mask |= (mask << 2) & ~0x303030303030303U;
+		mask |= (mask >> 4) & ~0xF0F0F0F0F0F0F0F0U;
+		mask |= (mask << 4) & ~0xF0F0F0F0F0F0F0FU;
+		return mask;
+	}
 
+	constexpr Bitboard diagMask(square s)
+	{
+		Bitboard mask = setbit(s);
+		mask |= (mask >> 7) & ~0x8080808080808080U;
+		mask |= (mask << 7) & ~0x101010101010101U;
+		mask |= (mask >> 14) & ~0xC0C0C0C0C0C0C0C0U;
+		mask |= (mask << 14) & ~0x303030303030303U;
+		mask |= (mask >> 28) & ~0xF0F0F0F0F0F0F0F0U;
+		mask |= (mask << 28) & ~0xF0F0F0F0F0F0F0FU;
+		return mask;
+	}
 
+	constexpr Bitboard antiDiagMask(square s)
+	{
+		Bitboard mask = setbit(s);
+		mask |= (mask >> 9) & ~0x8080808080808080U;
+		mask |= (mask << 9) & ~0x101010101010101U;
+		mask |= (mask >> 18) & ~0xC0C0C0C0C0C0C0C0U;
+		mask |= (mask << 18) & ~0x303030303030303U;
+		mask |= (mask >> 36) & ~0xF0F0F0F0F0F0F0F0U;
+		mask |= (mask << 36) & ~0xF0F0F0F0F0F0F0FU;
+		return mask;
 	}
 
 	constexpr bool isRightEdge(unsigned_integral auto i)
