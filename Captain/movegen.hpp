@@ -59,16 +59,51 @@ namespace movegen
 		}
 	};
 
-	board::Bitboard dumbFill(board::Bitboard loc, board::Bitboard occ, int r, int f);
-	board::Bitboard filterEdgesRook(board::Bitboard rookMoves, std::size_t pos);
-	void initRookBishopAttacks();
-	void initAttacks();
+	// move generation is based on "Hyperbola Quintessence" algorithm
+	// https://www.chessprogramming.org/Hyperbola_Quintessence
+	constexpr board::Bitboard hypqDiag(board::Bitboard o, board::square idx)
+	{
+		o &= board::diagMask(idx);
+		board::Bitboard r = aux::setbit(idx);
+		board::Bitboard orev = _byteswap_uint64(o);
+		board::Bitboard rrev = _byteswap_uint64(r);
+
+		return board::diagMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
+	}
+
+	constexpr board::Bitboard hypqAntDiag(board::Bitboard o, board::square idx)
+	{
+		o &= board::antiDiagMask(idx);
+		board::Bitboard r = aux::setbit(idx);
+		board::Bitboard orev = _byteswap_uint64(o);
+		board::Bitboard rrev = _byteswap_uint64(r);
+
+		return board::antiDiagMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
+	}
+
+	constexpr board::Bitboard hypqFile(board::Bitboard o, board::square idx)
+	{
+		o &= board::fileMask(idx);
+		board::Bitboard r = aux::setbit(idx);
+		board::Bitboard orev = _byteswap_uint64(o);
+		board::Bitboard rrev = _byteswap_uint64(r);
+
+		return board::fileMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
+	}
+
+	board::Bitboard hypqRank(board::Bitboard o, board::square idx);
+
+	constexpr board::Bitboard knightAttacks(board::square idx)
+	{
+		board::Bitboard knight = aux::setbit(idx);
+		board::Bitboard n
+	}
 
 	template<bool wToMove, std::size_t N, bool qSearch = false>
-	std::size_t genMoves(board::QBB& b, std::array<board::Move, N>& ml, std::size_t i)
+	std::size_t genMoves(const board::QBB& b, std::array<board::Move, N>& ml, std::size_t i)
 	{
-		board::Move heading = b.getHeading();
-
+		
+		
 
 		genPawnMoves<wToMove>(b, heading, ml, i);
 
