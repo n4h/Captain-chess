@@ -124,6 +124,22 @@ namespace movegen
 		return (pawns << 8);
 	}
 
+	constexpr board::Bitboard kingAttacks(board::square idx)
+	{
+		const board::Bitboard king = aux::setbit(idx);
+
+		board::Bitboard n = (king << 8);
+		board::Bitboard s = (king >> 8);
+		board::Bitboard w = (king >> 1) & ~board::fileMask(board::h1);
+		board::Bitboard e = (king << 1) & ~board::fileMask(board::a1);
+
+		board::Bitboard nw = (king << 7) & ~board::fileMask(board::h1);
+		board::Bitboard ne = (king << 9) & ~board::fileMask(board::a1);
+		board::Bitboard sw = (king >> 9) & ~board::fileMask(board::h1);
+		board::Bitboard se = (king >> 7) & ~board::fileMask(board::a1);
+		return n | s | e | w | nw | ne | sw | se;
+	}
+
 	template<bool wToMove, std::size_t N, bool qSearch = false>
 	std::size_t genMoves(const board::QBB& b, std::array<board::Move, N>& ml, std::size_t i)
 	{
