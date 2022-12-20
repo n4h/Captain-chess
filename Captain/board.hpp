@@ -326,12 +326,12 @@ namespace board
 
 		constexpr bool canCastleShort() const noexcept
 		{
-			return epc & 0x90U;
+			return (epc & 0xF0U) == 0x90U;
 		}
 
 		constexpr bool canCastleLong() const noexcept
 		{
-			return epc & 0x11U;
+			return (epc & 0x1FU) == 0x11U;
 		}
 
 		constexpr Bitboard getOccupancy() const noexcept
@@ -387,6 +387,11 @@ namespace board
 		constexpr Bitboard getOrthogonalSliders() const noexcept
 		{
 			return rqk & ~getKings();
+		}
+
+		constexpr Bitboard getEp() const noexcept
+		{
+			return epc & ~rankMask(a1) & ~rankMask(a8);
 		}
 
 	private:

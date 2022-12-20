@@ -140,16 +140,33 @@ namespace movegen
 		return n | s | e | w | nw | ne | sw | se;
 	}
 
+	constexpr bool isInCheck(); // UNDONE isInCheck
+
+#define MOVEGEN_LOOP(bb) 
+
 	template<std::size_t N, bool qSearch = false>
 	std::size_t genMoves(const board::QBB& b, std::array<board::Move, N>& ml, std::size_t i)
 	{
 		board::Bitboard occ = b.getOccupancy();
+		board::Bitboard mine = b.my(occ);
 		board::Bitboard pawns = b.getPawns();
 		board::Bitboard knights = b.getKnights();
 		board::Bitboard king = b.getKings();
-		board::Bitboard diagonalSliders = b.pbq & ~pawns;
-		board::Bitboard
+		board::Bitboard diagonalSliders = b.getDiagonalSliders();
+		board::Bitboard orthSliders = b.getOrthogonalSliders();
 
+		unsigned long index;
+		while (_BitScanForward64(index, knights))
+		{
+			knights ^= _blsi_u64(knights);
+			auto moves = knightAttacks(index);
+			board::Move m = index;
+			while (_BitScanForward64(index, moves))
+			{
+				moves ^= _blsi_u64(moves);
+
+			}
+		}
 
 		return i;
 	}
