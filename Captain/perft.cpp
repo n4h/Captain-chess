@@ -26,9 +26,30 @@ namespace perft
 {
 	Perft::Perft(){}
 
-	Perft::Perft(board::Board& b, std::size_t t, bool w)
+	Perft::Perft(board::QBB& b, std::size_t t)
 	{
-		w ? perft<true>(b, t, (std::size_t)0) : perft<false>(b, t, (std::size_t)0);
+		perft(b, t, (std::size_t)0);
+	}
+
+	void Perft::perft(const board::QBB& b, std::size_t t, std::size_t firstMove)
+	{
+		if (t-- == 0)
+		{
+			++perftResult;
+			return;
+		}
+
+		const std::size_t j = movegen::genMoves(b, moveList, firstMove);
+
+		board::QBB bcopy = b;
+
+		for (std::size_t k = firstMove; k != j; ++k)
+		{
+			bcopy.makeMove(moveList[k]);
+
+			perft(bcopy, t, j);
+			bcopy = b;
+		}
 	}
 
 	std::size_t Perft::getResult()

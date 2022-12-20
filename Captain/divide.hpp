@@ -35,26 +35,21 @@ namespace divide
 {
 	std::string prettyPrintMove(board::Move m);
 
-	template<bool wToMove>
-	std::size_t perftDivide(board::Board& b, std::size_t t, std::size_t firstMove)
+	std::size_t perftDivide(const board::QBB& b, std::size_t t, std::size_t firstMove)
 	{
 		std::array<board::Move, 256> moves;
-		std::size_t lastMove = movegen::genMoves<wToMove>(b, moves, firstMove);
+		std::size_t lastMove = movegen::genMoves(b, moves, firstMove);
 		std::size_t total = 0;
 
+		board::QBB bcopy = b;
 		for (std::size_t i = firstMove; i != lastMove; ++i)
 		{
-			b.makeMove<wToMove>(moves[i]);
-			if (!movegen::isInCheck<wToMove>(b))
-			{
-				b.unmakeMove<wToMove>(b);
-				continue;
-			}
-			perft::Perft p{ b, t - 1, !wToMove };
+			bcopy.makeMove(moves[i]);
+			perft::Perft p{ bcopy, t - 1};
 			total += p.getResult();
 			std::cout << prettyPrintMove(moves[i]) << ": " << p.getResult() << std::endl;
 			p.reset();
-			b.unmakeMove<wToMove>(moves[i]);
+			bcopy = b;
 		}
 		std::cout << "total: " << total << std::endl;
 		return total;

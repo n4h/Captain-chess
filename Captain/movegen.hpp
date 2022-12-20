@@ -140,15 +140,16 @@ namespace movegen
 		return n | s | e | w | nw | ne | sw | se;
 	}
 
-	template<bool wToMove, std::size_t N, bool qSearch = false>
+	template<std::size_t N, bool qSearch = false>
 	std::size_t genMoves(const board::QBB& b, std::array<board::Move, N>& ml, std::size_t i)
 	{
-		
-		
+		board::Bitboard occ = b.getOccupancy();
+		board::Bitboard pawns = b.getPawns();
+		board::Bitboard knights = b.getKnights();
+		board::Bitboard king = b.getKings();
+		board::Bitboard diagonalSliders = b.pbq & ~pawns;
+		board::Bitboard
 
-		genPawnMoves<wToMove>(b, heading, ml, i);
-
-		genMovesForPiece<wToMove, board::king>(b, heading, ml, i);
 
 		return i;
 	}

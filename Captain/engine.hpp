@@ -78,7 +78,7 @@ namespace engine
 		std::size_t hash = 0;
 		std::size_t currIDdepth = 0;
 		bool engineW = true;
-		board::Board b;
+		board::QBB b;
 		std::chrono::milliseconds moveTime = 0ms;
 		TTable::TTable* tt = nullptr;
 		bool shouldStop() noexcept;
@@ -111,31 +111,10 @@ namespace engine
 				{
 					if (!searchFlags::searching.test())
 					{
-						// if the search ends too early then rootMoves[0].first
-						// may not be a legal move, so loop through until first legal
-						// move
-						for (std::size_t mv = 0; mv != j; ++mv)
-						{
-							b.makeMove<wToMove>(rootMoves[mv].first);
-							if (movegen::isInCheck<wToMove>(b))
-							{
-								b.unmakeMove<wToMove>(rootMoves[mv].first);
-							}
-							else
-							{
-								return rootMoves[mv].first;
-							}
-						}
 						return rootMoves[0].first;
 					}
 					auto oldHash = hash;
 					MAKE_MOVE_AND_UPDATE_HASH(rootMoves[i].first, b, false);
-					if (movegen::isInCheck<wToMove>(b))
-					{
-						b.unmakeMove<wToMove>(rootMoves[i].first);
-						hash = oldHash;
-						continue;
-					}
 
 					sync_cout << "info currmove " << move2uciFormat(rootMoves[i].first) << sync_endl;
 					sync_cout << "info nodes " << nodes << sync_endl;
@@ -239,18 +218,15 @@ namespace engine
 			}
 			if constexpr (s == ABSearch && !prevMoveNull)
 			{
-				if (!movegen::isInCheck<wToMove>(b))
-				{
-					board::Move m = b.getHeading();
-					auto oldHash = hash;
-					MAKE_MOVE_AND_UPDATE_HASH(m, b, true);
-					currEval = std::max(currEval, -1 * alphaBetaSearch<!wToMove, ABSearch, true>(-1 * beta, -1 * alpha, depth - 2));
-					b.unmakeMove<wToMove, true>(m);
-					hash = oldHash;
-					alpha = std::max(alpha, currEval);
-					if (alpha > beta)
-						return currEval;
-				}
+				board::Move m = b.getHeading();
+				auto oldHash = hash;
+				MAKE_MOVE_AND_UPDATE_HASH(m, b, true);
+				currEval = std::max(currEval, -1 * alphaBetaSearch<!wToMove, ABSearch, true>(-1 * beta, -1 * alpha, depth - 2));
+				b.unmakeMove<wToMove, true>(m);
+				hash = oldHash;
+				alpha = std::max(alpha, currEval);
+				if (alpha > beta)
+					return currEval;
 			}
 			bool legalMoveFound;
 			if constexpr (s == ABSearch) legalMoveFound = false;
@@ -276,12 +252,7 @@ namespace engine
 				}
 				auto oldHash = hash;
 				MAKE_MOVE_AND_UPDATE_HASH(moves[i], b, false);
-				if (movegen::isInCheck<wToMove>(b))
-				{
-					b.unmakeMove<wToMove>(moves[i]);
-					hash = oldHash;
-					continue;
-				}
+
 				legalMoveFound = true;
 				currEval = std::max(currEval, -1 * alphaBetaSearch<!wToMove, s>(-1 * beta, -1 * alpha, depth - 1));
 				b.unmakeMove<wToMove>(moves[i]);

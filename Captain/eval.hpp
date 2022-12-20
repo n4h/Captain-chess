@@ -122,7 +122,7 @@ namespace eval
 	std::int32_t computeMaterialValue(board::Bitboard, const std::array<std::int32_t, 64>&);
 
 	template<bool wToMove>
-	std::int32_t evaluate(const board::Board& b)
+	std::int32_t evaluate(const board::QBB& b)
 	{
 		std::int32_t totalW = 0;
 
@@ -159,6 +159,5 @@ namespace eval
 		}
 	}
 
-	unsigned int getCaptureValue(board::Move m);
 }
 #endif

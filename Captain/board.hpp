@@ -334,9 +334,59 @@ namespace board
 			return epc & 0x11U;
 		}
 
-		constexpr std::uint64_t getOccupancy() const noexcept
+		constexpr Bitboard getOccupancy() const noexcept
 		{
 			return rqk | nbk | pbq;
+		}
+
+		constexpr Bitboard getPawns() const noexcept
+		{
+			return pbq & ~nbk & ~rqk;
+		}
+
+		constexpr Bitboard getKnights() const noexcept
+		{
+			return nbk & ~pbq & ~rqk;
+		}
+
+		constexpr Bitboard getBishops() const noexcept
+		{
+			return nbk & pbq;
+		}
+
+		constexpr Bitboard getRooks() const noexcept
+		{
+			return rqk & ~pbq & ~nbk;
+		}
+
+		constexpr Bitboard getQueens() const noexcept
+		{
+			return pbq & rqk;
+		}
+
+		constexpr Bitboard getKings() const noexcept
+		{
+			return rqk & nbk;
+		}
+
+		constexpr Bitboard my(Bitboard b) const noexcept
+		{
+			return b & side;
+		}
+
+		constexpr Bitboard their(Bitboard b) const noexcept
+		{
+			return b & ~side;
+		}
+
+		constexpr Bitboard getDiagonalSliders() const noexcept
+		{
+			return pbq & ~getPawns();
+		}
+
+		constexpr Bitboard getOrthogonalSliders() const noexcept
+		{
+			return rqk & ~getKings();
 		}
 
 	private:
