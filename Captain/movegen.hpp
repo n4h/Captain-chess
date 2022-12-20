@@ -95,8 +95,33 @@ namespace movegen
 
 	constexpr board::Bitboard knightAttacks(board::square idx)
 	{
-		board::Bitboard knight = aux::setbit(idx);
-		board::Bitboard n
+		const board::Bitboard knight = aux::setbit(idx);
+		// n = north, s = south, etc.
+		board::Bitboard nnw = (knight << 15) & ~board::fileMask(board::h1);
+		board::Bitboard nne = (knight << 17) & ~board::fileMask(board::a1);
+		board::Bitboard nww = (knight << 6) & ~(board::fileMask(board::g1) | board::fileMask(board::h1));
+		board::Bitboard nee = (knight << 10) & ~(board::fileMask(board::b1) | board::fileMask(board::a1));
+
+		board::Bitboard ssw = (knight >> 17) & ~board::fileMask(board::h1);
+		board::Bitboard sse = (knight >> 15) & ~board::fileMask(board::a1);
+		board::Bitboard sww = (knight >> 10) & ~(board::fileMask(board::g1) | board::fileMask(board::h1));
+		board::Bitboard see = (knight >> 6) & ~(board::fileMask(board::b1) | board::fileMask(board::a1));
+		return nnw | nne | nww | nee | ssw | sse | sww | see;
+	}
+
+	constexpr board::Bitboard pawnAttacksLeft(board::Bitboard pawns)
+	{
+		return (pawns << 7) & ~board::fileMask(board::h1);
+	}
+
+	constexpr board::Bitboard pawnAttacksRight(board::Bitboard pawns)
+	{
+		return (pawns << 9) & ~board::fileMask(board::a1);
+	}
+
+	constexpr board::Bitboard pawnMovesUp(board::Bitboard pawns)
+	{
+		return (pawns << 8);
 	}
 
 	template<bool wToMove, std::size_t N, bool qSearch = false>
