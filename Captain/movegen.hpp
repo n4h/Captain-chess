@@ -118,6 +118,33 @@ namespace movegen
 		return board::fileMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
 	}
 
+	constexpr AttackMap hypqFileN(Bitboard o, board::square idx)
+	{
+		o &= board::fileMask(idx);
+		Bitboard r = aux::setbit(idx);
+
+		return board::fileMask(idx) & ((o - 2 * r) ^ o);
+	}
+
+	constexpr AttackMap hypqFileS(Bitboard o, board::square idx)
+	{
+		o &= board::fileMask(idx);
+		Bitboard r = aux::setbit(idx);
+		Bitboard orev = _byteswap_uint64(o);
+		Bitboard rrev = _byteswap_uint64(r);
+		return board::fileMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
+	}
+
+	constexpr AttackMap hypqRankE(Bitboard o, board::square idx)
+	{
+		o &= board::fileMask(idx);
+		Bitboard r = aux::setbit(idx);
+
+		return board::fileMask(idx) & ((o - 2 * r) ^ o);
+	}
+
+	AttackMap hypqRankW(Bitboard o, board::square idx);
+
 	AttackMap hypqRank(Bitboard o, board::square idx);
 
 	constexpr AttackMap knightAttacks(board::square idx)
