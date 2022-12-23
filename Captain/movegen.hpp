@@ -194,6 +194,19 @@ namespace movegen
 		return n | s | e | w | nw | ne | sw | se;
 	}
 
+	constexpr AttackMap genBishopAttackSet(Bitboard occ, Bitboard bishops)
+	{
+		unsigned long index;
+		AttackMap attacks;
+		while (_BitScanForward64(&index, bishops))
+		{
+			auto sq = static_cast<board::square>(index);
+			bishops ^= _blsi_u64(bishops);
+			attacks |= hypqDiag(occ, sq) | hypqAntDiag(occ, sq);
+		}
+		return attacks;
+	}
+
 	constexpr Bitboard isInCheck(const board::QBB& b) // UNDONE isInCheck
 	{
 		const Bitboard myKing = b.my(b.getKings());
@@ -218,8 +231,9 @@ namespace movegen
 	}
 
 	template<std::size_t N, bool qSearch = false>
-	std::size_t genMoves(const board::QBB& b, std::array<board::Move, N>& ml, std::size_t i)
+	std::size_t genMoves(const board::QBB& b, std::array<board::Move, N>& ml)
 	{
+		std::size_t i = 0;
 		Bitboard occ = b.getOccupancy();
 		Bitboard mine = b.my(occ);
 		Bitboard pawns = b.getPawns();
@@ -233,17 +247,25 @@ namespace movegen
 		_BitScanForward64(&index, myKing);
 		board::square sq = static_cast<board::square>(index);
 
-		const AttackMap diagonalChecks = hypqDiag(occ, sq) | hypqAntDiag(occ, sq);
-		const AttackMap orthogonalChecks = hypqFile(occ, sq) | hypqRank(occ, sq);
-		const AttackMap knightsChecks = knightAttacks(sq);
-		const AttackMap pawnsChecks = pawnAttacksLeft(b.my(king)) | pawnAttacksRight(b.my(king));
+		Bitboard NEchecks = hypqDiagNE(occ, sq) & b.their(diagonalSliders);
+		Bitboard NWchecks = hypqDiagNW(occ, sq) & b.their(diagonalSliders);
+		Bitboard SEchecks = hypqDiagSE(occ, sq) & b.their(diagonalSliders);
+		Bitboard SWchecks = hypqDiagSW(occ, sq) & b.their(diagonalSliders);
 
-		const Bitboard diagCheckers = diagonalChecks & b.their(diagonalSliders);
-		const Bitboard orthCheckers = orthogonalChecks & b.their(orthSliders);
-		const Bitboard knightCheckers = b.their(knights) & knightsChecks;
-		const Bitboard pawnCheckers = b.their(pawns) & pawnsChecks;
+		Bitboard Nchecks = hypqFileN(occ, sq) & b.their(orthSliders);
+		Bitboard Schecks = hypqFileS(occ, sq) & b.their(orthSliders);
+		Bitboard Echecks = hypqRankE(occ, sq) & b.their(orthSliders);
+		Bitboard Wchecks = hypqRankW(occ, sq) & b.their(orthSliders);
 
-		const Bitboard checkers = diagCheckers | orthCheckers | knightCheckers | pawnCheckers;
+		Bitboard PchecksLeft = pawnAttacksLeft(myKing) & b.their(pawns);
+		Bitboard PchecksRight = pawnAttacksRight(myKing) & b.their(pawns);
+		Bitboard knightChecks = knightAttacks(sq) & b.their(knights);
+
+		Bitboard diagCheckers = NEchecks | NWchecks | SEchecks | SWchecks;
+		Bitboard orthCheckers = Nchecks | Schecks | Echecks | Wchecks;
+		Bitboard pawnCheckers = PchecksLeft | PchecksRight;
+
+		const Bitboard checkers = diagCheckers | orthCheckers | knightChecks | pawnCheckers;
 
 		if (!checkers)
 		{
@@ -255,7 +277,9 @@ namespace movegen
 		}
 		else // >1 checkers (double check)
 		{
-
+			board::Move m = sq;
+			AttackMap kingMoves = kingAttacks(sq);
+			kingMoves &= ~genAttackSet()
 		}
 
 		return i;
