@@ -412,17 +412,11 @@ namespace movegen
 	// generate attacks given a set of bitboards (as opposed to a square)
 	constexpr AttackMap genDiagAttackSet(Bitboard occ, Bitboard diag)
 	{
-		unsigned long index;
 		AttackMap attacks = 0;
-		while (_BitScanForward64(&index, diag))
-		{
-			auto sq = static_cast<board::square>(index);
-			diag ^= _blsi_u64(diag);
-			attacks |= hypqDiag(occ, sq) | hypqAntiDiag(occ, sq);
-		}
+		Bitboard lsb = 0;
 		do
 		{
-			Bitboard lsb = _blsi_u64(diag);
+			lsb = _blsi_u64(diag);
 			attacks |= hypqDiag(occ, lsb) | hypqAntiDiag(occ, lsb);
 		} while (diag ^= lsb);
 		return attacks;
@@ -430,14 +424,13 @@ namespace movegen
 
 	constexpr AttackMap genOrthAttackSet(Bitboard occ, Bitboard orth)
 	{
-		unsigned long index;
 		AttackMap attacks = 0;
-		while (_BitScanForward64(&index, orth))
+		Bitboard lsb = 0;
+		do
 		{
-			auto sq = static_cast<board::square>(index);
-			orth ^= _blsi_u64(orth);
-			attacks |= hypqFile(occ, sq) | hypqRank(occ, sq);
-		}
+			lsb = _blsi_u64(orth);
+			attacks |= hypqFile(occ, lsb) | hypqRank(occ, lsb);
+		} while (orth ^= lsb);
 		return attacks;
 	}
 
