@@ -89,13 +89,25 @@ namespace movegen
 	
 	AttackMap hypqRank(Bitboard o, board::square idx);
 
-
 	// move generation in a particular direction
-	constexpr AttackMap hypqDiagNE(Bitboard o, board::square idx)
+	template<typename T>
+	constexpr AttackMap hypqDiagNE(Bitboard o, T idx)
 	{
-		o &= board::antiDiagMask(idx);
-		Bitboard r = aux::setbit(idx);
-		return board::antiDiagMask(idx) & (o ^ (o - 2 * r));
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			o &= board::antiDiagMask(idx);
+			Bitboard r = aux::setbit(idx);
+			return board::antiDiagMask(idx) & (o ^ (o - 2 * r));
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			o &= board::multiAntiDiagMask(idx);
+			return board::multiAntiDiagMask(idx) & (o ^ (o - 2 * idx));
+		}
+		else
+		{
+			return 0ULL;
+		}
 	}
 
 	template<typename T>
@@ -134,7 +146,7 @@ namespace movegen
 		else if constexpr (std::is_same_v<T, Bitboard>)
 		{
 			o &= board::multiDiagMask(idx);
-			return board::multiDiagMask(idx) & (o ^ (o - 2 * r));
+			return board::multiDiagMask(idx) & (o ^ (o - 2 * idx));
 		}
 		else
 		{
@@ -142,41 +154,119 @@ namespace movegen
 		}
 	}
 
-	constexpr AttackMap hypqDiagSE(Bitboard o, board::square idx)
+	template<typename T>
+	constexpr AttackMap hypqDiagSE(Bitboard o, T idx)
 	{
-		o &= board::diagMask(idx);
-		Bitboard r = aux::setbit(idx);
-		Bitboard orev = _byteswap_uint64(o);
-		Bitboard rrev = _byteswap_uint64(r);
-		return board::diagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			o &= board::diagMask(idx);
+			Bitboard r = aux::setbit(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(r);
+			return board::diagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			o &= board::multiDiagMask(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(idx);
+			return board::multiDiagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else
+		{
+			return 0ULL;
+		}
+
 	}
 
-	constexpr AttackMap hypqFileN(Bitboard o, board::square idx)
+	template<typename T>
+	constexpr AttackMap hypqFileN(Bitboard o, T idx)
 	{
-		o &= board::fileMask(idx);
-		Bitboard r = aux::setbit(idx);
-
-		return board::fileMask(idx) & ((o - 2 * r) ^ o);
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			o &= board::fileMask(idx);
+			Bitboard r = aux::setbit(idx);
+			return board::fileMask(idx) & ((o - 2 * r) ^ o);
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			o &= board::multiFileMask(idx);
+			return board::multiFileMask(idx) & ((o - 2 * idx) ^ o);
+		}
+		else
+		{
+			return 0ULL;
+		}
 	}
 
-	constexpr AttackMap hypqFileS(Bitboard o, board::square idx)
+	template<typename T>
+	constexpr AttackMap hypqFileS(Bitboard o, T idx)
 	{
-		o &= board::fileMask(idx);
-		Bitboard r = aux::setbit(idx);
-		Bitboard orev = _byteswap_uint64(o);
-		Bitboard rrev = _byteswap_uint64(r);
-		return board::fileMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			o &= board::fileMask(idx);
+			Bitboard r = aux::setbit(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(r);
+			return board::fileMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			o &= board::multiFileMask(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(idx);
+			return board::multiFileMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else
+		{
+			return 0ULL;
+		}
 	}
 
-	constexpr AttackMap hypqRankE(Bitboard o, board::square idx)
+	template<typename T>
+	constexpr AttackMap hypqRankE(Bitboard o, T idx)
 	{
-		o &= board::fileMask(idx);
-		Bitboard r = aux::setbit(idx);
-
-		return board::fileMask(idx) & ((o - 2 * r) ^ o);
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			o &= board::fileMask(idx);
+			Bitboard r = aux::setbit(idx);
+			return board::fileMask(idx) & ((o - 2 * r) ^ o);
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			o &= board::fileMask(idx);
+			return board::fileMask(idx) & ((o - 2 * idx) ^ o);
+		}
+		else
+		{
+			return 0ULL;
+		}
 	}
 
-	AttackMap hypqRankW(Bitboard o, board::square idx);
+	template<typename T>
+	AttackMap hypqRankW(Bitboard o, T idx)
+	{
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			Bitboard vertical = _pext_u64(o, board::rankMask(idx));
+			vertical = _pdep_u64(vertical, board::fileMask(board::a1));
+			Bitboard attacks = hypqFileS(vertical, static_cast<board::square>(8 * aux::file(idx)));
+			attacks = _pext_u64(attacks, board::fileMask(board::a1));
+			return _pdep_u64(attacks, board::rankMask(idx));
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			Bitboard vertical = _pext_u64(o, board::multiRankMask(idx));
+			vertical = _pdep_u64(vertical, board::fileMask(board::a1));
+			Bitboard attacks = hypqFileS(vertical, static_cast<board::square>(8 * aux::file(_tzcnt_u64(idx))));
+			attacks = _pext_u64(attacks, board::fileMask(board::a1));
+			return _pdep_u64(attacks, board::multiRankMask(idx));
+		}
+		else
+		{
+			return 0ULL;
+		}
+	}
 
 	constexpr AttackMap kingAttacks(board::square idx)
 	{

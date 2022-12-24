@@ -44,13 +44,4 @@ namespace movegen
         attacks = _pext_u64(attacks, board::fileMask(board::a1));
         return _pdep_u64(attacks, board::rankMask(idx));
     }
-
-    AttackMap hypqRankW(Bitboard o, board::square idx)
-    {
-        Bitboard vertical = _pext_u64(o, board::rankMask(idx));
-        vertical = _pdep_u64(vertical, board::fileMask(board::a1));
-        Bitboard attacks = hypqFileS(vertical, static_cast<board::square>(8 * aux::file(idx)));
-        attacks = _pext_u64(attacks, board::fileMask(board::a1));
-        return _pdep_u64(attacks, board::rankMask(idx));
-    }
 }
