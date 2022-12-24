@@ -56,6 +56,7 @@ namespace movegen
 
 	// move generation is based on "Hyperbola Quintessence" algorithm
 	// https://www.chessprogramming.org/Hyperbola_Quintessence
+
 	constexpr AttackMap hypqDiag(Bitboard o, board::square idx)
 	{
 		o &= board::diagMask(idx);
@@ -66,39 +67,7 @@ namespace movegen
 		return board::diagMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
 	}
 
-	constexpr AttackMap hypqDiagNE(Bitboard o, board::square idx)
-	{
-		o &= board::antiDiagMask(idx);
-		Bitboard r = aux::setbit(idx);
-		return board::antiDiagMask(idx) & (o ^ (o - 2 * r));
-	}
-
-	constexpr AttackMap hypqDiagSW(Bitboard o, board::square idx)
-	{
-		o &= board::antiDiagMask(idx);
-		Bitboard r = aux::setbit(idx);
-		Bitboard orev = _byteswap_uint64(o);
-		Bitboard rrev = _byteswap_uint64(r);
-		return board::antiDiagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
-	}
-
-	constexpr AttackMap hypqDiagNW(Bitboard o, board::square idx)
-	{
-		o &= board::diagMask(idx);
-		Bitboard r = aux::setbit(idx);
-		return board::diagMask(idx) & (o ^ (o - 2 * r));
-	}
-
-	constexpr AttackMap hypqDiagSE(Bitboard o, board::square idx)
-	{
-		o &= board::diagMask(idx);
-		Bitboard r = aux::setbit(idx);
-		Bitboard orev = _byteswap_uint64(o);
-		Bitboard rrev = _byteswap_uint64(r);
-		return board::diagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
-	}
-
-	constexpr AttackMap hypqAntDiag(Bitboard o, board::square idx)
+	constexpr AttackMap hypqAntiDiag(Bitboard o, board::square idx)
 	{
 		o &= board::antiDiagMask(idx);
 		Bitboard r = aux::setbit(idx);
@@ -116,6 +85,70 @@ namespace movegen
 		Bitboard rrev = _byteswap_uint64(r);
 
 		return board::fileMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
+	}
+	
+	AttackMap hypqRank(Bitboard o, board::square idx);
+
+
+	// move generation in a particular direction
+	constexpr AttackMap hypqDiagNE(Bitboard o, board::square idx)
+	{
+		o &= board::antiDiagMask(idx);
+		Bitboard r = aux::setbit(idx);
+		return board::antiDiagMask(idx) & (o ^ (o - 2 * r));
+	}
+
+	template<typename T>
+	constexpr AttackMap hypqDiagSW(Bitboard o, T idx)
+	{
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			o &= board::antiDiagMask(idx);
+			Bitboard r = aux::setbit(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(r);
+			return board::antiDiagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			o &= board::multiAntiDiagMask(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(idx);
+			return board::multiAntiDiagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else
+		{
+			return 0ULL;
+		}
+	}
+
+	template<typename T>
+	constexpr AttackMap hypqDiagNW(Bitboard o, T idx)
+	{
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			o &= board::diagMask(idx);
+			Bitboard r = aux::setbit(idx);
+			return board::diagMask(idx) & (o ^ (o - 2 * r));
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			o &= board::multiDiagMask(idx);
+			return board::multiDiagMask(idx) & (o ^ (o - 2 * r));
+		}
+		else
+		{
+			return 0ULL;
+		}
+	}
+
+	constexpr AttackMap hypqDiagSE(Bitboard o, board::square idx)
+	{
+		o &= board::diagMask(idx);
+		Bitboard r = aux::setbit(idx);
+		Bitboard orev = _byteswap_uint64(o);
+		Bitboard rrev = _byteswap_uint64(r);
+		return board::diagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
 	}
 
 	constexpr AttackMap hypqFileN(Bitboard o, board::square idx)
@@ -145,39 +178,6 @@ namespace movegen
 
 	AttackMap hypqRankW(Bitboard o, board::square idx);
 
-	AttackMap hypqRank(Bitboard o, board::square idx);
-
-	constexpr AttackMap knightAttacks(board::square idx)
-	{
-		const Bitboard knight = aux::setbit(idx);
-		// n = north, s = south, etc.
-		Bitboard nnw = (knight << 15) & ~board::fileMask(board::h1);
-		Bitboard nne = (knight << 17) & ~board::fileMask(board::a1);
-		Bitboard nww = (knight << 6) & ~(board::fileMask(board::g1) | board::fileMask(board::h1));
-		Bitboard nee = (knight << 10) & ~(board::fileMask(board::b1) | board::fileMask(board::a1));
-
-		Bitboard ssw = (knight >> 17) & ~board::fileMask(board::h1);
-		Bitboard sse = (knight >> 15) & ~board::fileMask(board::a1);
-		Bitboard sww = (knight >> 10) & ~(board::fileMask(board::g1) | board::fileMask(board::h1));
-		Bitboard see = (knight >> 6) & ~(board::fileMask(board::b1) | board::fileMask(board::a1));
-		return nnw | nne | nww | nee | ssw | sse | sww | see;
-	}
-
-	constexpr AttackMap pawnAttacksLeft(Bitboard pawns)
-	{
-		return (pawns << 7) & ~board::fileMask(board::h1);
-	}
-
-	constexpr AttackMap pawnAttacksRight(Bitboard pawns)
-	{
-		return (pawns << 9) & ~board::fileMask(board::a1);
-	}
-
-	constexpr Bitboard pawnMovesUp(Bitboard pawns)
-	{
-		return (pawns << 8);
-	}
-
 	constexpr AttackMap kingAttacks(board::square idx)
 	{
 		const Bitboard king = aux::setbit(idx);
@@ -194,17 +194,98 @@ namespace movegen
 		return n | s | e | w | nw | ne | sw | se;
 	}
 
-	constexpr AttackMap genBishopAttackSet(Bitboard occ, Bitboard bishops)
+	constexpr AttackMap knightAttacks(board::square sq)
+	{
+		Bitboard knight = aux::setbit(sq);
+		return genKnightAttackSet(knight);
+	}
+
+	// pawn moves/attacks are generated setwise
+	constexpr AttackMap pawnAttacksLeft(Bitboard pawns)
+	{
+		return (pawns << 7) & ~board::fileMask(board::h1);
+	}
+
+	constexpr AttackMap pawnAttacksRight(Bitboard pawns)
+	{
+		return (pawns << 9) & ~board::fileMask(board::a1);
+	}
+
+	constexpr AttackMap enemyPawnAttacksLeft(Bitboard pawns)
+	{
+		return (pawns >> 9) & ~board::fileMask(board::h1);
+	}
+
+	constexpr AttackMap enemyPawnAttacksRight(Bitboard pawns)
+	{
+		return (pawns >> 7) & ~board::fileMask(board::a1);
+	}
+
+	constexpr Bitboard pawnMovesUp(Bitboard pawns)
+	{
+		return (pawns << 8);
+	}
+
+	// generate attacks given a set of bitboards (as opposed to a square)
+	constexpr AttackMap genDiagAttackSet(Bitboard occ, Bitboard diag)
 	{
 		unsigned long index;
-		AttackMap attacks;
-		while (_BitScanForward64(&index, bishops))
+		AttackMap attacks = 0;
+		while (_BitScanForward64(&index, diag))
 		{
 			auto sq = static_cast<board::square>(index);
-			bishops ^= _blsi_u64(bishops);
-			attacks |= hypqDiag(occ, sq) | hypqAntDiag(occ, sq);
+			diag ^= _blsi_u64(diag);
+			attacks |= hypqDiag(occ, sq) | hypqAntiDiag(occ, sq);
 		}
 		return attacks;
+	}
+
+	constexpr AttackMap genOrthAttackSet(Bitboard occ, Bitboard orth)
+	{
+		unsigned long index;
+		AttackMap attacks = 0;
+		while (_BitScanForward64(&index, orth))
+		{
+			auto sq = static_cast<board::square>(index);
+			orth ^= _blsi_u64(orth);
+			attacks |= hypqFile(occ, sq) | hypqRank(occ, sq);
+		}
+		return attacks;
+	}
+
+	constexpr AttackMap genKnightAttackSet(Bitboard knight)
+	{
+		// n = north, s = south, etc.
+		Bitboard nnw = (knight << 15) & ~board::fileMask(board::h1);
+		Bitboard nne = (knight << 17) & ~board::fileMask(board::a1);
+		Bitboard nww = (knight << 6) & ~(board::fileMask(board::g1) | board::fileMask(board::h1));
+		Bitboard nee = (knight << 10) & ~(board::fileMask(board::b1) | board::fileMask(board::a1));
+
+		Bitboard ssw = (knight >> 17) & ~board::fileMask(board::h1);
+		Bitboard sse = (knight >> 15) & ~board::fileMask(board::a1);
+		Bitboard sww = (knight >> 10) & ~(board::fileMask(board::g1) | board::fileMask(board::h1));
+		Bitboard see = (knight >> 6) & ~(board::fileMask(board::b1) | board::fileMask(board::a1));
+		return nnw | nne | nww | nee | ssw | sse | sww | see;
+	}
+
+	constexpr AttackMap kingAttacksSet(Bitboard king)
+	{
+		Bitboard n = (king << 8);
+		Bitboard s = (king >> 8);
+		Bitboard w = (king >> 1) & ~board::fileMask(board::h1);
+		Bitboard e = (king << 1) & ~board::fileMask(board::a1);
+
+		Bitboard nw = (king << 7) & ~board::fileMask(board::h1);
+		Bitboard ne = (king << 9) & ~board::fileMask(board::a1);
+		Bitboard sw = (king >> 9) & ~board::fileMask(board::h1);
+		Bitboard se = (king >> 7) & ~board::fileMask(board::a1);
+		return n | s | e | w | nw | ne | sw | se;
+	}
+
+	constexpr Bitboard getAllPinnedPieces(Bitboard occ, Bitboard king, Bitboard diag, Bitboard orth)
+	{
+		Bitboard pinned = 0;
+		pinned |= 
 	}
 
 	constexpr Bitboard isInCheck(const board::QBB& b) // UNDONE isInCheck
@@ -219,7 +300,7 @@ namespace movegen
 		const Bitboard theirKnights = b.their(b.getKnights());
 		const Bitboard occ = b.getOccupancy();
 
-		const AttackMap diagonal = hypqDiag(occ, sq) | hypqAntDiag(occ, sq);
+		const AttackMap diagonal = hypqDiag(occ, sq) | hypqAntiDiag(occ, sq);
 		const AttackMap orthogonal = hypqFile(occ, sq) | hypqRank(occ, sq);
 		const AttackMap knights = knightAttacks(sq);
 		const AttackMap pawns = pawnAttacksLeft(myKing) | pawnAttacksRight(myKing);
@@ -247,21 +328,17 @@ namespace movegen
 		_BitScanForward64(&index, myKing);
 		board::square sq = static_cast<board::square>(index);
 
-		Bitboard NEchecks = hypqDiagNE(occ, sq) & b.their(diagonalSliders);
-		Bitboard NWchecks = hypqDiagNW(occ, sq) & b.their(diagonalSliders);
-		Bitboard SEchecks = hypqDiagSE(occ, sq) & b.their(diagonalSliders);
-		Bitboard SWchecks = hypqDiagSW(occ, sq) & b.their(diagonalSliders);
+		Bitboard DiagChecks = hypqDiag(occ, sq) & b.their(diagonalSliders);
+		Bitboard AntiDiagChecks = hypqAntiDiag(occ, sq) & b.their(diagonalSliders);
 
 		Bitboard Nchecks = hypqFileN(occ, sq) & b.their(orthSliders);
 		Bitboard Schecks = hypqFileS(occ, sq) & b.their(orthSliders);
-		Bitboard Echecks = hypqRankE(occ, sq) & b.their(orthSliders);
-		Bitboard Wchecks = hypqRankW(occ, sq) & b.their(orthSliders);
 
 		Bitboard PchecksLeft = pawnAttacksLeft(myKing) & b.their(pawns);
 		Bitboard PchecksRight = pawnAttacksRight(myKing) & b.their(pawns);
 		Bitboard knightChecks = knightAttacks(sq) & b.their(knights);
 
-		Bitboard diagCheckers = NEchecks | NWchecks | SEchecks | SWchecks;
+		Bitboard diagCheckers = DiagChecks | AntiDiagChecks;
 		Bitboard orthCheckers = Nchecks | Schecks | Echecks | Wchecks;
 		Bitboard pawnCheckers = PchecksLeft | PchecksRight;
 
@@ -269,7 +346,7 @@ namespace movegen
 
 		if (!checkers)
 		{
-
+			Bitboard horPinned = hypqRankW(occ, sq) & multi
 		}
 		else if (__popcnt64(checkers) == 1)
 		{
@@ -279,7 +356,11 @@ namespace movegen
 		{
 			board::Move m = sq;
 			AttackMap kingMoves = kingAttacks(sq);
-			kingMoves &= ~genAttackSet()
+			kingMoves &= ~genDiagAttackSet(b.their(diagonalSliders));
+			kingMoves &= ~genOrthAttackSet(b.their(orthSliders));
+			kingMoves &= ~kingAttacks(b.their(king));
+			kingMoves &= ~genKnightAttackSet(b.their(knights));
+			kingMoves &= ~()
 		}
 
 		return i;
