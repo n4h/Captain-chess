@@ -44,50 +44,107 @@ namespace movegen
 	using AttackMap = board::Bitboard;
 	using board::Bitboard;
 
-	struct MoveList
-	{
-		std::array<board::Move, 218> moves;
-		unsigned char mvCnt = 0;
-		board::Move& operator[](unsigned char k)
-		{
-			return moves[k];
-		}
-	};
-
 	// move generation is based on "Hyperbola Quintessence" algorithm
 	// https://www.chessprogramming.org/Hyperbola_Quintessence
 
-	constexpr AttackMap hypqDiag(Bitboard o, board::square idx)
+	template<typename T>
+	constexpr AttackMap hypqDiag(Bitboard o, T idx)
 	{
-		o &= board::diagMask(idx);
-		Bitboard r = aux::setbit(idx);
-		Bitboard orev = _byteswap_uint64(o);
-		Bitboard rrev = _byteswap_uint64(r);
-
-		return board::diagMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			o &= board::diagMask(idx);
+			Bitboard r = aux::setbit(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(r);
+			return board::diagMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			o &= board::multiDiagMask(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(idx);
+			return board::multiDiagMask(idx) & ((o - 2 * idx) ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else
+		{
+			return 0ULL;
+		}
 	}
 
-	constexpr AttackMap hypqAntiDiag(Bitboard o, board::square idx)
+	template<typename T>
+	constexpr AttackMap hypqAntiDiag(Bitboard o, T idx)
 	{
-		o &= board::antiDiagMask(idx);
-		Bitboard r = aux::setbit(idx);
-		Bitboard orev = _byteswap_uint64(o);
-		Bitboard rrev = _byteswap_uint64(r);
-
-		return board::antiDiagMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			o &= board::antiDiagMask(idx);
+			Bitboard r = aux::setbit(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(r);
+			return board::antiDiagMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			o &= board::multiAntiDiagMask(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(idx);
+			return board::multiAntiDiagMask(idx) & ((o - 2 * idx) ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else
+		{
+			return 0ULL;
+		}
 	}
 
-	constexpr AttackMap hypqFile(Bitboard o, board::square idx)
+	template<typename T>
+	constexpr AttackMap hypqFile(Bitboard o, T idx)
 	{
-		o &= board::fileMask(idx);
-		Bitboard r = aux::setbit(idx);
-		Bitboard orev = _byteswap_uint64(o);
-		Bitboard rrev = _byteswap_uint64(r);
-
-		return board::fileMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			o &= board::fileMask(idx);
+			Bitboard r = aux::setbit(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(r);
+			return board::fileMask(idx) & ((o - 2 * r) ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			o &= board::multiFileMask(idx);
+			Bitboard orev = _byteswap_uint64(o);
+			Bitboard rrev = _byteswap_uint64(idx);
+			return board::multiFileMask(idx) & ((o - 2 * idx) ^ _byteswap_uint64(orev - 2 * rrev));
+		}
+		else
+		{
+			return 0ULL;
+		}
 	}
 	
-	AttackMap hypqRank(Bitboard o, board::square idx);
+	template<typename T>
+	AttackMap hypqRank(Bitboard o, T idx)
+	{
+		// No bit reversal: map to file 0 and calculate file attacks
+		// before converting back to rank attacks
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			Bitboard vertical = _pext_u64(o, board::rankMask(idx));
+			vertical = _pdep_u64(vertical, board::fileMask(board::a1));
+			Bitboard attacks = hypqFile(vertical, static_cast<board::square>(8 * aux::file(idx)));
+			attacks = _pext_u64(attacks, board::fileMask(board::a1));
+			return _pdep_u64(attacks, board::rankMask(idx));
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			Bitboard vertical = _pext_u64(o, board::multiRankMask(idx));
+			vertical = _pdep_u64(vertical, board::fileMask(board::a1));
+			Bitboard attacks = hypqFile(vertical, static_cast<board::square>(8 * aux::file(_tzcnt_u64(idx))));
+			attacks = _pext_u64(attacks, board::fileMask(board::a1));
+			return _pdep_u64(attacks, board::multiRankMask(idx));
+		}
+		else
+		{
+			return 0ULL;
+		}
+	}
 
 	// move generation in a particular direction
 	template<typename T>
@@ -363,6 +420,11 @@ namespace movegen
 			diag ^= _blsi_u64(diag);
 			attacks |= hypqDiag(occ, sq) | hypqAntiDiag(occ, sq);
 		}
+		do
+		{
+			Bitboard lsb = _blsi_u64(diag);
+			attacks |= hypqDiag(occ, lsb) | hypqAntiDiag(occ, lsb);
+		} while (diag ^= lsb);
 		return attacks;
 	}
 

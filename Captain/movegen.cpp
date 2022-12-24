@@ -33,15 +33,4 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 namespace movegen
 {
 
-
-    AttackMap hypqRank(Bitboard o, board::square idx)
-    {
-        // No bit reversal: map to file 0 and calculate file attacks
-        // before converting back to rank attacks
-        Bitboard vertical = _pext_u64(o, board::rankMask(idx));
-        vertical = _pdep_u64(vertical, board::fileMask(board::a1));
-        Bitboard attacks = hypqFile(vertical, static_cast<board::square>(8 * aux::file(idx)));
-        attacks = _pext_u64(attacks, board::fileMask(board::a1));
-        return _pdep_u64(attacks, board::rankMask(idx));
-    }
 }
