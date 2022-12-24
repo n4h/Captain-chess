@@ -268,9 +268,22 @@ namespace movegen
 		}
 	}
 
-	constexpr AttackMap kingAttacks(board::square idx)
+	template<typename T>
+	constexpr AttackMap kingAttacks(T idx)
 	{
-		const Bitboard king = aux::setbit(idx);
+		Bitboard king;
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			king = aux::setbit(idx);
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			king = idx;
+		}
+		else
+		{
+			return 0ULL;
+		}
 
 		Bitboard n = (king << 8);
 		Bitboard s = (king >> 8);
@@ -284,10 +297,33 @@ namespace movegen
 		return n | s | e | w | nw | ne | sw | se;
 	}
 
-	constexpr AttackMap knightAttacks(board::square sq)
+	template<typename T>
+	constexpr AttackMap knightAttacks(T idx)
 	{
-		Bitboard knight = aux::setbit(sq);
-		return genKnightAttackSet(knight);
+		Bitboard knight;
+		if constexpr (std::is_same_v<T, board::square>)
+		{
+			knight = aux::setbit(idx);
+		}
+		else if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			knight = idx;
+		}
+		else
+		{
+			return 0ULL;
+		}
+		// n = north, s = south, etc.
+		Bitboard nnw = (knight << 15) & ~board::fileMask(board::h1);
+		Bitboard nne = (knight << 17) & ~board::fileMask(board::a1);
+		Bitboard nww = (knight << 6) & ~(board::fileMask(board::g1) | board::fileMask(board::h1));
+		Bitboard nee = (knight << 10) & ~(board::fileMask(board::b1) | board::fileMask(board::a1));
+
+		Bitboard ssw = (knight >> 17) & ~board::fileMask(board::h1);
+		Bitboard sse = (knight >> 15) & ~board::fileMask(board::a1);
+		Bitboard sww = (knight >> 10) & ~(board::fileMask(board::g1) | board::fileMask(board::h1));
+		Bitboard see = (knight >> 6) & ~(board::fileMask(board::b1) | board::fileMask(board::a1));
+		return nnw | nne | nww | nee | ssw | sse | sww | see;
 	}
 
 	// pawn moves/attacks are generated setwise
@@ -341,35 +377,6 @@ namespace movegen
 			attacks |= hypqFile(occ, sq) | hypqRank(occ, sq);
 		}
 		return attacks;
-	}
-
-	constexpr AttackMap genKnightAttackSet(Bitboard knight)
-	{
-		// n = north, s = south, etc.
-		Bitboard nnw = (knight << 15) & ~board::fileMask(board::h1);
-		Bitboard nne = (knight << 17) & ~board::fileMask(board::a1);
-		Bitboard nww = (knight << 6) & ~(board::fileMask(board::g1) | board::fileMask(board::h1));
-		Bitboard nee = (knight << 10) & ~(board::fileMask(board::b1) | board::fileMask(board::a1));
-
-		Bitboard ssw = (knight >> 17) & ~board::fileMask(board::h1);
-		Bitboard sse = (knight >> 15) & ~board::fileMask(board::a1);
-		Bitboard sww = (knight >> 10) & ~(board::fileMask(board::g1) | board::fileMask(board::h1));
-		Bitboard see = (knight >> 6) & ~(board::fileMask(board::b1) | board::fileMask(board::a1));
-		return nnw | nne | nww | nee | ssw | sse | sww | see;
-	}
-
-	constexpr AttackMap kingAttacksSet(Bitboard king)
-	{
-		Bitboard n = (king << 8);
-		Bitboard s = (king >> 8);
-		Bitboard w = (king >> 1) & ~board::fileMask(board::h1);
-		Bitboard e = (king << 1) & ~board::fileMask(board::a1);
-
-		Bitboard nw = (king << 7) & ~board::fileMask(board::h1);
-		Bitboard ne = (king << 9) & ~board::fileMask(board::a1);
-		Bitboard sw = (king >> 9) & ~board::fileMask(board::h1);
-		Bitboard se = (king >> 7) & ~board::fileMask(board::a1);
-		return n | s | e | w | nw | ne | sw | se;
 	}
 
 	constexpr Bitboard getAllPinnedPieces(Bitboard occ, Bitboard king, Bitboard diag, Bitboard orth)
