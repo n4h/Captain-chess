@@ -47,6 +47,7 @@ namespace movegen
 	// move generation is based on "Hyperbola Quintessence" algorithm
 	// https://www.chessprogramming.org/Hyperbola_Quintessence
 
+
 	template<typename T>
 	constexpr AttackMap hypqDiag(Bitboard o, T idx)
 	{
@@ -434,27 +435,67 @@ namespace movegen
 		return attacks;
 	}
 
+	constexpr Bitboard getOrthPinnedPieces(Bitboard occ, Bitboard king, Bitboard orth)
+	{
+		Bitboard pinned = 0;
+		AttackMap fileAttacks = 0;
+		AttackMap rankAttacks = 0;
+		Bitboard lsb = 0;
+		do
+		{
+			lsb = _blsi_u64(orth);
+			fileAttacks |= hypqFile(occ, lsb);
+			rankAttacks |= hypqRank(occ, lsb);
+		} while (orth ^= lsb);
+		pinned |= hypqFile(occ, king) & fileAttacks & occ;
+		pinned |= hypqRank(occ, king) & rankAttacks & occ;
+		return pinned;
+	}
+
+	constexpr Bitboard getDiagPinnedPieces(Bitboard occ, Bitboard king, Bitboard diag, Bitboard orth)
+	{
+
+	}
+
 	constexpr Bitboard getAllPinnedPieces(Bitboard occ, Bitboard king, Bitboard diag, Bitboard orth)
 	{
 		Bitboard pinned = 0;
-		pinned |= 
+		AttackMap diagAttacks = 0;
+		AttackMap antiDiagAttacks = 0;
+		AttackMap fileAttacks = 0;
+		AttackMap rankAttacks = 0;
+		Bitboard lsb = 0;
+		do
+		{
+			lsb = _blsi_u64(diag);
+			diagAttacks |= hypqDiag(occ, lsb);
+			antiDiagAttacks |= hypqAntiDiag(occ, lsb);
+		} while (diag ^= lsb);
+		pinned |= hypqDiag(occ, king) & diagAttacks & occ;
+		pinned |= hypqAntiDiag(occ, king) & antiDiagAttacks & occ;
+		do
+		{
+			lsb = _blsi_u64(orth);
+			fileAttacks |= hypqFile(occ, lsb);
+			rankAttacks |= hypqRank(occ, lsb);
+		} while (orth ^= lsb);
+		pinned |= hypqFile(occ, king) & fileAttacks & occ;
+		pinned |= hypqRank(occ, king) & rankAttacks & occ;
+		return pinned;
 	}
 
-	constexpr Bitboard isInCheck(const board::QBB& b) // UNDONE isInCheck
+	constexpr Bitboard isInCheck(const board::QBB& b) 
 	{
 		const Bitboard myKing = b.my(b.getKings());
-		unsigned long index = 0;
-		_BitScanForward64(&index, myKing);
-		board::square sq = static_cast<board::square>(index);
 		const Bitboard theirDiagSliders = b.their(b.getDiagonalSliders());
 		const Bitboard theirOrthSliders = b.their(b.getOrthogonalSliders());
 		const Bitboard theirPawns = b.their(b.getPawns());
 		const Bitboard theirKnights = b.their(b.getKnights());
 		const Bitboard occ = b.getOccupancy();
 
-		const AttackMap diagonal = hypqDiag(occ, sq) | hypqAntiDiag(occ, sq);
-		const AttackMap orthogonal = hypqFile(occ, sq) | hypqRank(occ, sq);
-		const AttackMap knights = knightAttacks(sq);
+		const AttackMap diagonal = hypqDiag(occ, myKing) | hypqAntiDiag(occ, myKing);
+		const AttackMap orthogonal = hypqFile(occ, myKing) | hypqRank(occ, myKing);
+		const AttackMap knights = knightAttacks(myKing);
 		const AttackMap pawns = pawnAttacksLeft(myKing) | pawnAttacksRight(myKing);
 
 		return (diagonal & theirDiagSliders)
@@ -467,34 +508,8 @@ namespace movegen
 	std::size_t genMoves(const board::QBB& b, std::array<board::Move, N>& ml)
 	{
 		std::size_t i = 0;
-		Bitboard occ = b.getOccupancy();
-		Bitboard mine = b.my(occ);
-		Bitboard pawns = b.getPawns();
-		Bitboard knights = b.getKnights();
-		Bitboard king = b.getKings();
-		Bitboard diagonalSliders = b.getDiagonalSliders();
-		Bitboard orthSliders = b.getOrthogonalSliders();
 
-		const Bitboard myKing = b.my(b.getKings());
-		unsigned long index = 0;
-		_BitScanForward64(&index, myKing);
-		board::square sq = static_cast<board::square>(index);
-
-		Bitboard DiagChecks = hypqDiag(occ, sq) & b.their(diagonalSliders);
-		Bitboard AntiDiagChecks = hypqAntiDiag(occ, sq) & b.their(diagonalSliders);
-
-		Bitboard Nchecks = hypqFileN(occ, sq) & b.their(orthSliders);
-		Bitboard Schecks = hypqFileS(occ, sq) & b.their(orthSliders);
-
-		Bitboard PchecksLeft = pawnAttacksLeft(myKing) & b.their(pawns);
-		Bitboard PchecksRight = pawnAttacksRight(myKing) & b.their(pawns);
-		Bitboard knightChecks = knightAttacks(sq) & b.their(knights);
-
-		Bitboard diagCheckers = DiagChecks | AntiDiagChecks;
-		Bitboard orthCheckers = Nchecks | Schecks | Echecks | Wchecks;
-		Bitboard pawnCheckers = PchecksLeft | PchecksRight;
-
-		const Bitboard checkers = diagCheckers | orthCheckers | knightChecks | pawnCheckers;
+		const Bitboard checkers = isInCheck(b);
 
 		if (!checkers)
 		{
@@ -506,13 +521,27 @@ namespace movegen
 		}
 		else // >1 checkers (double check)
 		{
-			board::Move m = sq;
-			AttackMap kingMoves = kingAttacks(sq);
-			kingMoves &= ~genDiagAttackSet(b.their(diagonalSliders));
-			kingMoves &= ~genOrthAttackSet(b.their(orthSliders));
-			kingMoves &= ~kingAttacks(b.their(king));
-			kingMoves &= ~genKnightAttackSet(b.their(knights));
-			kingMoves &= ~()
+			Bitboard myKing = b.my(b.getKings());
+			Bitboard occ = b.getOccupancy();
+			occ &= ~myKing; // remove king to generate X rays through king
+			
+			Bitboard attacks = genDiagAttackSet(occ, b.their(b.getDiagonalSliders()));
+			attacks |= genOrthAttackSet(occ, b.their(b.getOrthogonalSliders()));
+			attacks |= enemyPawnAttacksLeft(b.their(b.getPawns()));
+			attacks |= enemyPawnAttacksRight(b.their(b.getPawns()));
+			attacks |= knightAttacks(b.their(b.getKnights()));
+			attacks |= kingAttacks(b.their(b.getKings));
+
+			AttackMap dest = kingAttacks(myKing) & ~attacks;
+			board::Move m = _tzcnt_u64(myKing);
+			unsigned long index = 0;
+			while (_BitScanForward64(&index, dest))
+			{
+				dest ^= _blsi_u64(dest);
+				m |= index << 6;
+				ml[i++] = m;
+				m &= constants::fromMask;
+			}
 		}
 
 		return i;
