@@ -435,7 +435,7 @@ namespace board
 
 		constexpr Bitboard getEp() const noexcept
 		{
-			return epc & ~rankMask(a1) & ~rankMask(a8);
+			return epc & rankMask(a6);
 		}
 
 	private:
