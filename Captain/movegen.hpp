@@ -410,6 +410,14 @@ namespace movegen
 		return (pawns << 8);
 	}
 
+	constexpr Bitboard pawn2MovesUp(Bitboard pawns, Bitboard occ)
+	{
+		Bitboard empty = ~occ;
+		pawns &= board::rankMask(board::a2);
+		Bitboard upOnce = (pawns << 8) & empty;
+		return (upOnce << 8) & empty;
+	}
+
 	// generate attacks given a bitboard (as opposed to a square)
 	constexpr AttackMap genDiagAttackSet(Bitboard occ, Bitboard diag)
 	{
@@ -548,6 +556,20 @@ namespace movegen
 		return checkers;
 	}
 
+#define MOVEGEN_LOOP_ATTACKS(attackExpression) while (_BitScanForward64(&index, pieces))\
+{\
+	AttackMap pieceAttacks = attackExpression;\
+	pieces ^= _blsi_u64(pieces);\
+	m = index;\
+	while (_BitScanForward64(&index, pieceAttacks))\
+	{\
+		pieceAttacks ^= _blsi_u64(pieceAttacks);\
+		m |= index << constants::toMaskOffset;\
+		ml[i++] = m;\
+		m &= constants::fromMask;\
+	}\
+}
+
 	template<std::size_t N, bool qSearch = false>
 	std::size_t genMoves(const board::QBB& b, std::array<board::Move, N>& ml)
 	{
@@ -566,14 +588,34 @@ namespace movegen
 			Bitboard enemyDiag = b.their(b.getDiagonalSliders());
 			Bitboard enemyOrth = b.their(b.getOrthogonalSliders());
 			Bitboard pinned = getAllPinnedPieces(occ, myKing, enemyDiag, enemyOrth);
+
+			// rare: checker can be captured by en passant
+			enpChecker = (checkers << 8) & b.getEp();
+			
 			checkers |= getBetweenChecks(b, checkers);
+			
 			Bitboard attacks = genEnemyAttacks(occ & ~myKing, b);
 
-			Bitboard lsb = 0;
-			do
+			AttackMap dest = kingAttacks(myKing) & ~attacks & ~b.side;
+			board::Move m = _tzcnt_u64(myKing);
+			unsigned long index = 0;
+			while (_BitScanForward64(&index, dest))
 			{
-				lsb = _blsi_u64(checkers);
-			} while (checkers ^= lsb);
+				dest ^= _blsi_u64(dest);
+				m |= index << constants::toMaskOffset;
+				ml[i++] = m;
+				m &= constants::fromMask;
+			}
+
+			Bitboard pieces = b.my(b.getKnights()) & ~pinned;
+			MOVEGEN_LOOP_ATTACKS(knightAttacks(index) & checkers);
+
+			pieces = b.my(b.getDiagonalSliders()) & ~pinned;
+			MOVEGEN_LOOP_ATTACKS((hypqDiag(occ, index) | hypqAntiDiag(occ, index)) & checkers);
+
+			pieces = b.my(b.getOrthogonalSliders()) & ~pinned;
+			MOVEGEN_LOOP_ATTACKS((hypqFile(occ, index) | hypqRank(occ, index)) & checkers);
+
 
 		}
 		else // >1 checkers (double check)
@@ -598,5 +640,7 @@ namespace movegen
 
 		return i;
 	}
+
+#undef MOVEGEN_LOOP_ATTACKS
 }
 #endif
