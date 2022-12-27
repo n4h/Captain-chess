@@ -147,185 +147,6 @@ namespace movegen
 		}
 	}
 
-	// move generation in a particular direction
-	template<typename T>
-	constexpr AttackMap hypqDiagNE(Bitboard o, T idx)
-	{
-		if constexpr (std::is_same_v<T, board::square>)
-		{
-			o &= board::antiDiagMask(idx);
-			Bitboard r = aux::setbit(idx);
-			return board::antiDiagMask(idx) & (o ^ (o - 2 * r));
-		}
-		else if constexpr (std::is_same_v<T, Bitboard>)
-		{
-			o &= board::multiAntiDiagMask(idx);
-			return board::multiAntiDiagMask(idx) & (o ^ (o - 2 * idx));
-		}
-		else
-		{
-			return 0ULL;
-		}
-	}
-
-	template<typename T>
-	constexpr AttackMap hypqDiagSW(Bitboard o, T idx)
-	{
-		if constexpr (std::is_same_v<T, board::square>)
-		{
-			o &= board::antiDiagMask(idx);
-			Bitboard r = aux::setbit(idx);
-			Bitboard orev = _byteswap_uint64(o);
-			Bitboard rrev = _byteswap_uint64(r);
-			return board::antiDiagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
-		}
-		else if constexpr (std::is_same_v<T, Bitboard>)
-		{
-			o &= board::multiAntiDiagMask(idx);
-			Bitboard orev = _byteswap_uint64(o);
-			Bitboard rrev = _byteswap_uint64(idx);
-			return board::multiAntiDiagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
-		}
-		else
-		{
-			return 0ULL;
-		}
-	}
-
-	template<typename T>
-	constexpr AttackMap hypqDiagNW(Bitboard o, T idx)
-	{
-		if constexpr (std::is_same_v<T, board::square>)
-		{
-			o &= board::diagMask(idx);
-			Bitboard r = aux::setbit(idx);
-			return board::diagMask(idx) & (o ^ (o - 2 * r));
-		}
-		else if constexpr (std::is_same_v<T, Bitboard>)
-		{
-			o &= board::multiDiagMask(idx);
-			return board::multiDiagMask(idx) & (o ^ (o - 2 * idx));
-		}
-		else
-		{
-			return 0ULL;
-		}
-	}
-
-	template<typename T>
-	constexpr AttackMap hypqDiagSE(Bitboard o, T idx)
-	{
-		if constexpr (std::is_same_v<T, board::square>)
-		{
-			o &= board::diagMask(idx);
-			Bitboard r = aux::setbit(idx);
-			Bitboard orev = _byteswap_uint64(o);
-			Bitboard rrev = _byteswap_uint64(r);
-			return board::diagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
-		}
-		else if constexpr (std::is_same_v<T, Bitboard>)
-		{
-			o &= board::multiDiagMask(idx);
-			Bitboard orev = _byteswap_uint64(o);
-			Bitboard rrev = _byteswap_uint64(idx);
-			return board::multiDiagMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
-		}
-		else
-		{
-			return 0ULL;
-		}
-
-	}
-
-	template<typename T>
-	constexpr AttackMap hypqFileN(Bitboard o, T idx)
-	{
-		if constexpr (std::is_same_v<T, board::square>)
-		{
-			o &= board::fileMask(idx);
-			Bitboard r = aux::setbit(idx);
-			return board::fileMask(idx) & ((o - 2 * r) ^ o);
-		}
-		else if constexpr (std::is_same_v<T, Bitboard>)
-		{
-			o &= board::multiFileMask(idx);
-			return board::multiFileMask(idx) & ((o - 2 * idx) ^ o);
-		}
-		else
-		{
-			return 0ULL;
-		}
-	}
-
-	template<typename T>
-	constexpr AttackMap hypqFileS(Bitboard o, T idx)
-	{
-		if constexpr (std::is_same_v<T, board::square>)
-		{
-			o &= board::fileMask(idx);
-			Bitboard r = aux::setbit(idx);
-			Bitboard orev = _byteswap_uint64(o);
-			Bitboard rrev = _byteswap_uint64(r);
-			return board::fileMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
-		}
-		else if constexpr (std::is_same_v<T, Bitboard>)
-		{
-			o &= board::multiFileMask(idx);
-			Bitboard orev = _byteswap_uint64(o);
-			Bitboard rrev = _byteswap_uint64(idx);
-			return board::multiFileMask(idx) & (o ^ _byteswap_uint64(orev - 2 * rrev));
-		}
-		else
-		{
-			return 0ULL;
-		}
-	}
-
-	template<typename T>
-	constexpr AttackMap hypqRankE(Bitboard o, T idx)
-	{
-		if constexpr (std::is_same_v<T, board::square>)
-		{
-			o &= board::fileMask(idx);
-			Bitboard r = aux::setbit(idx);
-			return board::fileMask(idx) & ((o - 2 * r) ^ o);
-		}
-		else if constexpr (std::is_same_v<T, Bitboard>)
-		{
-			o &= board::fileMask(idx);
-			return board::fileMask(idx) & ((o - 2 * idx) ^ o);
-		}
-		else
-		{
-			return 0ULL;
-		}
-	}
-
-	template<typename T>
-	AttackMap hypqRankW(Bitboard o, T idx)
-	{
-		if constexpr (std::is_same_v<T, board::square>)
-		{
-			Bitboard vertical = _pext_u64(o, board::rankMask(idx));
-			vertical = _pdep_u64(vertical, board::fileMask(board::a1));
-			Bitboard attacks = hypqFileS(vertical, static_cast<board::square>(8 * aux::file(idx)));
-			attacks = _pext_u64(attacks, board::fileMask(board::a1));
-			return _pdep_u64(attacks, board::rankMask(idx));
-		}
-		else if constexpr (std::is_same_v<T, Bitboard>)
-		{
-			Bitboard vertical = _pext_u64(o, board::multiRankMask(idx));
-			vertical = _pdep_u64(vertical, board::fileMask(board::a1));
-			Bitboard attacks = hypqFileS(vertical, static_cast<board::square>(8 * aux::file(_tzcnt_u64(idx))));
-			attacks = _pext_u64(attacks, board::fileMask(board::a1));
-			return _pdep_u64(attacks, board::multiRankMask(idx));
-		}
-		else
-		{
-			return 0ULL;
-		}
-	}
-
 	template<typename T>
 	constexpr AttackMap kingAttacks(T idx)
 	{
@@ -609,17 +430,29 @@ namespace movegen
 		{
 			Bitboard occ = b.getOccupancy();
 			Bitboard myKing = b.my(b.getKings());
+			Bitboard orth = b.my(b.getOrthSliders());
+			Bitboard diag = b.my(b.getDiagSliders());
+			Bitboard knights = b.my(b.getKnights());
+			Bitboard pawns = b.my(b.getPawns());
 			AttackMap enemyAttacks = genEnemyAttacks(occ, b);
-			Bitboard horPinned = getHorPinnedPieces(occ, myKing, b.their(b.getOrthSliders()));
-			Bitboard vertPinned = getVertPinnedPieces(occ, myKing, b.their(b.getOrthSliders()));
-			Bitboard diagPinned = getDiagPinnedPieces(occ, myKing, b.their(b.getDiagSliders()));
-			Bitboard antiDiagPinned = getAntiDiagPinnedPieces(occ, myKing, b.their(b.getDiagSliders()));
-			Bitboard diagPinnedPawns = diagPinned & b.my(b.getPawns());
-			Bitboard antiDiagPinnedPawns = antiDiagPinned & b.my(b.getPawns());
-			horPinned &= b.my(b.getOrthSliders());
-			vertPinned &= b.my(b.getOrthSliders());
-			diagPinned &= b.my(b.getDiagSliders());
-			antiDiagPinned &= b.my(b.getDiagSliders());
+
+			Bitboard horPinned = getHorPinnedPieces(occ, myKing, b.their(b.getOrthSliders())) & b.side;
+			Bitboard vertPinned = getVertPinnedPieces(occ, myKing, b.their(b.getOrthSliders())) & b.side;
+			Bitboard diagPinned = getDiagPinnedPieces(occ, myKing, b.their(b.getDiagSliders())) & b.side;
+			Bitboard antiDiagPinned = getAntiDiagPinnedPieces(occ, myKing, b.their(b.getDiagSliders())) & b.side;
+			Bitboard vertPinnedPawns = vertPinned & pawns;
+			Bitboard diagPinnedPawns = diagPinned & pawns;
+			Bitboard antiDiagPinnedPawns = antiDiagPinned & pawns;
+
+			pawns &= ~(horPinned | antiDiagPinnedPawns | antiDiagPinnedPawns | vertPinnedPawns);
+			knights &= ~(horPinned | vertPinned | diagPinned | antiDiagPinned);
+			orth &= ~(diagPinned | antiDiagPinned);
+			diag &= ~(horPinned | vertPinned);
+
+			horPinned &= orth;
+			vertPinned &= orth;
+			diagPinned &= diag;
+			antiDiagPinned &= diag;
 
 			unsigned long index = 0;
 			board::Move m = 0;
@@ -628,6 +461,94 @@ namespace movegen
 			MOVEGEN_LOOP_ATTACKS(hypqRank(occ, index));
 			pieces = vertPinned;
 			MOVEGEN_LOOP_ATTACKS(hypqFile(occ, index));
+			pieces = diagPinned;
+			MOVEGEN_LOOP_ATTACKS(hypqDiag(occ, index));
+			pieces = antiDiagPinned;
+			MOVEGEN_LOOP_ATTACKS(hypqAntiDiag(occ, index));
+			pieces = antiDiagPinnedPawns;
+			AttackMap attackPinner = pawnAttacksRight(pieces) & occ;
+			AttackMap attackPinnerEP = pawnAttacksRight(pieces) & b.getEp();
+			AttackMap attackPinner8 = attackPinner & board::rankMask(board::a8);
+			attackPinner &= ~attackPinner8;
+			while (_BitScanForward64(&index, attackPinnerEP))
+			{
+				m = index << constants::toMaskOffset;
+				m |= constants::enPCap << constants::moveTypeOffset;
+				m |= index - 9; 
+				ml[i++] = m; 
+			}
+			MOVEGEN_LOOP_PAWN_MOVES(attackPinner, 9);
+			MOVEGEN_LOOP_PAWN_PROMOS(attackPinner8, 9);
+			pieces = diagPinnedPawns;
+			attackPinner = pawnAttacksLeft(pieces) & occ;
+			attackPinnerEP = pawnAttacksRight(pieces) & b.getEp();
+			AttackMap attackPinner8 = attackPinner & board::rankMask(board::a8);
+			attackPinner &= ~attackPinner8;
+			while (_BitScanForward64(&index, attackPinnerEP))
+			{
+				m = index << constants::toMaskOffset;
+				m |= constants::enPCap << constants::moveTypeOffset;
+				m |= index - 7;
+				ml[i++] = m;
+			}
+			MOVEGEN_LOOP_PAWN_MOVES(attackPinner, 7);
+			MOVEGEN_LOOP_PAWN_PROMOS(attackPinner8, 7);
+			pieces = vertPinnedPawns;
+			Bitboard movesUp = pawnMovesUp(pieces) & ~occ;
+			Bitboard twoMovesUp = pawn2MovesUp(pieces, occ);
+			MOVEGEN_LOOP_PAWN_MOVES(movesUp, 8);
+			MOVEGEN_LOOP_PAWN_MOVES(twoMovesUp, 16);
+
+			pieces = knights;
+			MOVEGEN_LOOP_ATTACKS(knightAttacks(index) & ~b.side);
+			pieces = orth;
+			MOVEGEN_LOOP_ATTACKS((hypqRank(occ, index) | hypqFile(occ, index)) & ~b.side);
+			pieces = diag;
+			MOVEGEN_LOOP_ATTACKS((hypqAntiDiag(occ, index) | hypqDiag(occ, index)) & ~b.side);
+			pieces = myKing;
+			MOVEGEN_LOOP_ATTACKS(kingAttacks(myKing) & ~enemyAttacks & ~b.side);
+			pieces = pawns;
+			Bitboard enpAttacks = enemyPawnAttacksLeft(b.getEp()) | enemyPawnAttacksRight(b.getEp());
+			enpAttacks &= pawns;
+			AttackMap leftAttacks = pawnAttacksLeft(pieces) & b.their(occ);
+			AttackMap leftAttacks8 = leftAttacks & board::rankMask(a8);
+			leftAttacks &= ~leftAttacks8;
+			AttackMap rightAttacks = enemyPawnAttacksRight(pieces) & b.their(occ);
+			AttackMap rightAttacks8 = rightAttacks & board::rankMask(board::a8);
+			rightAttacks &= ~rightAttacks8;
+			Bitboard movesUp = pawnMovesUp(pieces) & ~occ;
+			AttackMap movesUp8 = movesUp & board::rankMask(board::a8);
+			movesUp &= ~movesUp8;
+			Bitboard twoMovesUp = pawn2MovesUp(pieces, occ);
+			MOVEGEN_LOOP_PAWN_MOVES(twoMovesUp, 16);
+			MOVEGEN_LOOP_PAWN_MOVES(movesUp, 8);
+			MOVEGEN_LOOP_PAWN_MOVES(leftAttacks, 7);
+			MOVEGEN_LOOP_PAWN_MOVES(rightAttacks, 9);
+			MOVEGEN_LOOP_PAWN_PROMOS(leftAttacks8, 7);
+			MOVEGEN_LOOP_PAWN_PROMOS(rightAttacks8, 9);
+			MOVEGEN_LOOP_PAWN_PROMOS(movesUp8, 8);
+			unsigned enpsq = _tzcnt_u64(b.getEp());
+			while (_BitScanForward64(&index, enpAttacks))
+			{
+				m = index;
+				m |= enpsq << constants::toMaskOffset;
+				m |= constants::enPCap << constants::moveTypeOffset;
+				ml[i++] = m;
+			}
+			if (b.canCastleShort() && (enemyAttacks & aux::setbit(board::f1)) && (enemyAttacks & aux::setbit(board::g1)))
+			{
+				m = board::e1;
+				m |= board::g1 << constants::toMaskOffset;
+				m |= constants::KSCastle << constants::moveTypeOffset;
+				ml[i++] = m;
+			}
+			if (b.canCastleLong() && (enemyAttacks & aux::setbit(board::d1)) && (enemyAttacks & aux::setbit(board::c1)) && (enemyAttacks & aux::setbit(board::b1)))
+			{
+				m = board::e1;
+				m |= board::c1 << constants::toMaskOffset;
+				m |= constants::QSCastle << constants::moveTypeOffset;
+				ml[i++] = m;
+			}
 		}
 		else if (__popcnt64(checkers) == 1)
 		{

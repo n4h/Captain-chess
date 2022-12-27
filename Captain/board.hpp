@@ -94,11 +94,6 @@ namespace board
 		}
 	}
 
-	constexpr unsigned int getPieceValue(pieceType p)
-	{
-		return pieceValues[p];
-	}
-
 	constexpr unsigned int getPromoPiece(Move m)
 	{
 		switch (getMoveInfo<moveTypeMask>(m))
