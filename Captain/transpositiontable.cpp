@@ -109,50 +109,30 @@ namespace TTable
 		const auto to = board::getMoveInfo<constants::toMask>(m);
 		const auto fromBit = aux::setbit(from);
 		const auto toBit = aux::setbit(to);
-		const auto pieceType = b.getPieceType(fromBit);
-		const auto toPieceType = b.getPieceType(toBit);
+		const auto pieceType = b.getPieceType(static_cast<board::square>(from));
+		const auto toPieceType = b.getPieceType(static_cast<board::square>(to));
 		
-		if (b.wMoving)
-		{
-			update ^= this->wPieces[pieceType][from];
-			if (toPieceType != board::pieceType::none)
-				update ^= this->bPieces[toPieceType][to];
-		}
-		else
-		{
-			update ^= this->bPieces[pieceType][from];
-			if (toPieceType != board::pieceType::none)
-				update ^= this->wPieces[toPieceType][to];
-		}
+
+		update ^= this->bPieces[pieceType][from];
+		if (toPieceType != board::pieceType::none)
+			update ^= this->wPieces[toPieceType][to];
 
 		auto moveType = board::getMoveInfo<constants::moveTypeMask>(m);
 		switch (moveType)
 		{
 		case constants::QSCastle:
-			if (b.wMoving)
-				update ^= this->wPieces[board::rooks][board::a1] ^ this->wPieces[board::rooks][board::d1];
-			else
-				update ^= this->bPieces[board::rooks][board::a8] ^ this->bPieces[board::rooks][board::d8];
+			update ^= this->wPieces[board::rooks][board::a1] ^ this->wPieces[board::rooks][board::d1];
 			break;
 		case constants::KSCastle:
-			if (b.wMoving)
-				update ^= this->wPieces[board::rooks][board::h1] ^ this->wPieces[board::rooks][board::f1];
-			else
-				update ^= this->bPieces[board::rooks][board::h8] ^ this->bPieces[board::rooks][board::f8];
+			update ^= this->wPieces[board::rooks][board::h1] ^ this->wPieces[board::rooks][board::f1];
 			break;
 		case constants::enPCap:
-			if (b.wMoving)
-				update ^= this->bPieces[board::pawns][to - 8];
-			else
-				update ^= this->wPieces[board::pawns][to + 8];
+			update ^= this->bPieces[board::pawns][to - 8];
 		}
 
 		if (board::getPromoPiece(m) != board::king)
 		{
-			if (b.wMoving)
-				update ^= this->wPieces[board::getPromoPiece(m)][to];
-			else
-				update ^= this->bPieces[board::getPromoPiece(m)][to];
+			update ^= this->wPieces[board::getPromoPiece(m)][to];
 		}
 
 		return update;

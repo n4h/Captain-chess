@@ -520,8 +520,8 @@ namespace movegen
 
 	constexpr AttackMap genEnemyAttacks(Bitboard occ, const board::QBB& b)
 	{
-		Bitboard attacks = genDiagAttackSet(occ, b.their(b.getDiagonalSliders()));
-		attacks |= genOrthAttackSet(occ, b.their(b.getOrthogonalSliders()));
+		Bitboard attacks = genDiagAttackSet(occ, b.their(b.getDiagSliders()));
+		attacks |= genOrthAttackSet(occ, b.their(b.getOrthSliders()));
 		attacks |= enemyPawnAttacksLeft(b.their(b.getPawns()));
 		attacks |= enemyPawnAttacksRight(b.their(b.getPawns()));
 		attacks |= knightAttacks(b.their(b.getKnights()));
@@ -534,7 +534,7 @@ namespace movegen
 		const Bitboard myKing = b.my(b.getKings());
 		Bitboard occ = b.getOccupancy();
 
-		checkers &= b.getDiagonalSliders() | b.getOrthogonalSliders();
+		checkers &= b.getDiagSliders() | b.getOrthSliders();
 		Bitboard between = hypqDiag(occ, myKing) & hypqDiag(occ, checkers);
 		between |= hypqAntiDiag(occ, myKing) & hypqAntiDiag(occ, checkers);
 		between |= hypqFile(occ, myKing) & hypqFile(occ, checkers);
@@ -548,8 +548,8 @@ namespace movegen
 		Bitboard myKing = b.my(b.getKings());
 		Bitboard occ = b.getOccupancy();
 
-		Bitboard checkers = b.their(b.getDiagonalSliders()) & (hypqDiag(occ, myKing) | hypqAntiDiag(occ, myKing));
-		checkers |= b.their(b.getOrthogonalSliders()) & (hypqFile(occ, myKing) | hypqRank(occ, myKing));
+		Bitboard checkers = b.their(b.getDiagSliders()) & (hypqDiag(occ, myKing) | hypqAntiDiag(occ, myKing));
+		checkers |= b.their(b.getOrthSliders()) & (hypqFile(occ, myKing) | hypqRank(occ, myKing));
 		checkers |= b.their(b.getKnights()) & knightAttacks(myKing);
 		checkers |= b.their(b.getPawns()) & (pawnAttacksLeft(myKing) | pawnAttacksRight(myKing));
 
@@ -610,19 +610,31 @@ namespace movegen
 			Bitboard occ = b.getOccupancy();
 			Bitboard myKing = b.my(b.getKings());
 			AttackMap enemyAttacks = genEnemyAttacks(occ, b);
-			Bitboard horPinned = getHorPinnedPieces(occ, myKing, b.their(b.getOrthogonalSliders()));
-			Bitboard vertPinned = getVertPinnedPieces(occ, myKing, b.their(b.getOrthogonalSliders()));
-			Bitboard diagPinned = getDiagPinnedPieces(occ, myKing, b.their(b.getDiagonalSliders()));
-			Bitboard antiDiagPinned = getAntiDiagPinnedPieces(occ, myKing, b.their(b.getDiagonalSliders()));
-			horPinned &= b.my(b.getOrthogonalSliders());
-			vertPinned &= b.my(b.getOrthogonalSliders());
+			Bitboard horPinned = getHorPinnedPieces(occ, myKing, b.their(b.getOrthSliders()));
+			Bitboard vertPinned = getVertPinnedPieces(occ, myKing, b.their(b.getOrthSliders()));
+			Bitboard diagPinned = getDiagPinnedPieces(occ, myKing, b.their(b.getDiagSliders()));
+			Bitboard antiDiagPinned = getAntiDiagPinnedPieces(occ, myKing, b.their(b.getDiagSliders()));
+			Bitboard diagPinnedPawns = diagPinned & b.my(b.getPawns());
+			Bitboard antiDiagPinnedPawns = antiDiagPinned & b.my(b.getPawns());
+			horPinned &= b.my(b.getOrthSliders());
+			vertPinned &= b.my(b.getOrthSliders());
+			diagPinned &= b.my(b.getDiagSliders());
+			antiDiagPinned &= b.my(b.getDiagSliders());
+
+			unsigned long index = 0;
+			board::Move m = 0;
+
+			Bitboard pieces = horPinned;
+			MOVEGEN_LOOP_ATTACKS(hypqRank(occ, index));
+			pieces = vertPinned;
+			MOVEGEN_LOOP_ATTACKS(hypqFile(occ, index));
 		}
 		else if (__popcnt64(checkers) == 1)
 		{
 			Bitboard myKing = b.my(b.getKings());
 			Bitboard occ = b.getOccupancy();
-			Bitboard enemyDiag = b.their(b.getDiagonalSliders());
-			Bitboard enemyOrth = b.their(b.getOrthogonalSliders());
+			Bitboard enemyDiag = b.their(b.getDiagSliders());
+			Bitboard enemyOrth = b.their(b.getOrthSliders());
 			Bitboard pinned = getAllPinnedPieces(occ, myKing, enemyDiag, enemyOrth);
 
 			// rare: checker can be captured by en passant
@@ -646,10 +658,10 @@ namespace movegen
 			Bitboard pieces = b.my(b.getKnights()) & ~pinned;
 			MOVEGEN_LOOP_ATTACKS(knightAttacks(index) & checkers);
 
-			pieces = b.my(b.getDiagonalSliders()) & ~pinned;
+			pieces = b.my(b.getDiagSliders()) & ~pinned;
 			MOVEGEN_LOOP_ATTACKS((hypqDiag(occ, index) | hypqAntiDiag(occ, index)) & checkers);
 
-			pieces = b.my(b.getOrthogonalSliders()) & ~pinned;
+			pieces = b.my(b.getOrthSliders()) & ~pinned;
 			MOVEGEN_LOOP_ATTACKS((hypqFile(occ, index) | hypqRank(occ, index)) & checkers);
 
 			pieces = b.my(b.getPawns()) & ~pinned;
@@ -657,10 +669,10 @@ namespace movegen
 			AttackMap leftAttacks8 = leftAttacks & board::rankMask(a8);
 			leftAttacks &= ~leftAttacks8;
 			AttackMap rightAttacks = enemyPawnAttacksRight(pieces) & checkers & occ;
-			AttackMap rightAttacks8 = rightAttacks & board::rankMask(a8);
+			AttackMap rightAttacks8 = rightAttacks & board::rankMask(board::a8);
 			rightAttacks &= ~rightAttacks8;
 			Bitboard movesUp = pawnMovesUp(pieces) & checkers & ~occ;
-			AttackMap movesUp8 = movesUp & board::rankMask(a8);
+			AttackMap movesUp8 = movesUp & board::rankMask(board::a8);
 			movesUp &= ~movesUp8;
 			Bitboard twoMovesUp = pawn2MovesUp(pieces, occ) & checkers;
 			MOVEGEN_LOOP_PAWN_MOVES(twoMovesUp, 16);

@@ -423,12 +423,12 @@ namespace board
 			return b & ~side;
 		}
 
-		constexpr Bitboard getDiagonalSliders() const noexcept
+		constexpr Bitboard getDiagSliders() const noexcept
 		{
 			return pbq & ~getPawns();
 		}
 
-		constexpr Bitboard getOrthogonalSliders() const noexcept
+		constexpr Bitboard getOrthSliders() const noexcept
 		{
 			return rqk & ~getKings();
 		}
