@@ -100,6 +100,6 @@ namespace engine
 
 	std::int32_t Engine::alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth)
 	{
-		alpha; beta; depth; return 0;
+		return alpha + beta + depth;
 	}
 }

@@ -210,8 +210,8 @@ namespace board
 
 		const auto moveType = getMoveInfo<moveTypeMask>(m);
 
-		const __m256i promoUpdateRules = _mm256_set_epi32(0x01'00'0000U, 0x01'00'01'00U, 0x00'01'0000U, 0x00'01'01'00U, 0,0,0,0);
-		const std::uint32_t promoUpdate = _mm256_extract_epi32(promoUpdateRules, moveType) << file(toSq);
+		constexpr std::uint32_t promoUpdateRules[8] = { 0, 0, 0, 0, 0x00'01'01'00U, 0x00'01'0000U, 0x01'00'01'00U, 0x01'00'0000U };
+		std::uint32_t promoUpdate = promoUpdateRules[moveType] << file(toSq);
 
 		rqk ^= _bextr_u64(promoUpdate, 24U, 8U) << 56;
 		nbk ^= _bextr_u64(promoUpdate, 16U, 8U) << 56;

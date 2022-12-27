@@ -188,8 +188,11 @@ namespace uci
 	// we're assuming that the GUI isn't sending us garbage moves
 	board::Move uciMove2boardMove(const board::QBB& b, const std::string& uciMove)
 	{
-		b; uciMove;
+		
 		// TODO rewrite uciMove2boardMove
-		return 0;
+		if (uciMove == "a")
+			return 0;
+		else
+			return static_cast<board::Move>(b.epc);
 	}
 }

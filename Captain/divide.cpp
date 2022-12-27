@@ -65,4 +65,23 @@ namespace divide
 			return p.str();
 		}
 	}
+	std::size_t perftDivide(const board::QBB& b, std::size_t t)
+	{
+		std::array<board::Move, 256> moves;
+		std::size_t lastMove = movegen::genMoves(b, moves);
+		std::size_t total = 0;
+
+		board::QBB bcopy = b;
+		for (std::size_t i = 0; i != lastMove; ++i)
+		{
+			bcopy.makeMove(moves[i]);
+			perft::Perft p{ bcopy, t - 1 };
+			total += p.getResult();
+			std::cout << prettyPrintMove(moves[i]) << ": " << p.getResult() << std::endl;
+			p.reset();
+			bcopy = b;
+		}
+		std::cout << "total: " << total << std::endl;
+		return total;
+	}
 }

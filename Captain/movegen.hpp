@@ -24,8 +24,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #pragma intrinsic(__popcnt64)
 #pragma intrinsic(_BitScanForward64)
-#pragma intrinsic(_pdep_u64)
-#pragma intrinsic(_pext_u64)
 
 
 #include <cstdint>
@@ -49,7 +47,7 @@ namespace movegen
 
 
 	template<typename T>
-	constexpr AttackMap hypqDiag(Bitboard o, T idx)
+	AttackMap hypqDiag(Bitboard o, T idx)
 	{
 		if constexpr (std::is_same_v<T, board::square>)
 		{
@@ -73,7 +71,7 @@ namespace movegen
 	}
 
 	template<typename T>
-	constexpr AttackMap hypqAntiDiag(Bitboard o, T idx)
+	AttackMap hypqAntiDiag(Bitboard o, T idx)
 	{
 		if constexpr (std::is_same_v<T, board::square>)
 		{
@@ -97,7 +95,7 @@ namespace movegen
 	}
 
 	template<typename T>
-	constexpr AttackMap hypqFile(Bitboard o, T idx)
+	AttackMap hypqFile(Bitboard o, T idx)
 	{
 		if constexpr (std::is_same_v<T, board::square>)
 		{
@@ -148,7 +146,7 @@ namespace movegen
 	}
 
 	template<typename T>
-	constexpr AttackMap kingAttacks(T idx)
+	AttackMap kingAttacks(T idx)
 	{
 		Bitboard king;
 		if constexpr (std::is_same_v<T, board::square>)
@@ -177,7 +175,7 @@ namespace movegen
 	}
 
 	template<typename T>
-	constexpr AttackMap knightAttacks(T idx)
+	AttackMap knightAttacks(T idx)
 	{
 		Bitboard knight;
 		if constexpr (std::is_same_v<T, board::square>)

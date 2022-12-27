@@ -21,8 +21,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #pragma intrinsic(__popcnt64)
 #pragma intrinsic(_BitScanForward64)
-#pragma intrinsic(_pdep_u64)
-#pragma intrinsic(_pext_u64)
 
 #include <cstddef>
 

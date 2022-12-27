@@ -33,7 +33,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "movegen.hpp"
 #include "eval.hpp"
 #include "auxiliary.hpp"
-#include "searchFlags.hpp"
+#include "searchflags.hpp"
 #include "transpositiontable.hpp"
 
 #define MAKE_MOVE_AND_UPDATE_HASH(Move, Board, Null) hash ^= tt->incrementalUpdatePre(Move, Board, Null);\

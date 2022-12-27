@@ -39,6 +39,13 @@ int main()
 		ucip.UCIStartup();
 		ucip.UCIStartLoop();
 	}
+	else if (init == "perft")
+	{
+		board::QBB b{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
+		perft::Perft p{ b, 6 };
+		std::cout << p.getResult() << std::endl;
+		std::cin >> init;
+	}
 	
 	return 0;
 }
