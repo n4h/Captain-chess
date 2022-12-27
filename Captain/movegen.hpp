@@ -341,13 +341,13 @@ namespace movegen
 			board::Move m = 0;
 
 			Bitboard pieces = horPinned;
-			MOVEGEN_LOOP_ATTACKS(hypqRank(occ, index));
+			MOVEGEN_LOOP_ATTACKS(hypqRank(occ, static_cast<board::square>(index)));
 			pieces = vertPinned;
-			MOVEGEN_LOOP_ATTACKS(hypqFile(occ, index));
+			MOVEGEN_LOOP_ATTACKS(hypqFile(occ, static_cast<board::square>(index)));
 			pieces = diagPinned;
-			MOVEGEN_LOOP_ATTACKS(hypqDiag(occ, index));
+			MOVEGEN_LOOP_ATTACKS(hypqDiag(occ, static_cast<board::square>(index)));
 			pieces = antiDiagPinned;
-			MOVEGEN_LOOP_ATTACKS(hypqAntiDiag(occ, index));
+			MOVEGEN_LOOP_ATTACKS(hypqAntiDiag(occ, static_cast<board::square>(index)));
 			pieces = antiDiagPinnedPawns;
 			AttackMap attackPinner = pawnAttacksRight(pieces) & occ;
 			AttackMap attackPinnerEP = pawnAttacksRight(pieces) & b.getEp();
@@ -365,7 +365,7 @@ namespace movegen
 			pieces = diagPinnedPawns;
 			attackPinner = pawnAttacksLeft(pieces) & occ;
 			attackPinnerEP = pawnAttacksRight(pieces) & b.getEp();
-			AttackMap attackPinner8 = attackPinner & board::rankMask(board::a8);
+			attackPinner8 = attackPinner & board::rankMask(board::a8);
 			attackPinner &= ~attackPinner8;
 			while (_BitScanForward64(&index, attackPinnerEP))
 			{
@@ -383,11 +383,11 @@ namespace movegen
 			MOVEGEN_LOOP_PAWN_MOVES(twoMovesUp, 16);
 
 			pieces = knights;
-			MOVEGEN_LOOP_ATTACKS(knightAttacks(index) & ~b.side);
+			MOVEGEN_LOOP_ATTACKS(knightAttacks(static_cast<board::square>(index)) & ~b.side);
 			pieces = orth;
-			MOVEGEN_LOOP_ATTACKS((hypqRank(occ, index) | hypqFile(occ, index)) & ~b.side);
+			MOVEGEN_LOOP_ATTACKS((hypqRank(occ, static_cast<board::square>(index)) | hypqFile(occ, static_cast<board::square>(index))) & ~b.side);
 			pieces = diag;
-			MOVEGEN_LOOP_ATTACKS((hypqAntiDiag(occ, index) | hypqDiag(occ, index)) & ~b.side);
+			MOVEGEN_LOOP_ATTACKS((hypqAntiDiag(occ, static_cast<board::square>(index)) | hypqDiag(occ, static_cast<board::square>(index))) & ~b.side);
 			pieces = myKing;
 			MOVEGEN_LOOP_ATTACKS(kingAttacks(myKing) & ~enemyAttacks & ~b.side);
 			pieces = pawns;
@@ -399,10 +399,10 @@ namespace movegen
 			AttackMap rightAttacks = enemyPawnAttacksRight(pieces) & b.their(occ);
 			AttackMap rightAttacks8 = rightAttacks & board::rankMask(board::a8);
 			rightAttacks &= ~rightAttacks8;
-			Bitboard movesUp = pawnMovesUp(pieces) & ~occ;
+			movesUp = pawnMovesUp(pieces) & ~occ;
 			AttackMap movesUp8 = movesUp & board::rankMask(board::a8);
 			movesUp &= ~movesUp8;
-			Bitboard twoMovesUp = pawn2MovesUp(pieces, occ);
+			twoMovesUp = pawn2MovesUp(pieces, occ);
 			MOVEGEN_LOOP_PAWN_MOVES(twoMovesUp, 16);
 			MOVEGEN_LOOP_PAWN_MOVES(movesUp, 8);
 			MOVEGEN_LOOP_PAWN_MOVES(leftAttacks, 7);
@@ -410,7 +410,7 @@ namespace movegen
 			MOVEGEN_LOOP_PAWN_PROMOS(leftAttacks8, 7);
 			MOVEGEN_LOOP_PAWN_PROMOS(rightAttacks8, 9);
 			MOVEGEN_LOOP_PAWN_PROMOS(movesUp8, 8);
-			unsigned enpsq = _tzcnt_u64(b.getEp());
+			auto enpsq = _tzcnt_u64(b.getEp());
 			while (_BitScanForward64(&index, enpAttacks))
 			{
 				m = index;
@@ -449,7 +449,7 @@ namespace movegen
 			Bitboard attacks = genEnemyAttacks(occ & ~myKing, b);
 
 			AttackMap dest = kingAttacks(myKing) & ~attacks & ~b.side;
-			board::Move m = _tzcnt_u64(myKing);
+			board::Move m = static_cast<board::Move>(_tzcnt_u64(myKing));
 			unsigned long index = 0;
 			while (_BitScanForward64(&index, dest))
 			{
@@ -460,13 +460,13 @@ namespace movegen
 			}
 
 			Bitboard pieces = b.my(b.getKnights()) & ~pinned;
-			MOVEGEN_LOOP_ATTACKS(knightAttacks(index) & checkers);
+			MOVEGEN_LOOP_ATTACKS(knightAttacks(static_cast<board::square>(index)) & checkers);
 
 			pieces = b.my(b.getDiagSliders()) & ~pinned;
-			MOVEGEN_LOOP_ATTACKS((hypqDiag(occ, index) | hypqAntiDiag(occ, index)) & checkers);
+			MOVEGEN_LOOP_ATTACKS((hypqDiag(occ, static_cast<board::square>(index)) | hypqAntiDiag(occ, static_cast<board::square>(index))) & checkers);
 
 			pieces = b.my(b.getOrthSliders()) & ~pinned;
-			MOVEGEN_LOOP_ATTACKS((hypqFile(occ, index) | hypqRank(occ, index)) & checkers);
+			MOVEGEN_LOOP_ATTACKS((hypqFile(occ, static_cast<board::square>(index)) | hypqRank(occ, static_cast<board::square>(index))) & checkers);
 
 			pieces = b.my(b.getPawns()) & ~pinned;
 			AttackMap leftAttacks = pawnAttacksLeft(pieces) & checkers & occ;
@@ -489,7 +489,7 @@ namespace movegen
 
 			AttackMap enpCheckerAttacks = enemyPawnAttacksLeft(enpChecker) | enemyPawnAttacksRight(enpChecker);
 			enpCheckerAttacks &= b.my(b.getPawns());
-			unsigned enpsq = _tzcnt_u64(enpChecker);
+			auto enpsq = _tzcnt_u64(enpChecker);
 			while (_BitScanForward64(&index, enpCheckerAttacks))
 			{
 				m = index;
@@ -507,7 +507,7 @@ namespace movegen
 			AttackMap attacks = genEnemyAttacks(occ, b);
 
 			AttackMap dest = kingAttacks(myKing) & ~attacks & ~b.side;
-			board::Move m = _tzcnt_u64(myKing);
+			board::Move m = static_cast<board::Move>(_tzcnt_u64(myKing));
 			unsigned long index = 0;
 			while (_BitScanForward64(&index, dest))
 			{

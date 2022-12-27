@@ -95,4 +95,11 @@ namespace engine
 	{
 		
 	}
+
+	// TODO rewrite alpha beta search
+
+	std::int32_t Engine::alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth)
+	{
+		alpha; beta; depth; return 0;
+	}
 }

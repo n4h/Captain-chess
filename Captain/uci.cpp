@@ -69,7 +69,6 @@ namespace uci
 				UCIStopCommand();
 				if (!initialized)
 				{
-					movegen::initAttacks();
 					e.setTTable(&tt);
 					initialized = true;
 				}
@@ -94,7 +93,6 @@ namespace uci
 	{
 		if (!initialized)
 		{
-			movegen::initAttacks();
 			e.setTTable(&tt);
 			initialized = true;
 		}
@@ -102,26 +100,26 @@ namespace uci
 
 		if (command[1] == "startpos")
 		{
-			b = board::Board{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
+			b = board::QBB{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
 			if (command.size() >= 3 && command[2] == "moves")
 			{
 				for (std::size_t i = 3; i < command.size(); ++i)
 				{
-					b.playMoves({ uciMove2boardMove(b, command[i]) });
+					// TODO playMoves on board (UCI)
 				}
 			}
 		}
 		else if (command[1] == "fen" && command.size() >= 8)
 		{
 			// FEN string contains 6 space separated fields
-			b = board::Board{command[2] + " " + command[3] + " " + command[4] + " " + command[5] + " "
+			b = board::QBB{command[2] + " " + command[3] + " " + command[4] + " " + command[5] + " "
 			 + command[6] + " " + command[7]};
 
 			if (command.size() >= 9 && command[8] == "moves")
 			{
 				for (std::size_t i = 9; i < command.size(); ++i)
 				{
-					b.playMoves({ uciMove2boardMove(b, command[i]) });
+					// TODO play moves on board (UCI)
 				}
 			}
 		}
@@ -188,77 +186,10 @@ namespace uci
 	}
 
 	// we're assuming that the GUI isn't sending us garbage moves
-	// such as a pawn on the 6th rank moving to the 3rd rank.
-	// If the GUI is sending us garbage moves, there is no really
-	// good way to deal with it - either the GUI is buggy, or 
-	// the we are unsynchronized with the GUI, in which case we
-	// will be re-synchronized upon the next position command
 	board::Move uciMove2boardMove(const board::QBB& b, const std::string& uciMove)
 	{
-		if (!aux::isMove(uciMove))
-			return 0;
-
-		board::Move m = 0;
-
-		const auto fromIndex = aux::index((unsigned)(uciMove[1] - '0') - 1U, aux::fileNumber(uciMove[0]));
-		const auto toIndex = aux::index((unsigned)(uciMove[3] - '0') - 1U, aux::fileNumber(uciMove[2]));
-		const auto from = aux::setbit(fromIndex);
-		const auto to = aux::setbit(toIndex);
-		const auto fromPieceType = b.getPieceType(from);
-		const auto toPieceType = b.getPieceType(to);
-
-		m |= fromIndex;
-		m |= toIndex << constants::toMaskOffset;
-
-		// Promo moves
-		if (uciMove.size() >= 5 && aux::isPiece(uciMove[4]))
-		{
-			board::pieceType promoType = board::char2pieceType(uciMove[4]);
-
-			m |= board::getPromoType(promoType, toPieceType);
-			return m;
-		}
-
-		// pawn moves
-		if (fromPieceType == board::pawns)
-		{
-			if (aux::rank(fromIndex) == 1 || aux::rank(fromIndex) == 6)
-			{
-				if (aux::rank(toIndex) == 3 || aux::rank(toIndex) == 4)
-				{
-					m |= constants::dblPawnMove;
-					return m;
-				}
-			}
-			if (to == b.epLoc)
-			{
-				m |= constants::enPCap;
-				return m;
-			}
-			m |= board::getCapType(toPieceType);
-			return m;
-		}
-
-		// king moves
-		if (fromPieceType == board::king)
-		{
-			if ((fromIndex == board::square::e1 && toIndex == board::square::g1)
-				|| (fromIndex == board::square::e8 && toIndex == board::square::g8))
-			{
-				m |= constants::KSCastle;
-				return m;
-			}
-			if ((fromIndex == board::square::e1 && toIndex == board::square::c1)
-				|| (fromIndex == board::square::e8 && toIndex == board::square::c8))
-			{
-				m |= constants::QSCastle;
-				return m;
-			}
-			m |= board::getCapType(toPieceType);
-			return m;
-		}
-
-		m |= board::getCapType(toPieceType);
-		return m;
+		b; uciMove;
+		// TODO rewrite uciMove2boardMove
+		return 0;
 	}
 }

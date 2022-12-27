@@ -28,26 +28,26 @@ namespace perft
 
 	Perft::Perft(board::QBB& b, std::size_t t)
 	{
-		perft(b, t, (std::size_t)0);
+		perft(b, t);
 	}
 
-	void Perft::perft(const board::QBB& b, std::size_t t, std::size_t firstMove)
+	void Perft::perft(const board::QBB& b, std::size_t t)
 	{
 		if (t-- == 0)
 		{
 			++perftResult;
 			return;
 		}
-
-		const std::size_t j = movegen::genMoves(b, moveList, firstMove);
+		std::array<board::Move, 218> moveList;
+		const std::size_t j = movegen::genMoves(b, moveList);
 
 		board::QBB bcopy = b;
 
-		for (std::size_t k = firstMove; k != j; ++k)
+		for (std::size_t k = 0; k != j; ++k)
 		{
 			bcopy.makeMove(moveList[k]);
 
-			perft(bcopy, t, j);
+			perft(bcopy, t);
 			bcopy = b;
 		}
 	}

@@ -31,14 +31,13 @@ namespace perft
 	class Perft
 	{
 	public:
-		void perft(const board::QBB& b, std::size_t t, std::size_t firstMove);
+		void perft(const board::QBB& b, std::size_t t);
 		std::size_t getResult();
 		void reset();
 		Perft();
 		Perft(board::QBB& b, std::size_t t);
 	private:
 		std::size_t perftResult = 0;
-		std::array<board::Move, 1024> moveList;
 
 	};
 }

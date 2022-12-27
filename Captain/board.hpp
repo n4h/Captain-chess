@@ -133,10 +133,10 @@ namespace board
 	{
 		// TODO make a switch statement
 		if (promoPiece == queens) return queenPromo;
-		if (promoPiece == rooks) return rookPromo;
-		if (promoPiece == bishops) return bishopPromo;
-		if (promoPiece == knights) return knightPromo;
-		return QMove;
+		else if (promoPiece == rooks) return rookPromo;
+		else if (promoPiece == bishops) return bishopPromo;
+		else if (promoPiece == knights) return knightPromo;
+		else return QMove;
 	}
 
 	std::tuple<bool, unsigned int> makeSquare(const char i);
@@ -356,6 +356,7 @@ namespace board
 		// starting square's bit if and only if the respective piece
 		// has never moved
 		std::uint64_t epc = 0;
+		QBB() {}
 		QBB(const std::string&);
 		
 		

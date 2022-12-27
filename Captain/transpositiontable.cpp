@@ -103,12 +103,12 @@ namespace TTable
 	// TODO hash table update
 	std::uint64_t TTable::incrementalUpdatePre(board::Move m, const board::QBB& b, bool nullMove)
 	{
-		m; b; nullMove;
+		m; b; nullMove; return 0;
 	}
 
 	std::uint64_t TTable::incrementalUpdatePost(board::Move m, const board::QBB& b, bool nullMove)
 	{
-		m; b; nullMove;
+		m; b; nullMove; return 0;
 	}
 
 }
