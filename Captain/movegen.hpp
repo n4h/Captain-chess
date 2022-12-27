@@ -556,6 +556,10 @@ namespace movegen
 		return checkers;
 	}
 
+	// macros refer to the following variables:
+	// unsigned long index
+	// board::Move m
+	// Bitboard pieces
 #define MOVEGEN_LOOP_ATTACKS(attackExpression) while (_BitScanForward64(&index, pieces))\
 {\
 	AttackMap pieceAttacks = attackExpression;\
@@ -570,6 +574,30 @@ namespace movegen
 	}\
 }
 
+#define MOVEGEN_LOOP_PAWN_MOVES(dest, offset) while (_BitScanForward64(&index, dest))\
+{\
+	m = index << constants::toMaskOffset;\
+	m |= index - offset;\
+	ml[i++] = m;\
+}
+
+#define MOVEGEN_LOOP_PAWN_PROMOS(dest, offset) while (_BitScanForward64(&index, dest))\
+{\
+	m = index << constants::toMaskOffset;\
+	m |= index - offset;\
+	m |= constants::queenPromo << constants::moveTypeOffset;\
+	ml[i++] = m;\
+	m &= constants::fromMask | constants::toMask;\
+	m |= constants::knightPromo << constants::moveTypeOffset;\
+	ml[i++] = m;\
+	m &= constants::fromMask | constants::toMask;\
+	m |= constants::rookPromo << constants::moveTypeOffset;\
+	ml[i++] = m;\
+	m &= constants::fromMask | constants::toMask;\
+	m |= constants::bishopPromo << constants::moveTypeOffset;\
+	ml[i++] = m;\
+}
+
 	template<std::size_t N, bool qSearch = false>
 	std::size_t genMoves(const board::QBB& b, std::array<board::Move, N>& ml)
 	{
@@ -579,7 +607,15 @@ namespace movegen
 
 		if (!checkers)
 		{
-			
+			Bitboard occ = b.getOccupancy();
+			Bitboard myKing = b.my(b.getKings());
+			AttackMap enemyAttacks = genEnemyAttacks(occ, b);
+			Bitboard horPinned = getHorPinnedPieces(occ, myKing, b.their(b.getOrthogonalSliders()));
+			Bitboard vertPinned = getVertPinnedPieces(occ, myKing, b.their(b.getOrthogonalSliders()));
+			Bitboard diagPinned = getDiagPinnedPieces(occ, myKing, b.their(b.getDiagonalSliders()));
+			Bitboard antiDiagPinned = getAntiDiagPinnedPieces(occ, myKing, b.their(b.getDiagonalSliders()));
+			horPinned &= b.my(b.getOrthogonalSliders());
+			vertPinned &= b.my(b.getOrthogonalSliders());
 		}
 		else if (__popcnt64(checkers) == 1)
 		{
@@ -590,7 +626,7 @@ namespace movegen
 			Bitboard pinned = getAllPinnedPieces(occ, myKing, enemyDiag, enemyOrth);
 
 			// rare: checker can be captured by en passant
-			enpChecker = (checkers << 8) & b.getEp();
+			Bitboard enpChecker = (checkers << 8) & b.getEp();
 			
 			checkers |= getBetweenChecks(b, checkers);
 			
@@ -616,7 +652,35 @@ namespace movegen
 			pieces = b.my(b.getOrthogonalSliders()) & ~pinned;
 			MOVEGEN_LOOP_ATTACKS((hypqFile(occ, index) | hypqRank(occ, index)) & checkers);
 
+			pieces = b.my(b.getPawns()) & ~pinned;
+			AttackMap leftAttacks = pawnAttacksLeft(pieces) & checkers & occ;
+			AttackMap leftAttacks8 = leftAttacks & board::rankMask(a8);
+			leftAttacks &= ~leftAttacks8;
+			AttackMap rightAttacks = enemyPawnAttacksRight(pieces) & checkers & occ;
+			AttackMap rightAttacks8 = rightAttacks & board::rankMask(a8);
+			rightAttacks &= ~rightAttacks8;
+			Bitboard movesUp = pawnMovesUp(pieces) & checkers & ~occ;
+			AttackMap movesUp8 = movesUp & board::rankMask(a8);
+			movesUp &= ~movesUp8;
+			Bitboard twoMovesUp = pawn2MovesUp(pieces, occ) & checkers;
+			MOVEGEN_LOOP_PAWN_MOVES(twoMovesUp, 16);
+			MOVEGEN_LOOP_PAWN_MOVES(movesUp, 8);
+			MOVEGEN_LOOP_PAWN_MOVES(leftAttacks, 7);
+			MOVEGEN_LOOP_PAWN_MOVES(rightAttacks, 9);
+			MOVEGEN_LOOP_PAWN_PROMOS(leftAttacks8, 7);
+			MOVEGEN_LOOP_PAWN_PROMOS(rightAttacks8, 9);
+			MOVEGEN_LOOP_PAWN_PROMOS(movesUp8, 8);
 
+			AttackMap enpCheckerAttacks = enemyPawnAttacksLeft(enpChecker) | enemyPawnAttacksRight(enpChecker);
+			enpCheckerAttacks &= b.my(b.getPawns());
+			unsigned enpsq = _tzcnt_u64(enpChecker);
+			while (_BitScanForward64(&index, enpCheckerAttacks))
+			{
+				m = index;
+				m |= enpsq << constants::toMaskOffset;
+				m |= constants::enPCap << constants::moveTypeOffset;
+				ml[i++] = m;
+			}
 		}
 		else // >1 checkers (double check)
 		{
