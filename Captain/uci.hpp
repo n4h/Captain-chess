@@ -49,7 +49,7 @@ namespace uci
 		std::string UCIName = "Captain";
 		std::string UCIAuthor = "Narbeh Mouradian";
 		bool initialized = false;
-		board::Board b;
+		board::QBB b;
 		engine::Engine e;
 		TTable::TTable tt;
 		std::future<void> engineResult;
@@ -58,7 +58,7 @@ namespace uci
 		friend class engine::Engine;
 	};
 
-	board::Move uciMove2boardMove(const board::Board&, const std::string&);
+	board::Move uciMove2boardMove(const board::QBB&, const std::string&);
 }
 
 

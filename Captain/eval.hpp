@@ -126,24 +126,24 @@ namespace eval
 	{
 		std::int32_t totalW = 0;
 
-		totalW += computeMaterialValue(b.wPieces[board::pawns], PSQTpawnw);
-		totalW += computeMaterialValue(b.wPieces[board::knights], PSQTknight);
-		totalW += computeMaterialValue(b.wPieces[board::bishops], PSQTbishop);
-		totalW += computeMaterialValue(b.wPieces[board::rooks], PSQTrookw);
-		totalW += computeMaterialValue(b.wPieces[board::queens], PSQTqueen);
+		totalW += computeMaterialValue(b.my(b.getPawns()), PSQTpawnw);
+		totalW += computeMaterialValue(b.my(b.getKnights()), PSQTknight);
+		totalW += computeMaterialValue(b.my(b.getBishops()), PSQTbishop);
+		totalW += computeMaterialValue(b.my(b.getRooks()), PSQTrookw);
+		totalW += computeMaterialValue(b.my(b.getQueens()), PSQTqueen);
 
 		std::int32_t totalB = 0;
 
-		totalB += computeMaterialValue(b.bPieces[board::pawns], PSQTpawnb);
-		totalB += computeMaterialValue(b.bPieces[board::knights], PSQTknight);
-		totalB += computeMaterialValue(b.bPieces[board::bishops], PSQTbishop);
-		totalB += computeMaterialValue(b.bPieces[board::rooks], PSQTrookb);
-		totalB += computeMaterialValue(b.bPieces[board::queens], PSQTqueen);
+		totalB += computeMaterialValue(b.their(b.getPawns()), PSQTpawnb);
+		totalB += computeMaterialValue(b.their(b.getKnights()), PSQTknight);
+		totalB += computeMaterialValue(b.their(b.getBishops()), PSQTbishop);
+		totalB += computeMaterialValue(b.their(b.getRooks()), PSQTrookb);
+		totalB += computeMaterialValue(b.their(b.getQueens()), PSQTqueen);
 
 		if (totalW + totalB > 3000) // not in endgame
 		{
-			totalW += computeMaterialValue(b.wPieces[board::king], PSQTking);
-			totalB += computeMaterialValue(b.bPieces[board::king], PSQTking);
+			totalW += computeMaterialValue(b.my(b.getKings()), PSQTking);
+			totalB += computeMaterialValue(b.their(b.getKings()), PSQTking);
 		}
 
 		std::int32_t eval = totalW - totalB;

@@ -193,12 +193,12 @@ namespace uci
 	// good way to deal with it - either the GUI is buggy, or 
 	// the we are unsynchronized with the GUI, in which case we
 	// will be re-synchronized upon the next position command
-	board::Move uciMove2boardMove(const board::Board& b, const std::string& uciMove)
+	board::Move uciMove2boardMove(const board::QBB& b, const std::string& uciMove)
 	{
 		if (!aux::isMove(uciMove))
 			return 0;
 
-		board::Move m = b.getHeading();
+		board::Move m = 0;
 
 		const auto fromIndex = aux::index((unsigned)(uciMove[1] - '0') - 1U, aux::fileNumber(uciMove[0]));
 		const auto toIndex = aux::index((unsigned)(uciMove[3] - '0') - 1U, aux::fileNumber(uciMove[2]));

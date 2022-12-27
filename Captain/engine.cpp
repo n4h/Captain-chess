@@ -60,50 +60,21 @@ namespace engine
 		return oss.str();
 	}
 
-	void Engine::playBestMove(const board::Board& bCopy, std::chrono::time_point<std::chrono::steady_clock> s)
+	void Engine::playBestMove(const board::QBB& bCopy, std::chrono::time_point<std::chrono::steady_clock> s)
 	{
+		// TODO time management
 		searchStart = s;
-		engineW = bCopy.wMoving;
+		//engineW = bCopy.wMoving;
 		board::Move m = 0;
 		currIDdepth = 0;
 		b = bCopy;
-		
-		if (b.currMove <= 40)
-		{
-			auto movesLeft = 40 - b.currMove + 1;
-
-			if (engineW)
-			{
-				moveTime = std::chrono::duration_cast<std::chrono::milliseconds>(0.7 * settings.winc + settings.wmsec / movesLeft);
-				moveTime = std::min(moveTime, std::chrono::duration_cast<std::chrono::milliseconds>(0.95 * settings.wmsec));
-			}
-			else
-			{
-				moveTime = std::chrono::duration_cast<std::chrono::milliseconds>(0.7 * settings.binc + settings.bmsec / movesLeft);
-				moveTime = std::min(moveTime, std::chrono::duration_cast<std::chrono::milliseconds>(0.95 * settings.bmsec));
-			}
-		}
-		else
-		{
-			if (engineW)
-				moveTime = std::chrono::duration_cast<std::chrono::milliseconds>(settings.winc + 0.1 * settings.wmsec);
-			else
-				moveTime = std::chrono::duration_cast<std::chrono::milliseconds>(settings.binc + 0.1 * settings.bmsec);
-		}
 
 		nodes = 0;
 		if (tt != nullptr)
 			initialHash();
 		else
 			hash = 0;
-		if (b.wMoving)
-		{
-			m = rootSearch<true>();
-		}
-		else
-		{
-			m = rootSearch<false>();
-		}
+		// TODO call rootSearch
 
 		sync_cout << "bestmove " << move2uciFormat(m) << sync_endl;
 		searchFlags::searching.clear();
@@ -122,42 +93,6 @@ namespace engine
 	}
 	void Engine::initialHash()
 	{
-		hash = 0;
-
-		if (b.wMoving)
-			hash ^= tt->wToMove;
-
-		if (b.flags & board::Board::wkCastleFlagMask)
-			hash ^= tt->castling_first[0];
-		if (b.flags & board::Board::wqCastleFlagMask)
-			hash ^= tt->castling_first[1];
-		if (b.flags & board::Board::bkCastleFlagMask)
-			hash ^= tt->castling_first[2];
-		if (b.flags & board::Board::bqCastleFlagMask)
-			hash ^= tt->castling_first[3];
-
-		if (b.epLoc)
-		{
-			unsigned long index;
-			_BitScanForward64(&index, b.epLoc);
-			hash ^= tt->enPassant[aux::file(index)];
-		}
-
-		for (std::size_t i = 0; i != 6; ++i)
-		{
-			board::Bitboard wb = b.wPieces[i];
-			board::Bitboard bb = b.bPieces[i];
-			unsigned long index;
-			while (_BitScanForward64(&index, wb))
-			{
-				wb ^= aux::setbit(index);
-				hash ^= tt->wPieces[i][index];
-			}
-			while (_BitScanForward64(&index, bb))
-			{
-				bb ^= aux::setbit(index);
-				hash ^= tt->bPieces[i][index];
-			}
-		}
+		
 	}
 }

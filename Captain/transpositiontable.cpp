@@ -100,63 +100,15 @@ namespace TTable
 		}
 	}
 
+	// TODO hash table update
 	std::uint64_t TTable::incrementalUpdatePre(board::Move m, const board::QBB& b, bool nullMove)
 	{
-		std::uint64_t update = this->wToMove;
-		if (nullMove)
-			return update;
-		const auto from = board::getMoveInfo<constants::fromMask>(m);
-		const auto to = board::getMoveInfo<constants::toMask>(m);
-		const auto fromBit = aux::setbit(from);
-		const auto toBit = aux::setbit(to);
-		const auto pieceType = b.getPieceType(static_cast<board::square>(from));
-		const auto toPieceType = b.getPieceType(static_cast<board::square>(to));
-		
-
-		update ^= this->bPieces[pieceType][from];
-		if (toPieceType != board::pieceType::none)
-			update ^= this->wPieces[toPieceType][to];
-
-		auto moveType = board::getMoveInfo<constants::moveTypeMask>(m);
-		switch (moveType)
-		{
-		case constants::QSCastle:
-			update ^= this->wPieces[board::rooks][board::a1] ^ this->wPieces[board::rooks][board::d1];
-			break;
-		case constants::KSCastle:
-			update ^= this->wPieces[board::rooks][board::h1] ^ this->wPieces[board::rooks][board::f1];
-			break;
-		case constants::enPCap:
-			update ^= this->bPieces[board::pawns][to - 8];
-		}
-
-		if (board::getPromoPiece(m) != board::king)
-		{
-			update ^= this->wPieces[board::getPromoPiece(m)][to];
-		}
-
-		return update;
+		m; b; nullMove;
 	}
 
 	std::uint64_t TTable::incrementalUpdatePost(board::Move m, const board::QBB& b, bool nullMove)
 	{
-		const auto mcastling = (board::getMoveInfo<constants::castleFlagMask>(m) >> constants::castleFlagsOffset);
-		const auto bcastling = (b.flags & 0b1111000000U) >> 6;
-		auto update = 0;
-		update ^= this->castling[mcastling ^ bcastling];
-
-		if (board::getMoveInfo<constants::enPExistsMask>(m))
-			update ^= this->enPassant[board::getMoveInfo<constants::enPFileMask>(m)];
-		if (nullMove)
-			return update; // null move does not introduce new en passant square
-
-		unsigned long index;
-		if (_BitScanForward64(&index, b.epLoc))
-		{
-			update ^= this->enPassant[aux::file(index)];
-		}
-
-		return update;
+		m; b; nullMove;
 	}
 
 }
