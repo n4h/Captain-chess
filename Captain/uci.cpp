@@ -32,6 +32,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "movegen.hpp"
 #include "auxiliary.hpp"
 #include "constants.hpp"
+#include "divide.hpp"
 
 namespace uci
 {
@@ -97,10 +98,10 @@ namespace uci
 			initialized = true;
 		}
 		e.setTTable(&tt);
-
 		if (command[1] == "startpos")
 		{
-			b = board::QBB{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
+			
+			b = board::QBB{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", ebi};
 			if (command.size() >= 3 && command[2] == "moves")
 			{
 				for (std::size_t i = 3; i < command.size(); ++i)
@@ -113,7 +114,7 @@ namespace uci
 		{
 			// FEN string contains 6 space separated fields
 			b = board::QBB{command[2] + " " + command[3] + " " + command[4] + " " + command[5] + " "
-			 + command[6] + " " + command[7]};
+			 + command[6] + " " + command[7], ebi};
 
 			if (command.size() >= 9 && command[8] == "moves")
 			{
@@ -135,26 +136,31 @@ namespace uci
 		{
 			if (i == "depth")
 				ss.maxDepth = (std::size_t)std::stoi(command[index + 1]);
-			if (i == "time")
+			else if (i == "time")
 				ss.maxTime = std::chrono::milliseconds(std::stoi(command[index + 1]));
-			if (i == "wtime")
+			else if (i == "wtime")
 				ss.wmsec = std::chrono::milliseconds(std::stoi(command[index + 1]));
-			if (i == "btime")
+			else if (i == "btime")
 				ss.bmsec = std::chrono::milliseconds(std::stoi(command[index + 1]));
-			if (i == "winc")
+			else if (i == "winc")
 				ss.winc = std::chrono::milliseconds(std::stoi(command[index + 1]));
-			if (i == "binc")
+			else if (i == "binc")
 				ss.binc = std::chrono::milliseconds(std::stoi(command[index + 1]));
-			if (i == "nodes")
+			else if (i == "nodes")
 				ss.maxNodes = (std::size_t)std::stoi(command[index + 1]);
-			if (i == "wtime")
+			else if (i == "wtime")
 				ss.wmsec = std::chrono::milliseconds(std::stoi(command[index + 1]));
-			if (i == "movestogo")
+			else if (i == "movestogo")
 				ss.movestogo = (std::size_t)std::stoi(command[index + 1]);
-			if (i == "ponder")
+			else if (i == "ponder")
 				ss.ponder = true;
-			if (i == "infinite")
+			else if (i == "infinite")
 				ss.infiniteSearch = true;
+			else if (i == "perft")
+			{
+				divide::perftDivide(b, ebi, std::stoi(command[index + 1]));
+				return;
+			}
 			++index;
 		}
 		e.setSettings(ss);

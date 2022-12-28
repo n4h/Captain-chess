@@ -32,7 +32,7 @@ int main()
 {
 	std::string init;
 	std::getline(std::cin, init);
-
+	board::ExtraBoardInfo ebi;
 	if (init == "uci")
 	{
 		uci::UCIProtocol ucip;
@@ -41,9 +41,8 @@ int main()
 	}
 	else if (init == "perft")
 	{
-		board::QBB b{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
-		perft::Perft p{ b, 6 };
-		std::cout << p.getResult() << std::endl;
+		board::QBB b{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", ebi };
+		divide::perftDivide(b, ebi, 4);
 		std::cin >> init;
 	}
 	

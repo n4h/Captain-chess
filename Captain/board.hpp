@@ -107,7 +107,7 @@ namespace board
 		case knightPromo:
 			return knights;
 		default:
-			return king;
+			return none;
 		}
 	}
 
@@ -266,23 +266,23 @@ namespace board
 	constexpr Bitboard diagMask(square s)
 	{
 		Bitboard mask = setbit(s);
-		mask |= (mask >> 7) & ~0x8080808080808080U;
-		mask |= (mask << 7) & ~0x101010101010101U;
-		mask |= (mask >> 14) & ~0xC0C0C0C0C0C0C0C0U;
-		mask |= (mask << 14) & ~0x303030303030303U;
-		mask |= (mask >> 28) & ~0xF0F0F0F0F0F0F0F0U;
-		mask |= (mask << 28) & ~0xF0F0F0F0F0F0F0FU;
+		mask |= (mask >> 7) & ~0x101010101010101U;
+		mask |= (mask << 7) & ~0x8080808080808080U;
+		mask |= (mask << 14) & ~0xC0C0C0C0C0C0C0C0U;
+		mask |= (mask >> 14) & ~0x303030303030303U;
+		mask |= (mask << 28) & ~0xF0F0F0F0F0F0F0F0U;
+		mask |= (mask >> 28) & ~0xF0F0F0F0F0F0F0FU;
 		return mask;
 	}
 
 	constexpr Bitboard multiDiagMask(Bitboard b)
 	{
-		b |= (b >> 7) & ~0x8080808080808080U;
-		b |= (b << 7) & ~0x101010101010101U;
-		b |= (b >> 14) & ~0xC0C0C0C0C0C0C0C0U;
-		b |= (b << 14) & ~0x303030303030303U;
-		b |= (b >> 28) & ~0xF0F0F0F0F0F0F0F0U;
-		b |= (b << 28) & ~0xF0F0F0F0F0F0F0FU;
+		b |= (b << 7) & ~0x8080808080808080U;
+		b |= (b >> 7) & ~0x101010101010101U;
+		b |= (b << 14) & ~0xC0C0C0C0C0C0C0C0U;
+		b |= (b >> 14) & ~0x303030303030303U;
+		b |= (b << 28) & ~0xF0F0F0F0F0F0F0F0U;
+		b |= (b >> 28) & ~0xF0F0F0F0F0F0F0FU;
 		return b;
 	}
 
@@ -343,6 +343,16 @@ namespace board
 	{
 		return i == a1 || i == h1 || i == a8 || i == h8;
 	}
+
+	enum class Color{Black = -1, White = 1};
+
+	struct ExtraBoardInfo
+	{
+		Color initialMover;
+		std::size_t halfMoves = 0;
+		std::size_t moveNumber = 0;
+	};
+
 #include <xmmintrin.h>
 	using QBBDelta = std::array<std::uint64_t, 4>;
 	struct QBB
@@ -357,7 +367,7 @@ namespace board
 		// has never moved
 		std::uint64_t epc = 0;
 		QBB() {}
-		QBB(const std::string&);
+		QBB(const std::string&, ExtraBoardInfo&);
 		
 		
 		void makeMove(const Move);

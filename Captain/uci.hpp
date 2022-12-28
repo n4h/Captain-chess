@@ -50,6 +50,7 @@ namespace uci
 		std::string UCIAuthor = "Narbeh Mouradian";
 		bool initialized = false;
 		board::QBB b;
+		board::ExtraBoardInfo ebi;
 		engine::Engine e;
 		TTable::TTable tt;
 		std::future<void> engineResult;

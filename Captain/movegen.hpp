@@ -278,6 +278,7 @@ namespace movegen
 
 #define MOVEGEN_LOOP_PAWN_MOVES(dest, offset) while (_BitScanForward64(&index, dest))\
 {\
+	dest ^= _blsi_u64(dest);\
 	m = index << constants::toMaskOffset;\
 	m |= index - offset;\
 	ml[i++] = m;\
@@ -394,7 +395,7 @@ namespace movegen
 			AttackMap leftAttacks = pawnAttacksLeft(pieces) & b.their(occ);
 			AttackMap leftAttacks8 = leftAttacks & board::rankMask(board::a8);
 			leftAttacks &= ~leftAttacks8;
-			AttackMap rightAttacks = enemyPawnAttacksRight(pieces) & b.their(occ);
+			AttackMap rightAttacks = pawnAttacksRight(pieces) & b.their(occ);
 			AttackMap rightAttacks8 = rightAttacks & board::rankMask(board::a8);
 			rightAttacks &= ~rightAttacks8;
 			movesUp = pawnMovesUp(pieces) & ~occ;
@@ -510,7 +511,7 @@ namespace movegen
 			while (_BitScanForward64(&index, dest))
 			{
 				dest ^= _blsi_u64(dest);
-				m |= index << 6;
+				m |= index << constants::toMaskOffset;
 				ml[i++] = m;
 				m &= constants::fromMask;
 			}

@@ -82,7 +82,7 @@ namespace board
 	}
 
 	// see https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
-	QBB::QBB(const std::string& fen)
+	QBB::QBB(const std::string& fen, ExtraBoardInfo& EBI)
 	{
 		unsigned int currFile = 0;
 		
@@ -90,6 +90,11 @@ namespace board
 		auto splitboard = splitString(splitfen[0], '/');
 
 		bool wToMove = splitfen[1] == "w";
+
+		if (wToMove)
+			EBI.initialMover = Color::White;
+		else
+			EBI.initialMover = Color::Black;
 
 		for (unsigned int i = 0; i != 8; ++i)
 		{
@@ -153,8 +158,8 @@ namespace board
 		//if (splitfen[1] == "w") wMoving = true;
 		if (!wToMove) flipQBB();
 
-		//flags += (std::uint16_t)(std::stoi(splitfen[4]));
-		//currMove = std::stoi(splitfen[5]);
+		EBI.halfMoves = (std::uint16_t)(std::stoi(splitfen[4]));
+		EBI.moveNumber = std::stoi(splitfen[5]);
 	}
 
 	// adapted from https://www.chessprogramming.org/AVX2#VerticalNibble
@@ -210,8 +215,8 @@ namespace board
 
 		const auto moveType = getMoveInfo<moveTypeMask>(m);
 
-		constexpr std::uint32_t promoUpdateRules[8] = { 0, 0, 0, 0, 0x00'01'01'00U, 0x00'01'0000U, 0x01'00'01'00U, 0x01'00'0000U };
-		std::uint32_t promoUpdate = promoUpdateRules[moveType] << file(toSq);
+		constexpr std::uint32_t promoUpdateRules[8] = { 0, 0, 0, 0, 0x00'01'01'00U, 0x00'01'00'00U, 0x01'00'01'00U, 0x01'00'00'00U };
+		const std::uint32_t promoUpdate = promoUpdateRules[moveType] << file(toSq);
 
 		rqk ^= _bextr_u64(promoUpdate, 24U, 8U) << 56;
 		nbk ^= _bextr_u64(promoUpdate, 16U, 8U) << 56;

@@ -31,16 +31,17 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace divide
 {
-	std::string prettyPrintMove(board::Move m)
+	std::string prettyPrintMove(board::Move m, board::Color stm)
 	{
-		std::size_t from = board::getMoveInfo<constants::fromMask>(m);
-		std::size_t to = board::getMoveInfo<constants::toMask>(m);
+		bool wmove = stm == board::Color::White;
+		board::square from = static_cast<board::square>(board::getMoveInfo<constants::fromMask>(m));
+		board::square to = static_cast<board::square>(board::getMoveInfo<constants::toMask>(m));
 		std::ostringstream p;
 
 		auto fromFile = aux::file(from);
 		auto toFile = aux::file(to);
-		auto fromRank = aux::rank(from);
-		auto toRank = aux::rank(to);
+		auto fromRank = wmove ? aux::rank(from) : 7 - aux::rank(from);
+		auto toRank = wmove ? aux::rank(to) : 7 - aux::rank(to);
 
 		p << aux::file2char(fromFile);
 		p << fromRank + 1;
@@ -65,9 +66,9 @@ namespace divide
 			return p.str();
 		}
 	}
-	std::size_t perftDivide(const board::QBB& b, std::size_t t)
+	std::size_t perftDivide(const board::QBB& b, board::ExtraBoardInfo ebi, std::size_t t)
 	{
-		std::array<board::Move, 256> moves;
+		std::array<board::Move, 218> moves;
 		std::size_t lastMove = movegen::genMoves(b, moves);
 		std::size_t total = 0;
 
@@ -77,7 +78,7 @@ namespace divide
 			bcopy.makeMove(moves[i]);
 			perft::Perft p{ bcopy, t - 1 };
 			total += p.getResult();
-			std::cout << prettyPrintMove(moves[i]) << ": " << p.getResult() << std::endl;
+			std::cout << prettyPrintMove(moves[i], ebi.initialMover) << ": " << p.getResult() << std::endl;
 			p.reset();
 			bcopy = b;
 		}
