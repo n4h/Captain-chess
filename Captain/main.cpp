@@ -39,12 +39,6 @@ int main()
 		ucip.UCIStartup();
 		ucip.UCIStartLoop();
 	}
-	else if (init == "perft")
-	{
-		board::QBB b{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", ebi };
-		divide::perftDivide(b, ebi, 4);
-		std::cin >> init;
-	}
 	
 	return 0;
 }

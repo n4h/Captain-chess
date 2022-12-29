@@ -93,7 +93,7 @@ namespace movegen
 		do
 		{
 			lsb = _blsi_u64(diag);
-			antiDiagAttacks |= hypqDiag(occ, lsb);
+			antiDiagAttacks |= hypqAntiDiag(occ, lsb);
 		} while (diag ^= lsb);
 		return hypqAntiDiag(occ, king) & antiDiagAttacks & occ;
 	}
