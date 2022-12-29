@@ -33,7 +33,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace divide
 {
-	std::string prettyPrintMove(board::Move m);
+	std::string prettyPrintMove(board::Move m, board::Color stm);
 
 	std::size_t perftDivide(const board::QBB& b, board::ExtraBoardInfo ebi, std::size_t t);
 }

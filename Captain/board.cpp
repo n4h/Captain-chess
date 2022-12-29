@@ -187,7 +187,7 @@ namespace board
 		const auto toSq = getMoveInfo<toMask>(m);
 		const auto fromBB = setbit(fromSq);
 		const auto toBB = setbit(toSq);
-		
+		const auto fromPcType = getPieceType(static_cast<square>(fromSq)) >> 1;
 		side &= ~fromBB;
 		side |= toBB;
 		
@@ -209,7 +209,7 @@ namespace board
 		epc &= ~rank6;
 
 		constexpr Bitboard rank3 = 0x00'00'00'00'00'FF'00'00U;
-		const auto fromPcType = getPieceType(static_cast<square>(fromSq)) >> 1;
+		
 		const Bitboard enPassant = (rank3 & (fromBB << 8) & (toBB >> 8)) << 8 * (fromPcType - 1);
 		epc |= enPassant & rank3;
 
@@ -227,7 +227,7 @@ namespace board
 		side ^= _bextr_u64(castleUpdate, moveType * 8, 8U);
 
 		constexpr std::uint64_t enPUpdate = 0x00'00'00'00'01'00'00'00U;
-		pbq ^= _bextr_u64(enPUpdate, moveType * 8, 8U) << file(toSq);
+		pbq ^= _bextr_u64(enPUpdate, moveType * 8, 8U) << (file(toSq)+32);
 
 		side = ~side & (pbq | nbk | rqk);
 		flipQBB();

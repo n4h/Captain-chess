@@ -38,12 +38,12 @@ namespace perft
 			++perftResult;
 			return;
 		}
-		std::array<board::Move, 218> moveList;
-		const std::size_t j = movegen::genMoves(b, moveList);
+		movegen::Movelist<218> moveList;
+		movegen::genMoves(b, moveList);
 
 		board::QBB bcopy = b;
 
-		for (std::size_t k = 0; k != j; ++k)
+		for (std::size_t k = 0; k != moveList.size(); ++k)
 		{
 			bcopy.makeMove(moveList[k]);
 

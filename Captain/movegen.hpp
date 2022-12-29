@@ -63,7 +63,7 @@ namespace movegen
 		}
 		auto end()
 		{
-			reurn ml.begin() + i;
+			return ml.begin() + i;
 		}
 		constexpr std::size_t size() const noexcept
 		{
@@ -364,18 +364,41 @@ namespace movegen
 #define addLeftPMoves movegen::addPawnMoves<true, 7>
 #define addRightPMoves movegen::addPawnMoves<true, 9>
 #define addUpPMoves movegen::addPawnMoves<true, 8>
+#define addPinUpPMove movegen::addPawnMoves<false, 8>
 #define addUp2PMoves movegen::addPawnMoves<false, 16>
 
-	template<std::size_t N, bool qSearch = false>
-	std::size_t genMoves(const board::QBB& b, Movelist<N>& ml)
+	template<std::size_t N>
+	void addEPMoves(Movelist<N>& ml, Bitboard pawns, Bitboard enp)
 	{
-		std::size_t i = 0;
+		AttackMap enpAttacksL = enemyPawnAttacksLeft(enp) & pawns;
+		AttackMap enpAttacksR = enemyPawnAttacksRight(enp) & pawns;
+		unsigned long index;
+		if (_BitScanForward64(&index, enpAttacksL))
+		{
+			board::Move m = index;
+			m |= (index + 9) << constants::toMaskOffset;
+			m |= constants::enPCap << constants::moveTypeOffset;
+			ml.push_back(m);
+		}
+		if (_BitScanForward64(&index, enpAttacksR))
+		{
+			board::Move m = index;
+			m |= (index + 7) << constants::toMaskOffset;
+			m |= constants::enPCap << constants::moveTypeOffset;
+			ml.push_back(m);
+		}
+	}
 
+	template<std::size_t N, bool qSearch = false>
+	void genMoves(const board::QBB& b, Movelist<N>& ml)
+	{
 		Bitboard checkers = isInCheck(b);
 
 		if (!checkers)
 		{
 			Bitboard occ = b.getOccupancy();
+			Bitboard mine = b.side;
+			Bitboard theirs = occ & ~mine;
 			Bitboard myKing = b.my(b.getKings());
 			Bitboard orth = b.my(b.getOrthSliders());
 			Bitboard diag = b.my(b.getDiagSliders());
@@ -388,8 +411,11 @@ namespace movegen
 			Bitboard diagPinned = getDiagPinnedPieces(occ, myKing, b.their(b.getDiagSliders())) & b.side;
 			Bitboard antiDiagPinned = getAntiDiagPinnedPieces(occ, myKing, b.their(b.getDiagSliders())) & b.side;
 			Bitboard vertPinnedPawns = vertPinned & pawns;
+			vertPinned -= vertPinnedPawns;
 			Bitboard diagPinnedPawns = diagPinned & pawns;
+			diagPinned -= diagPinnedPawns;
 			Bitboard antiDiagPinnedPawns = antiDiagPinned & pawns;
+			antiDiagPinned -= antiDiagPinnedPawns;
 
 			pawns &= ~(horPinned | antiDiagPinnedPawns | diagPinnedPawns | vertPinnedPawns);
 			knights &= ~(horPinned | vertPinned | diagPinned | antiDiagPinned);
@@ -397,104 +423,83 @@ namespace movegen
 			diag &= ~(horPinned | vertPinned);
 
 			horPinned &= orth;
+			orth -= horPinned;
 			vertPinned &= orth;
+			orth -= vertPinned;
 			diagPinned &= diag;
+			diag -= diagPinned;
 			antiDiagPinned &= diag;
+			diag -= antiDiagPinned;
 
-			unsigned long index = 0;
-			board::Move m = 0;
+			addMoves(horPinned, ml, [occ, mine](board::square idx) {
+				return hypqRank(occ, idx) & ~mine; });
 
-			Bitboard pieces = horPinned;
-			MOVEGEN_LOOP_ATTACKS(hypqRank(occ, static_cast<board::square>(index)));
-			pieces = vertPinned;
-			MOVEGEN_LOOP_ATTACKS(hypqFile(occ, static_cast<board::square>(index)));
-			pieces = diagPinned;
-			MOVEGEN_LOOP_ATTACKS(hypqDiag(occ, static_cast<board::square>(index)));
-			pieces = antiDiagPinned;
-			MOVEGEN_LOOP_ATTACKS(hypqAntiDiag(occ, static_cast<board::square>(index)));
-			pieces = antiDiagPinnedPawns;
-			AttackMap attackPinner = pawnAttacksRight(pieces) & occ;
-			AttackMap attackPinnerEP = pawnAttacksRight(pieces) & b.getEp();
-			AttackMap attackPinner8 = attackPinner & board::rankMask(board::a8);
-			attackPinner &= ~attackPinner8;
-			while (_BitScanForward64(&index, attackPinnerEP))
-			{
-				attackPinnerEP ^= _blsi_u64(attackPinnerEP);
-				m = index << constants::toMaskOffset;
-				m |= constants::enPCap << constants::moveTypeOffset;
-				m |= index - 9; 
-				ml[i++] = m; 
-			}
-			MOVEGEN_LOOP_PAWN_MOVES(attackPinner, 9);
-			MOVEGEN_LOOP_PAWN_PROMOS(attackPinner8, 9);
-			pieces = diagPinnedPawns;
-			attackPinner = pawnAttacksLeft(pieces) & occ;
-			attackPinnerEP = pawnAttacksLeft(pieces) & b.getEp();
-			attackPinner8 = attackPinner & board::rankMask(board::a8);
-			attackPinner &= ~attackPinner8;
-			while (_BitScanForward64(&index, attackPinnerEP))
-			{
-				attackPinnerEP ^= _blsi_u64(attackPinnerEP);
-				m = index << constants::toMaskOffset;
-				m |= constants::enPCap << constants::moveTypeOffset;
-				m |= index - 7;
-				ml[i++] = m;
-			}
-			MOVEGEN_LOOP_PAWN_MOVES(attackPinner, 7);
-			MOVEGEN_LOOP_PAWN_PROMOS(attackPinner8, 7);
-			pieces = vertPinnedPawns;
-			Bitboard movesUp = pawnMovesUp(pieces) & ~occ;
-			Bitboard twoMovesUp = pawn2MovesUp(pieces, occ);
-			MOVEGEN_LOOP_PAWN_MOVES(movesUp, 8);
-			MOVEGEN_LOOP_PAWN_MOVES(twoMovesUp, 16);
+			addMoves(vertPinned, ml, [occ, mine](board::square idx) {
+				return hypqFile(occ, idx) & ~mine; });
 
-			Bitboard mine = b.side;
-			addMoves(knights, ml, [mine](board::square idx) {return knightAttacks(idx) & ~mine; });
-			addMoves(orth, ml, [occ, mine](board::square idx) {return hypqAllOrth(occ, idx) & ~mine; });
-			addMoves(diag, ml, [occ, mine](board::square idx) {return hypqAllDiag(occ, idx) & ~mine; });
-			addMoves(myKing, ml, [occ, mine, enemyAttacks](board::square idx) {return kingAttacks(idx) & ~mine & ~enemyAttacks; });
-			pieces = pawns;
-			Bitboard enpAttacks = enemyPawnAttacksLeft(b.getEp()) | enemyPawnAttacksRight(b.getEp());
-			enpAttacks &= pawns;
-			AttackMap leftAttacks = pawnAttacksLeft(pieces) & b.their(occ);
-			AttackMap leftAttacks8 = leftAttacks & board::rankMask(board::a8);
-			leftAttacks &= ~leftAttacks8;
-			AttackMap rightAttacks = pawnAttacksRight(pieces) & b.their(occ);
-			AttackMap rightAttacks8 = rightAttacks & board::rankMask(board::a8);
-			rightAttacks &= ~rightAttacks8;
-			movesUp = pawnMovesUp(pieces) & ~occ;
-			AttackMap movesUp8 = movesUp & board::rankMask(board::a8);
-			movesUp &= ~movesUp8;
-			twoMovesUp = pawn2MovesUp(pieces, occ);
-			MOVEGEN_LOOP_PAWN_MOVES(twoMovesUp, 16);
-			MOVEGEN_LOOP_PAWN_MOVES(movesUp, 8);
-			MOVEGEN_LOOP_PAWN_MOVES(leftAttacks, 7);
-			MOVEGEN_LOOP_PAWN_MOVES(rightAttacks, 9);
-			MOVEGEN_LOOP_PAWN_PROMOS(leftAttacks8, 7);
-			MOVEGEN_LOOP_PAWN_PROMOS(rightAttacks8, 9);
-			MOVEGEN_LOOP_PAWN_PROMOS(movesUp8, 8);
-			auto enpsq = _tzcnt_u64(b.getEp());
-			while (_BitScanForward64(&index, enpAttacks))
+			addMoves(diagPinned, ml, [occ, mine](board::square idx) {
+				return hypqDiag(occ, idx) & ~mine; });
+
+			addMoves(antiDiagPinned, ml, [occ, mine](board::square idx) {
+				return hypqAntiDiag(occ, idx) & ~mine; });
+
+			addLeftPMoves(diagPinnedPawns, ml, [occ, theirs](Bitboard pawns) 
+				{return pawnAttacksLeft(pawns) & theirs; });
+
+			addRightPMoves(antiDiagPinnedPawns, ml, [occ, theirs](Bitboard pawns) {
+				return pawnAttacksRight(pawns) & theirs; });
+
+			Bitboard pinnedPawnEP = (enemyPawnAttacksLeft(b.getEp()) & antiDiagPinnedPawns) | (enemyPawnAttacksRight(b.getEp()) & diagPinnedPawns);
+			addEPMoves(ml, pinnedPawnEP, b.getEp());
+
+			addPinUpPMove(vertPinnedPawns, ml, [occ](Bitboard pawns) {
+				return pawnMovesUp(pawns) & ~occ; });
+
+			addUp2PMoves(vertPinnedPawns, ml, [occ](Bitboard pawns) {
+				return pawn2MovesUp(pawns, occ); });
+
+			addMoves(knights, ml, [mine](board::square idx) {
+				return knightAttacks(idx) & ~mine; });
+
+			addMoves(orth, ml, [occ, mine](board::square idx) {
+				return hypqAllOrth(occ, idx) & ~mine; });
+
+			addMoves(diag, ml, [occ, mine](board::square idx) {
+				return hypqAllDiag(occ, idx) & ~mine; });
+
+			addMoves(myKing, ml, [occ, mine, enemyAttacks](board::square idx) {
+				return kingAttacks(idx) & ~mine & ~enemyAttacks; });
+			
+			addLeftPMoves(pawns, ml, [theirs](Bitboard pawns) {
+				return pawnAttacksLeft(pawns) & theirs; });
+
+			addRightPMoves(pawns, ml, [theirs](Bitboard pawns) {
+				return pawnAttacksRight(pawns) & theirs; });
+
+			addUpPMoves(pawns, ml, [occ](Bitboard pawns) {
+				return pawnMovesUp(pawns) & ~occ; });
+
+			addUp2PMoves(pawns, ml, [occ](Bitboard pawns) {
+				return pawn2MovesUp(pawns, occ); });
+
+			addEPMoves(ml, pawns, b.getEp());
+
+			constexpr Bitboard betweenKSCastle = aux::setbit(board::f1) | aux::setbit(board::g1);
+			if (b.canCastleShort() && !((enemyAttacks | occ) & betweenKSCastle))
 			{
-				enpAttacks ^= _blsi_u64(enpAttacks);
-				m = index;
-				m |= enpsq << constants::toMaskOffset;
-				m |= constants::enPCap << constants::moveTypeOffset;
-				ml[i++] = m;
-			}
-			if (b.canCastleShort() && !(enemyAttacks & (aux::setbit(board::f1) | aux::setbit(board::g1))))
-			{
-				m = board::e1;
+				board::Move m = board::e1;
 				m |= board::g1 << constants::toMaskOffset;
 				m |= constants::KSCastle << constants::moveTypeOffset;
-				ml[i++] = m;
+				ml.push_back(m);
 			}
-			if (b.canCastleLong() && !(enemyAttacks & (aux::setbit(board::d1) | aux::setbit(board::c1) | aux::setbit(board::b1))))
+			constexpr Bitboard betweenQSCastle = aux::setbit(board::d1) | aux::setbit(board::c1) | aux::setbit(board::c1);
+			constexpr Bitboard QSCastleNoAttack = aux::setbit(board::d1) | aux::setbit(board::c1);
+			if (b.canCastleLong() && !(enemyAttacks & QSCastleNoAttack) && !(occ & betweenQSCastle))
 			{
-				m = board::e1;
+				board::Move m = board::e1;
 				m |= board::c1 << constants::toMaskOffset;
 				m |= constants::QSCastle << constants::moveTypeOffset;
-				ml[i++] = m;
+				ml.push_back(m);
 			}
 		}
 		else if (__popcnt64(checkers) == 1)
@@ -512,7 +517,6 @@ namespace movegen
 			
 			Bitboard enemyAttacks = genEnemyAttacks(occ & ~myKing, b);
 
-			AttackMap dest = kingAttacks(myKing) & ~enemyAttacks & ~b.side;
 			Bitboard mine = b.side;
 
 			addMoves(myKing, ml, [enemyAttacks, mine](board::square idx) {
@@ -536,42 +540,21 @@ namespace movegen
 			addUpPMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers, occ](Bitboard pawns) {
 				return pawnMovesUp(pawns) & checkers & ~occ; });
 
-			addUp2PMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers](Bitboard pawns) {
-				return pawn2MovesUp(pawns) & checkers; });
+			addUp2PMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers, occ](Bitboard pawns) {
+				return pawn2MovesUp(pawns, occ) & checkers; });
 
-
-			AttackMap enpCheckerAttacksL = enemyPawnAttacksLeft(enpChecker) & b.my(b.getPawns());
-			AttackMap enpCheckerAttacksR = enemyPawnAttacksRight(enpChecker) & b.my(b.getPawns());
-			unsigned long index;
-			if (_BitScanForward64(&index, enpCheckerAttacksL))
-			{
-				board::Move m = index;
-				m |= (index + 9) << constants::toMaskOffset;
-				m |= constants::enPCap << constants::moveTypeOffset;
-				ml.push_back(m);
-			}
-			if (_BitScanForward64(&index, enpCheckerAttacksR))
-			{
-				board::Move m = index;
-				m |= (index + 7) << constants::toMaskOffset;
-				m |= constants::enPCap << constants::moveTypeOffset;
-				ml.push_back(m);
-			}
+			addEPMoves(ml, b.my(b.getPawns()), enpChecker);
 		}
 		else // >1 checkers (double check)
 		{
 			Bitboard myKing = b.my(b.getKings());
 			Bitboard occ = b.getOccupancy();
+			Bitboard mine = occ & ~b.side;
 			occ &= ~myKing; // remove king to generate X rays through king
-			
+
 			AttackMap attacks = genEnemyAttacks(occ, b);
-
-			AttackMap dest = kingAttacks(myKing) & ~attacks & ~b.side;
-			board::square idx = static_cast<board::square>(_tzcnt_u64(myKing));
-			i = addMoves<constants::QMove>(dest, idx, ml, i);
+			addMoves(myKing, ml, [mine, attacks](board::square idx) {return kingAttacks(idx) & ~attacks & ~mine; });
 		}
-
-		return i;
 	}
 
 #undef MOVEGEN_LOOP_ATTACKS
