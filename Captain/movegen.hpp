@@ -482,7 +482,10 @@ namespace movegen
 			addUp2PMoves(pawns, ml, [occ](Bitboard pawns) {
 				return pawn2MovesUp(pawns, occ); });
 
-			addEPMoves(ml, pawns, b.getEp());
+			Bitboard myKing5 = myKing & board::rankMask(board::a5);
+			Bitboard theirOrth5 = b.their(b.getOrthSliders()) & board::rankMask(board::a5);
+			Bitboard EPPin = getHorPinnedPieces(occ & ~(b.getEp() >> 8), myKing5, theirOrth5);
+			addEPMoves(ml, pawns & ~EPPin, b.getEp());
 
 			constexpr Bitboard betweenKSCastle = aux::setbit(board::f1) | aux::setbit(board::g1);
 			if (b.canCastleShort() && !((enemyAttacks | occ) & betweenKSCastle))
@@ -492,7 +495,7 @@ namespace movegen
 				m |= constants::KSCastle << constants::moveTypeOffset;
 				ml.push_back(m);
 			}
-			constexpr Bitboard betweenQSCastle = aux::setbit(board::d1) | aux::setbit(board::c1) | aux::setbit(board::c1);
+			constexpr Bitboard betweenQSCastle = aux::setbit(board::d1) | aux::setbit(board::c1) | aux::setbit(board::b1);
 			constexpr Bitboard QSCastleNoAttack = aux::setbit(board::d1) | aux::setbit(board::c1);
 			if (b.canCastleLong() && !(enemyAttacks & QSCastleNoAttack) && !(occ & betweenQSCastle))
 			{
@@ -543,13 +546,13 @@ namespace movegen
 			addUp2PMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers, occ](Bitboard pawns) {
 				return pawn2MovesUp(pawns, occ) & checkers; });
 
-			addEPMoves(ml, b.my(b.getPawns()), enpChecker);
+			addEPMoves(ml, b.my(b.getPawns()) & ~pinned, enpChecker);
 		}
 		else // >1 checkers (double check)
 		{
 			Bitboard myKing = b.my(b.getKings());
 			Bitboard occ = b.getOccupancy();
-			Bitboard mine = occ & ~b.side;
+			Bitboard mine = occ & b.side;
 			occ &= ~myKing; // remove king to generate X rays through king
 
 			AttackMap attacks = genEnemyAttacks(occ, b);

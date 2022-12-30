@@ -222,7 +222,7 @@ namespace board
 		nbk ^= _bextr_u64(promoUpdate, 16U, 8U) << 56;
 		pbq ^= _bextr_u64(promoUpdate, 8U, 8U) << 56;
 
-		constexpr std::uint64_t castleUpdate = 0x00'00'00'00'00'90'11'00U;
+		constexpr std::uint64_t castleUpdate = 0x00'00'00'00'00'A0'09'00U;
 		rqk ^= _bextr_u64(castleUpdate, moveType * 8, 8U);
 		side ^= _bextr_u64(castleUpdate, moveType * 8, 8U);
 
