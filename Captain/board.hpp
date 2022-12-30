@@ -131,12 +131,19 @@ namespace board
 
 	constexpr std::uint32_t getPromoType(pieceType promoPiece)
 	{
-		// TODO make a switch statement
-		if (promoPiece == queens) return queenPromo;
-		else if (promoPiece == rooks) return rookPromo;
-		else if (promoPiece == bishops) return bishopPromo;
-		else if (promoPiece == knights) return knightPromo;
-		else return QMove;
+		switch (promoPiece)
+		{
+		case queens:
+			return queenPromo;
+		case rooks:
+			return rookPromo;
+		case bishops:
+			return bishopPromo;
+		case knights:
+			return knightPromo;
+		default:
+			return QMove;
+		}
 	}
 
 	std::tuple<bool, unsigned int> makeSquare(const char i);
@@ -345,6 +352,10 @@ namespace board
 	}
 
 	enum class Color{Black = -1, White = 1};
+	constexpr Color operator*(board::Color c, int)
+	{
+		return static_cast<Color>(static_cast<int>(c) * -1);
+	}
 
 	struct ExtraBoardInfo
 	{

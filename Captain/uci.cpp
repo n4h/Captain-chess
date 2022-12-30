@@ -26,6 +26,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <utility>
 #include <functional>
 #include <cstdlib>
+#include <tuple>
 
 #include "uci.hpp"
 #include "board.hpp"
@@ -104,9 +105,16 @@ namespace uci
 			b = board::QBB{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", ebi};
 			if (command.size() >= 3 && command[2] == "moves")
 			{
+				board::Color c = ebi.initialMover;
 				for (std::size_t i = 3; i < command.size(); ++i)
 				{
-					// TODO playMoves on board (UCI)
+					auto [move, halfMove] = uciMove2boardMove(b, command[i], c);
+					b.makeMove(move);
+					if (halfMove)
+						++ebi.halfMoves;
+					else
+						ebi.halfMoves = 0;
+					c = c * -1;
 				}
 			}
 		}
@@ -158,7 +166,11 @@ namespace uci
 				ss.infiniteSearch = true;
 			else if (i == "perft")
 			{
+				auto start = std::chrono::steady_clock::now();
 				divide::perftDivide(b, ebi, std::stoi(command[index + 1]));
+				auto end = std::chrono::steady_clock::now();
+				std::chrono::milliseconds time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+				sync_cout << "Time: " << time << sync_endl;
 				return;
 			}
 			++index;
@@ -191,14 +203,37 @@ namespace uci
 		}
 	}
 
-	// we're assuming that the GUI isn't sending us garbage moves
-	board::Move uciMove2boardMove(const board::QBB& b, const std::string& uciMove)
+	// we're assuming that the GUI isn't sending us invalid moves
+	std::tuple<board::Move, bool> uciMove2boardMove(const board::QBB& b, const std::string& uciMove, board::Color c)
 	{
+		auto fromFile = aux::fileNumber(uciMove[0]);
+		unsigned fromRank = c == board::Color::White ? uciMove[1] - '0' - 1: 7 - (uciMove[1] - '0' - 1);
+		auto toFile = aux::fileNumber(uciMove[2]);
+		unsigned toRank = c == board::Color::White ? uciMove[3] - '0' - 1: 7 - (uciMove[3] - '0' - 1);
+		board::Move m = aux::index(fromRank, fromFile);
+		m |= aux::index(toRank, toFile) << constants::toMaskOffset;
+
+		board::square from = static_cast<board::square>(aux::index(fromRank, fromFile));
+		board::square to = static_cast<board::square>(aux::index(toRank, toFile));
+
+		auto piecetype = b.getPieceType(from);
+		auto piecetypeTo = b.getPieceType(to);
+		bool incHalfClock = !(piecetypeTo || piecetype == constants::myPawn);
+		if (piecetype == constants::myPawn)
+		{
+			if (_tzcnt_u64(b.getEp()) == to)
+				m |= constants::enPCap << constants::moveTypeOffset;
+			else if (toRank == 7 && uciMove.size() == 5)
+				m |= board::getPromoType(board::char2pieceType(uciMove[4])) << constants::moveTypeOffset;
+		}
+		else if (piecetype == constants::myKing)
+		{
+			if (from == board::e1 && to == board::g1)
+				m |= constants::KSCastle << constants::moveTypeOffset;
+			else if (from == board::e1 && to == board::c1)
+				m |= constants::QSCastle << constants::moveTypeOffset;
+		}
 		
-		// TODO rewrite uciMove2boardMove
-		if (uciMove == "a")
-			return 0;
-		else
-			return static_cast<board::Move>(b.epc);
+		return std::make_tuple(m, incHalfClock);
 	}
 }

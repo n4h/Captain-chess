@@ -98,8 +98,8 @@ namespace engine
 
 	// TODO rewrite alpha beta search
 
-	std::int32_t Engine::alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth)
+	std::int32_t Engine::alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth, bool prevNull)
 	{
-		return alpha + beta + depth;
+		return alpha + beta + depth + prevNull;
 	}
 }

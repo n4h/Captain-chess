@@ -443,10 +443,10 @@ namespace movegen
 			addMoves(antiDiagPinned, ml, [occ, mine](board::square idx) {
 				return hypqAntiDiag(occ, idx) & ~mine; });
 
-			addLeftPMoves(diagPinnedPawns, ml, [occ, theirs](Bitboard pawns) 
+			addLeftPMoves(diagPinnedPawns, ml, [theirs](Bitboard pawns) 
 				{return pawnAttacksLeft(pawns) & theirs; });
 
-			addRightPMoves(antiDiagPinnedPawns, ml, [occ, theirs](Bitboard pawns) {
+			addRightPMoves(antiDiagPinnedPawns, ml, [theirs](Bitboard pawns) {
 				return pawnAttacksRight(pawns) & theirs; });
 
 			Bitboard pinnedPawnEP = (enemyPawnAttacksLeft(b.getEp()) & antiDiagPinnedPawns) | (enemyPawnAttacksRight(b.getEp()) & diagPinnedPawns);
@@ -467,7 +467,7 @@ namespace movegen
 			addMoves(diag, ml, [occ, mine](board::square idx) {
 				return hypqAllDiag(occ, idx) & ~mine; });
 
-			addMoves(myKing, ml, [occ, mine, enemyAttacks](board::square idx) {
+			addMoves(myKing, ml, [mine, enemyAttacks](board::square idx) {
 				return kingAttacks(idx) & ~mine & ~enemyAttacks; });
 			
 			addLeftPMoves(pawns, ml, [theirs](Bitboard pawns) {

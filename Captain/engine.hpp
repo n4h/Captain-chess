@@ -133,7 +133,10 @@ namespace engine
 			return rootMoves[0].first;
 		}
 		// TODO rewrite alpha beta search
-		std::int32_t alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth);
+
+		std::int32_t quiesceSearch(std::int32_t alpha, std::int32_t beta, int depth);
+
+		std::int32_t alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth, bool prevNull);
 		
 		std::int32_t eval = 0;
 		// 218 = current max number of moves in chess position

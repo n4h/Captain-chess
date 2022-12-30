@@ -78,7 +78,7 @@ namespace divide
 			bcopy.makeMove(moves[i]);
 			perft::Perft p{ bcopy, t - 1 };
 			total += p.getResult();
-			std::cout << prettyPrintMove(moves[i], ebi.initialMover) << ": " << p.getResult() << std::endl;
+			sync_cout << prettyPrintMove(moves[i], ebi.initialMover) << ": " << p.getResult() << sync_endl;
 			p.reset();
 			bcopy = b;
 		}
