@@ -114,6 +114,8 @@ namespace uci
 						++ebi.halfMoves;
 					else
 						ebi.halfMoves = 0;
+					if (c == board::Color::Black)
+						++ebi.moveNumber;
 					c = c * -1;
 				}
 			}
@@ -126,9 +128,18 @@ namespace uci
 
 			if (command.size() >= 9 && command[8] == "moves")
 			{
+				board::Color c = ebi.initialMover;
 				for (std::size_t i = 9; i < command.size(); ++i)
 				{
-					// TODO play moves on board (UCI)
+					auto [move, halfMove] = uciMove2boardMove(b, command[i], c);
+					b.makeMove(move);
+					if (halfMove)
+						++ebi.halfMoves;
+					else
+						ebi.halfMoves = 0;
+					if (c == board::Color::Black)
+						++ebi.moveNumber;
+					c = c * -1;
 				}
 			}
 		}

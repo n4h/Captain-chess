@@ -59,7 +59,7 @@ namespace uci
 		friend class engine::Engine;
 	};
 
-	board::Move uciMove2boardMove(const board::QBB&, const std::string&);
+	std::tuple<board::Move, bool> uciMove2boardMove(const board::QBB&, const std::string&, board::Color);
 }
 
 
