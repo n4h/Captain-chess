@@ -49,11 +49,18 @@ namespace engine
 	std::string Engine::move2uciFormat(board::Move m)
 	{
 		std::ostringstream oss;
-		oss << aux::file2char(aux::file(board::getMoveInfo<constants::fromMask>(m)));
-		oss << aux::rank(board::getMoveInfo<constants::fromMask>(m)) + 1;
-		oss << aux::file2char(aux::file(board::getMoveInfo<constants::toMask>(m)));
-		oss << aux::rank(board::getMoveInfo<constants::toMask>(m)) + 1;
-		if (board::getPromoPiece(m) != board::king)
+		auto from = board::getMoveInfo<constants::fromMask>(m);
+		auto to = board::getMoveInfo<constants::toMask>(m);
+		auto fromfile = aux::file(from);
+		auto fromrank = ebi.initialMover == board::Color::White ? aux::rank(from) + 1 : 7 - aux::rank(from) + 1;
+		auto tofile = aux::file(to);
+		auto torank = ebi.initialMover == board::Color::White ? aux::rank(to) + 1 : 7 - aux::rank(to) + 1;
+
+		oss << aux::file2char(fromfile);
+		oss << fromrank;
+		oss << aux::file2char(tofile);
+		oss << torank;
+		if (board::getPromoPiece(m) != board::none)
 		{
 			oss << board::promoFlag2char(m);
 		}
