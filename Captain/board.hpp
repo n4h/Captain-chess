@@ -455,6 +455,11 @@ namespace board
 			return epc & rankMask(a6);
 		}
 
+		constexpr auto get50() const noexcept
+		{
+			return _bextr_u64(epc, 24, 6);
+		}
+
 	private:
 		void flipQBB();
 

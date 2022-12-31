@@ -158,6 +158,9 @@ namespace board
 		//if (splitfen[1] == "w") wMoving = true;
 		if (!wToMove) flipQBB();
 
+		Bitboard halfMoves = static_cast<Bitboard>(std::stoi(splitfen[4])) << 24;
+		halfMoves |= halfMoves << 8;
+		epc += halfMoves;
 		EBI.halfMoves = (std::uint16_t)(std::stoi(splitfen[4]));
 		EBI.moveNumber = std::stoi(splitfen[5]);
 	}
@@ -188,6 +191,13 @@ namespace board
 		const auto fromBB = setbit(fromSq);
 		const auto toBB = setbit(toSq);
 		const auto fromPcType = getPieceType(static_cast<square>(fromSq)) >> 1;
+		const auto toPcType = getPieceType(static_cast<square>(fromSq)) >> 1;
+		
+		Bitboard add1 = 0x1'01'00'00'00U;
+		add1 *= 1U >> toPcType;
+		add1 *= 1U - (2U >> fromPcType);
+		epc += add1;
+
 		side &= ~fromBB;
 		side |= toBB;
 		
@@ -203,8 +213,8 @@ namespace board
 		rqk |= toBB * ((fromBB & rqk) >> fromSq);
 		rqk ^= (fromBB & rqk);
 
-		epc &= ~fromBB;
-		epc &= ~toBB;
+		epc &= ~(fromBB & (rankMask(a1) | rankMask(a8)));
+		epc &= ~(toBB & (rankMask(a1) | rankMask(a8)));
 		constexpr Bitboard rank6 = 0x00'00'FF'00'00'00'00'00U;
 		epc &= ~rank6;
 
