@@ -60,26 +60,6 @@ namespace engine
 		return oss.str();
 	}
 
-	void Engine::playBestMove(const board::QBB& bCopy, std::chrono::time_point<std::chrono::steady_clock> s)
-	{
-		// TODO time management
-		searchStart = s;
-		//engineW = bCopy.wMoving;
-		board::Move m = 0;
-		currIDdepth = 0;
-		b = bCopy;
-
-		nodes = 0;
-		if (tt != nullptr)
-			initialHash();
-		else
-			hash = 0;
-		// TODO call rootSearch
-
-		sync_cout << "bestmove " << move2uciFormat(m) << sync_endl;
-		searchFlags::searching.clear();
-	}
-
 	bool Engine::shouldStop() noexcept
 	{
 		if (settings.ponder)
@@ -96,6 +76,61 @@ namespace engine
 		
 	}
 	
+	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s, board::ExtraBoardInfo e)
+	{
+		// TODO time management
+		searchStart = s;
+		ebi = e;
+		engineW = ebi.initialMover == board::Color::White;
+		currIDdepth = 0;
+		nodes = 0;
+		if (tt != nullptr)
+			initialHash();
+		else
+			hash = 0;
+
+		movegen::Movelist<218> moves;
+		movegen::genMoves(b, moves);
+		board::Move bestmove = moves[0];
+
+
+		// TODO set move scores to negative infinity
+
+		std::int32_t worstCase = negInf;
+
+		board::QBB bcopy = b;
+		for (unsigned int k = 1; k <= posInf; ++k)
+		{
+			sync_cout << "info string iterative deepening " << k << sync_endl;
+			currIDdepth = k;
+			worstCase = negInf;
+			std::int32_t score = negInf;
+
+			for (std::size_t i = 0; i != moves.size(); ++i)
+			{
+				if (!searchFlags::searching.test())
+					goto endsearch;
+				bcopy.makeMove(rootMoves[i].first);
+
+				sync_cout << "info currmove " << move2uciFormat(rootMoves[i].first) << sync_endl;
+				sync_cout << "info nodes " << nodes << sync_endl;
+				rootMoves[i].second =  -alphaBetaSearch(bcopy, negInf, -1 * worstCase, k - 1, false);
+				score = std::max(score, rootMoves[i].second);
+				bcopy = b;
+				if (score > worstCase)
+					worstCase = score;
+			}
+
+			std::stable_sort(rootMoves.begin(), rootMoves.begin() + j, [](const auto& a, const auto& b) {
+				return a.second > b.second;
+				});
+		}
+	endsearch:
+		// TODO sort all moves one last time
+		searchFlags::searching.clear();
+		sync_cout << "bestmove " << move2uciFormat(bestmove) << sync_endl;
+	}
+
 	std::int32_t Engine::quiesceSearch(const board::QBB& b, std::int32_t alpha, std::int32_t beta, int depth)
 	{
 		++nodes;

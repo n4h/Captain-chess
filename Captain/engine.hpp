@@ -61,7 +61,7 @@ namespace engine
 	class Engine
 	{
 	public:
-		void playBestMove(const board::QBB& bCopy, std::chrono::time_point<std::chrono::steady_clock> s);
+		void rootSearch(const board::QBB&, std::chrono::time_point<std::chrono::steady_clock>, board::ExtraBoardInfo);
 		double getEval();
 		Engine() {}
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
@@ -73,63 +73,13 @@ namespace engine
 		std::size_t nodes = 0;
 		std::size_t hash = 0;
 		std::size_t currIDdepth = 0;
+		board::ExtraBoardInfo ebi;
 		bool engineW = true;
-		board::QBB b;
 		std::chrono::milliseconds moveTime = 0ms;
 		TTable::TTable* tt = nullptr;
 		bool shouldStop() noexcept;
 		void initialHash();
-
-		enum SearchType {ABSearch, QSearch};
-
-		template<bool wToMove>
-		board::Move rootSearch()
-		{
-			std::array<board::Move, 256> moves;
-			std::size_t j = movegen::genMoves<wToMove>(b, moves, 0);
-
-			for (std::size_t i = 0; i != j; ++i)
-			{
-				rootMoves[i].first = moves[i];
-				rootMoves[i].second = negInf;
-			}
-
-			std::int32_t worstCase = negInf;
-
-			for (unsigned int k = 1; k <= posInf; ++k)
-			{
-				sync_cout << "info string iterative deepening " << k << sync_endl;
-				currIDdepth = k;
-				worstCase = negInf;
-				std::int32_t score = negInf;
-
-				for (std::size_t i = 0; i != j; ++i)
-				{
-					if (!searchFlags::searching.test())
-					{
-						return rootMoves[0].first;
-					}
-					auto oldHash = hash;
-					MAKE_MOVE_AND_UPDATE_HASH(rootMoves[i].first, b, false);
-
-					sync_cout << "info currmove " << move2uciFormat(rootMoves[i].first) << sync_endl;
-					sync_cout << "info nodes " << nodes << sync_endl;
-					rootMoves[i].second = -1 * alphaBetaSearch(negInf, -1 * worstCase, k - 1);
-					score = std::max(score, rootMoves[i].second);
-					// TODO copy make
-					hash = oldHash;
-					if (score > worstCase)
-						worstCase = score;
-				}
-
-				std::stable_sort(rootMoves.begin(), rootMoves.begin() + j, [](const auto& a, const auto& b) {
-					return a.second > b.second;
-					});
-			}
-			return rootMoves[0].first;
-		}
-		// TODO rewrite alpha beta search
-
+		// TODO 3-fold repetition
 		std::int32_t quiesceSearch(const board::QBB& b, std::int32_t alpha, std::int32_t beta, int depth);
 
 		std::int32_t alphaBetaSearch(const board::QBB& , std::int32_t, std::int32_t, int, bool);
