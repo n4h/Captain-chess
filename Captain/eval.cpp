@@ -44,4 +44,32 @@ namespace eval
 		}
 		return mval;
 	}
+	std::int32_t evaluate(const board::QBB& b)
+	{
+		std::int32_t totalW = 0;
+
+		totalW += computeMaterialValue(b.my(b.getPawns()), PSQTpawnw);
+		totalW += computeMaterialValue(b.my(b.getKnights()), PSQTknight);
+		totalW += computeMaterialValue(b.my(b.getBishops()), PSQTbishop);
+		totalW += computeMaterialValue(b.my(b.getRooks()), PSQTrookw);
+		totalW += computeMaterialValue(b.my(b.getQueens()), PSQTqueen);
+
+		std::int32_t totalB = 0;
+
+		totalB += computeMaterialValue(b.their(b.getPawns()), PSQTpawnb);
+		totalB += computeMaterialValue(b.their(b.getKnights()), PSQTknight);
+		totalB += computeMaterialValue(b.their(b.getBishops()), PSQTbishop);
+		totalB += computeMaterialValue(b.their(b.getRooks()), PSQTrookb);
+		totalB += computeMaterialValue(b.their(b.getQueens()), PSQTqueen);
+
+		if (totalW + totalB > 3000) // not in endgame
+		{
+			totalW += computeMaterialValue(b.my(b.getKings()), PSQTking);
+			totalB += computeMaterialValue(b.their(b.getKings()), PSQTking);
+		}
+
+		std::int32_t eval = totalW - totalB;
+
+		return eval;
+	}
 }
