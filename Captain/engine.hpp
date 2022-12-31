@@ -36,10 +36,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "searchflags.hpp"
 #include "transpositiontable.hpp"
 
-#define MAKE_MOVE_AND_UPDATE_HASH(Move, Board, Null) hash ^= tt->incrementalUpdatePre(Move, Board, Null);\
-Board.makeMove<wToMove, Null>(Move);\
-hash ^= tt->incrementalUpdatePost(Move, Board, Null);
-
 namespace engine
 {
 	using namespace std::literals::chrono_literals;
@@ -134,9 +130,9 @@ namespace engine
 		}
 		// TODO rewrite alpha beta search
 
-		std::int32_t quiesceSearch(std::int32_t alpha, std::int32_t beta, int depth);
+		std::int32_t quiesceSearch(const board::QBB& b, std::int32_t alpha, std::int32_t beta, int depth);
 
-		std::int32_t alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth, bool prevNull);
+		std::int32_t alphaBetaSearch(const board::QBB& , std::int32_t, std::int32_t, int, bool);
 		
 		std::int32_t eval = 0;
 		// 218 = current max number of moves in chess position

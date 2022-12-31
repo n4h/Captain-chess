@@ -95,11 +95,41 @@ namespace engine
 	{
 		
 	}
-
-	// TODO rewrite alpha beta search
-
-	std::int32_t Engine::alphaBetaSearch(std::int32_t alpha, std::int32_t beta, int depth, bool prevNull)
+	
+	std::int32_t Engine::quiesceSearch(const board::QBB& b, std::int32_t alpha, std::int32_t beta, int depth)
 	{
-		return alpha + beta + depth + prevNull;
+		std::int32_t checkpos = eval::evaluate(b);
+	}
+
+	std::int32_t Engine::alphaBetaSearch(const board::QBB& b, std::int32_t alpha, std::int32_t beta, int depth, bool prevNull)
+	{
+		++nodes;
+		const auto oldAlpha = alpha;
+		if (shouldStop())
+			searchFlags::searching.clear();
+		if (b.get50() == 50)
+			return 0;
+
+		// TODO TT check
+
+		movegen::Movelist<218> ml;
+		movegen::genMoves(b, ml); // TODO sort moves
+
+		std::int32_t currEval = negInf;
+
+		// TODO nullMove
+		board::QBB bcopy = b;
+		for (std::size_t i = 0; i != ml.size(); ++i)
+		{
+			if (!searchFlags::searching.test())
+				return eval::evaluate(b);
+			bcopy.makeMove(ml[i]);
+			currEval = std::max(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, !prevNull));
+			bcopy = b;
+			alpha = std::max(currEval, alpha);
+			// TODO TT store
+		}
+		// TODO TT store at end
+		return currEval;
 	}
 }

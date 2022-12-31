@@ -391,7 +391,7 @@ namespace movegen
 
 	template<std::size_t N, bool qSearch = false>
 	void genMoves(const board::QBB& b, Movelist<N>& ml)
-	{
+	{ // TODO gen captures only in qSearch = true mode
 		Bitboard checkers = isInCheck(b);
 
 		if (!checkers)
