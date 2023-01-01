@@ -85,7 +85,6 @@ namespace engine
 	
 	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s, board::ExtraBoardInfo e)
 	{
-		// TODO time management
 		searchStart = s;
 		ebi = e;
 		engineW = ebi.initialMover == board::Color::White;
@@ -95,13 +94,19 @@ namespace engine
 			initialHash();
 		else
 			hash = 0;
+		auto mytime = engineW ? settings.wmsec : settings.bmsec;
+		auto myinc = engineW ? settings.winc : settings.binc;
+		moveTime = e.moveNumber < 40 ? aux::castms((mytime / (40 - e.moveNumber)) + myinc/3) : aux::castms(mytime / 10);
 
 		movegen::Movelist<218> moves;
 		movegen::genMoves(b, moves);
-		board::Move bestmove = moves[0];
-
-
-		// TODO set move scores to negative infinity
+		
+		std::array<std::pair<board::Move, std::int32_t>, 218> rootMoves;
+		for (std::size_t i = 0; i != moves.size(); ++i)
+		{
+			rootMoves[i].first = moves[i];
+			rootMoves[i].second = negInf;
+		}
 
 		std::int32_t worstCase = negInf;
 
@@ -121,37 +126,50 @@ namespace engine
 
 				sync_cout << "info currmove " << move2uciFormat(rootMoves[i].first) << sync_endl;
 				sync_cout << "info nodes " << nodes << sync_endl;
-				rootMoves[i].second =  -alphaBetaSearch(bcopy, negInf, -1 * worstCase, k - 1, false);
+				rootMoves[i].second =  -alphaBetaSearch(bcopy, negInf, -worstCase, k - 1, false);
 				score = std::max(score, rootMoves[i].second);
 				bcopy = b;
 				if (score > worstCase)
 					worstCase = score;
 			}
 
-			std::stable_sort(rootMoves.begin(), rootMoves.begin() + j, [](const auto& a, const auto& b) {
+			std::stable_sort(rootMoves.begin(), rootMoves.begin() + moves.size(), [](const auto& a, const auto& b) {
 				return a.second > b.second;
 				});
 		}
 	endsearch:
-		// TODO sort all moves one last time
 		searchFlags::searching.clear();
-		sync_cout << "bestmove " << move2uciFormat(bestmove) << sync_endl;
+		sync_cout << "bestmove " << move2uciFormat(rootMoves[0].first) << sync_endl;
 	}
 
 	std::int32_t Engine::quiesceSearch(const board::QBB& b, std::int32_t alpha, std::int32_t beta, int depth)
 	{
-		++nodes;
 		const std::int32_t checkpos = eval::evaluate(b);
+		if (b.get50() == 50)
+			return 0;
 		if (checkpos > beta)
 			return checkpos;
 		else if (checkpos > alpha)
 			alpha = checkpos;
 		if (shouldStop())
 			searchFlags::searching.clear();
-
+		++nodes;
 
 		movegen::Movelist<218> ml;
-		movegen::genMoves(b, ml); // TODO sort moves in Q search
+		movegen::genMoves<movegen::QSearch>(b, ml); // TODO sort moves in Q search
+
+		if (!ml.size())
+		{
+			if (movegen::isInCheck(b))
+				return negInf;
+			else
+			{
+				if (movegen::genMoves(b, ml); ml.size())
+					return checkpos;
+				else
+					return 0;
+			}
+		}
 
 		std::int32_t currEval = checkpos;
 
@@ -172,7 +190,7 @@ namespace engine
 
 	std::int32_t Engine::alphaBetaSearch(const board::QBB& b, std::int32_t alpha, std::int32_t beta, int depth, bool prevNull)
 	{
-		const auto oldAlpha = alpha;
+		//const auto oldAlpha = alpha;
 		if (shouldStop())
 			searchFlags::searching.clear();
 		if (b.get50() == 50)
@@ -184,6 +202,14 @@ namespace engine
 
 		movegen::Movelist<218> ml;
 		movegen::genMoves(b, ml); // TODO sort moves
+
+		if (!ml.size())
+		{
+			if (movegen::isInCheck(b))
+				return negInf;
+			else
+				return 0;
+		}
 
 		std::int32_t currEval = negInf;
 

@@ -388,10 +388,10 @@ namespace movegen
 			ml.push_back(m);
 		}
 	}
-
-	template<std::size_t N, bool qSearch = false>
+	constexpr bool QSearch = true;
+	template<bool qSearch = false, std::size_t N>
 	void genMoves(const board::QBB& b, Movelist<N>& ml)
-	{ // TODO gen captures only in qSearch = true mode
+	{
 		Bitboard checkers = isInCheck(b);
 
 		if (!checkers)
@@ -431,6 +431,8 @@ namespace movegen
 			antiDiagPinned &= diag;
 			diag -= antiDiagPinned;
 
+			if constexpr (qSearch)
+				mine = ~theirs;
 			addMoves(horPinned, ml, [occ, mine](board::square idx) {
 				return hypqRank(occ, idx) & ~mine; });
 
@@ -451,12 +453,15 @@ namespace movegen
 
 			Bitboard pinnedPawnEP = (enemyPawnAttacksLeft(b.getEp()) & antiDiagPinnedPawns) | (enemyPawnAttacksRight(b.getEp()) & diagPinnedPawns);
 			addEPMoves(ml, pinnedPawnEP, b.getEp());
+			
+			if constexpr (!qSearch)
+			{
+				addPinUpPMove(vertPinnedPawns, ml, [occ](Bitboard pawns) {
+					return pawnMovesUp(pawns) & ~occ; });
 
-			addPinUpPMove(vertPinnedPawns, ml, [occ](Bitboard pawns) {
-				return pawnMovesUp(pawns) & ~occ; });
-
-			addUp2PMoves(vertPinnedPawns, ml, [occ](Bitboard pawns) {
-				return pawn2MovesUp(pawns, occ); });
+				addUp2PMoves(vertPinnedPawns, ml, [occ](Bitboard pawns) {
+					return pawn2MovesUp(pawns, occ); });
+			}
 
 			addMoves(knights, ml, [mine](board::square idx) {
 				return knightAttacks(idx) & ~mine; });
@@ -476,33 +481,38 @@ namespace movegen
 			addRightPMoves(pawns, ml, [theirs](Bitboard pawns) {
 				return pawnAttacksRight(pawns) & theirs; });
 
-			addUpPMoves(pawns, ml, [occ](Bitboard pawns) {
-				return pawnMovesUp(pawns) & ~occ; });
+			if constexpr (!qSearch)
+			{
+				addUpPMoves(pawns, ml, [occ](Bitboard pawns) {
+					return pawnMovesUp(pawns) & ~occ; });
 
-			addUp2PMoves(pawns, ml, [occ](Bitboard pawns) {
-				return pawn2MovesUp(pawns, occ); });
+				addUp2PMoves(pawns, ml, [occ](Bitboard pawns) {
+					return pawn2MovesUp(pawns, occ); });
+			}
 
 			Bitboard myKing5 = myKing & board::rankMask(board::a5);
 			Bitboard theirOrth5 = b.their(b.getOrthSliders()) & board::rankMask(board::a5);
 			Bitboard EPPin = getHorPinnedPieces(occ & ~(b.getEp() >> 8), myKing5, theirOrth5);
 			addEPMoves(ml, pawns & ~EPPin, b.getEp());
-
-			constexpr Bitboard betweenKSCastle = aux::setbit(board::f1) | aux::setbit(board::g1);
-			if (b.canCastleShort() && !((enemyAttacks | occ) & betweenKSCastle))
+			if constexpr (!qSearch)
 			{
-				board::Move m = board::e1;
-				m |= board::g1 << constants::toMaskOffset;
-				m |= constants::KSCastle << constants::moveTypeOffset;
-				ml.push_back(m);
-			}
-			constexpr Bitboard betweenQSCastle = aux::setbit(board::d1) | aux::setbit(board::c1) | aux::setbit(board::b1);
-			constexpr Bitboard QSCastleNoAttack = aux::setbit(board::d1) | aux::setbit(board::c1);
-			if (b.canCastleLong() && !(enemyAttacks & QSCastleNoAttack) && !(occ & betweenQSCastle))
-			{
-				board::Move m = board::e1;
-				m |= board::c1 << constants::toMaskOffset;
-				m |= constants::QSCastle << constants::moveTypeOffset;
-				ml.push_back(m);
+				constexpr Bitboard betweenKSCastle = aux::setbit(board::f1) | aux::setbit(board::g1);
+				if (b.canCastleShort() && !((enemyAttacks | occ) & betweenKSCastle))
+				{
+					board::Move m = board::e1;
+					m |= board::g1 << constants::toMaskOffset;
+					m |= constants::KSCastle << constants::moveTypeOffset;
+					ml.push_back(m);
+				}
+				constexpr Bitboard betweenQSCastle = aux::setbit(board::d1) | aux::setbit(board::c1) | aux::setbit(board::b1);
+				constexpr Bitboard QSCastleNoAttack = aux::setbit(board::d1) | aux::setbit(board::c1);
+				if (b.canCastleLong() && !(enemyAttacks & QSCastleNoAttack) && !(occ & betweenQSCastle))
+				{
+					board::Move m = board::e1;
+					m |= board::c1 << constants::toMaskOffset;
+					m |= constants::QSCastle << constants::moveTypeOffset;
+					ml.push_back(m);
+				}
 			}
 		}
 		else if (__popcnt64(checkers) == 1)
@@ -559,7 +569,5 @@ namespace movegen
 			addMoves(myKing, ml, [mine, attacks](board::square idx) {return kingAttacks(idx) & ~attacks & ~mine; });
 		}
 	}
-
-#undef MOVEGEN_LOOP_ATTACKS
 }
 #endif

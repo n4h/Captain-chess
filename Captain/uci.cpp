@@ -101,7 +101,6 @@ namespace uci
 		e.setTTable(&tt);
 		if (command[1] == "startpos")
 		{
-			
 			b = board::QBB{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", ebi};
 			if (command.size() >= 3 && command[2] == "moves")
 			{
@@ -118,6 +117,7 @@ namespace uci
 						++ebi.moveNumber;
 					c = c * -1;
 				}
+				ebi.initialMover = c;
 			}
 		}
 		else if (command[1] == "fen" && command.size() >= 8)
@@ -141,6 +141,7 @@ namespace uci
 						++ebi.moveNumber;
 					c = c * -1;
 				}
+				ebi.initialMover = c;
 			}
 		}
 	}
@@ -189,7 +190,7 @@ namespace uci
 		e.setSettings(ss);
 
 		sf.searching.test_and_set();
-		auto tmp = std::async(&engine::Engine::playBestMove, &e, std::cref(b), startTime);
+		auto tmp = std::async(&engine::Engine::rootSearch, &e, std::cref(b), startTime, ebi);
 		engineResult = std::move(tmp);
 	}
 

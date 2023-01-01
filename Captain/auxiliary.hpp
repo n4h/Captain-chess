@@ -27,6 +27,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstdint>
 #include <string_view>
 #include <type_traits>
+#include <chrono>
 
 
 // from Stockfish
@@ -207,6 +208,11 @@ namespace aux
 		default:
 			return false;
 		}
+	}
+
+	std::chrono::milliseconds castms(auto s)
+	{
+		return std::chrono::duration_cast<std::chrono::milliseconds>(s);
 	}
 }
 #endif

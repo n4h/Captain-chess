@@ -87,8 +87,6 @@ namespace engine
 		std::int32_t eval = 0;
 		// 218 = current max number of moves in chess position
 		// 256 = leeway for pseudolegal move generation
-		std::array<std::pair<board::Move, std::int32_t>, 256> rootMoves;
-		std::array<board::Move, 256> currline;
 	};
 }
 #endif
