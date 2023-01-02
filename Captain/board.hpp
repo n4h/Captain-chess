@@ -409,7 +409,7 @@ namespace board
 
 		constexpr bool enpExists() const noexcept
 		{
-			return epc & rankMask(a6)
+			return epc & rankMask(a6);
 		}
 
 		bool getEnpFile() const noexcept;

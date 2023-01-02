@@ -49,6 +49,14 @@ namespace TTable
 		}
 	}
 
+	void TTable::store(std::uint64_t hash, int depth, std::int32_t eval, char nodetype)
+	{
+		(*this)[hash].key = hash;
+		(*this)[hash].depth = depth;
+		(*this)[hash].eval = eval;
+		(*this)[hash].nodeType = nodetype;
+	}
+
 	TTable::TTable(std::size_t N)
 	{
 		if (N > 0)
@@ -101,7 +109,6 @@ namespace TTable
 		}
 	}
 
-	// TODO hash table update
 
 	std::uint64_t TTable::incrementalUpdate(board::Move m, const board::QBB& old, const board::QBB& newb)
 	{

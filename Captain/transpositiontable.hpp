@@ -8,6 +8,9 @@
 
 namespace TTable
 {
+	enum : char {PV = 0, ALL = 1, CUT = 2};
+
+
 	struct Entry
 	{
 		std::uint64_t key = 0;
@@ -36,6 +39,8 @@ namespace TTable
 		~TTable();
 		
 		void clear();
+
+		void store(std::uint64_t hash, int depth, std::int32_t eval, char nodetype);
 
 		Entry& operator[](std::uint64_t hash) noexcept;
 

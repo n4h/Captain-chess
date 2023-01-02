@@ -87,17 +87,23 @@ namespace engine
 			auto piecetype = b.getPieceType(static_cast<board::square>(i));
 			if (b.isWhiteToPlay())
 			{
-				if (piecetype & 1)
-					hash ^= tt->whitePSQT[(piecetype >> 1) - 1][i];
-				else
-					hash ^= tt->blackPSQT[(piecetype >> 1) - 1][i];
+				if (piecetype)
+				{
+					if (piecetype & 1)
+						hash ^= tt->whitePSQT[(piecetype >> 1) - 1][i];
+					else
+						hash ^= tt->blackPSQT[(piecetype >> 1) - 1][i];
+				}
 			}
 			else
 			{
-				if (piecetype & 1)
-					hash ^= tt->blackPSQT[(piecetype >> 1) - 1][aux::flip(i)];
-				else
-					hash ^= tt->whitePSQT[(piecetype >> 1) - 1][aux::flip(i)];
+				if (piecetype)
+				{
+					if (piecetype & 1)
+						hash ^= tt->blackPSQT[(piecetype >> 1) - 1][aux::flip(i)];
+					else
+						hash ^= tt->whitePSQT[(piecetype >> 1) - 1][aux::flip(i)];
+				}
 			}
 		}
 		
@@ -198,6 +204,22 @@ namespace engine
 			searchFlags::searching.clear();
 		++nodes;
 
+		if (tt)
+		{
+			if ((*tt)[hash].key == hash && (*tt)[hash].depth > depth)
+			{
+				auto nodetype = (*tt)[hash].nodeType;
+				auto eval = (*tt)[hash].eval;
+				if (nodetype == TTable::PV)
+					return eval;
+				else if (nodetype == TTable::ALL && eval < alpha)
+					return eval;
+				else if (nodetype == TTable::CUT && eval > beta)
+					return eval;
+			}
+		}
+
+
 		movegen::Movelist<218> ml;
 		movegen::genMoves<movegen::QSearch>(b, ml); // TODO sort moves in Q search
 
@@ -236,7 +258,7 @@ namespace engine
 
 	std::int32_t Engine::alphaBetaSearch(const board::QBB& b, std::int32_t alpha, std::int32_t beta, int depth, bool prevNull)
 	{
-		//const auto oldAlpha = alpha;
+		const auto oldAlpha = alpha;
 		if (shouldStop())
 			searchFlags::searching.clear();
 		if (b.get50() == 50)
@@ -244,7 +266,21 @@ namespace engine
 		if (depth <= 0)
 			return quiesceSearch(b, alpha, beta, depth);
 		++nodes;
-		// TODO TT check
+		
+		if (tt)
+		{
+			if ((*tt)[hash].key == hash && (*tt)[hash].depth > depth)
+			{
+				auto nodetype = (*tt)[hash].nodeType;
+				auto eval = (*tt)[hash].eval;
+				if (nodetype == TTable::PV)
+					return eval;
+				else if (nodetype == TTable::ALL && eval < alpha)
+					return eval;
+				else if (nodetype == TTable::CUT && eval > beta)
+					return eval;
+			}
+		}
 
 		movegen::Movelist<218> ml;
 		movegen::genMoves(b, ml); // TODO sort moves
@@ -273,10 +309,14 @@ namespace engine
 			hash = oldhash;
 			alpha = std::max(currEval, alpha);
 			if (alpha > beta)
+			{
+				if (tt)
+					tt->store(hash, depth, currEval, TTable::CUT);
 				return currEval;
-			// TODO TT store
+			}
 		}
-		// TODO TT store at end
+		if (tt)
+			tt->store(hash, depth, currEval, alpha > oldAlpha ? TTable::PV : TTable::ALL);
 		return currEval;
 	}
 }
