@@ -61,6 +61,13 @@ namespace aux
 		return rank * 8 + file;
 	}
 
+	// converts square to new square after vertically flipping board
+	// (file stays same, but rank is flipped)
+	constexpr std::unsigned_integral auto flip(uintOrSquare auto x)
+	{
+		return x ^ 56;
+	}
+
 	constexpr std::uint64_t setbit(uintOrSquare auto pos)
 	{
 		return 0b1ULL << pos;

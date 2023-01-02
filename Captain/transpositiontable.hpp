@@ -2,6 +2,7 @@
 #define TRANSPOSITION_TABLE_H
 
 #include <cstdint>
+#include <array>
 
 #include "board.hpp"
 
@@ -23,12 +24,12 @@ namespace TTable
 
 		void initRandom();
 	public:
-		std::uint64_t wPieces[6][64];
-		std::uint64_t bPieces[6][64];
+		std::array<std::array<std::uint64_t, 64>, 6> whitePSQT;
+		std::array<std::array<std::uint64_t, 64>, 6> blackPSQT;
 		std::uint64_t wToMove;
-		std::uint64_t castling_first[4];
-		std::uint64_t castling[16];
-		std::uint64_t enPassant[8];
+		std::array<std::uint64_t, 4> castling_first;
+		std::array<std::uint64_t, 16> castling;
+		std::array<std::uint64_t, 8> enPassant;
 
 		TTable(std::size_t);
 		TTable() { initRandom(); }
@@ -40,8 +41,7 @@ namespace TTable
 
 		void resize(std::size_t);
 
-		std::uint64_t incrementalUpdatePre(board::Move m, const board::QBB& b, bool nullMove);
-		std::uint64_t incrementalUpdatePost(board::Move m, const board::QBB& b, bool nullMove);
+		std::uint64_t incrementalUpdate(board::Move, const board::QBB&, const board::QBB&);
 		TTable(const TTable&) = delete;
 		TTable& operator=(const TTable&) = delete;
 		TTable(TTable&&) = delete;

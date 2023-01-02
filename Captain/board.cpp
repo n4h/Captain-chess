@@ -155,7 +155,7 @@ namespace board
 			epc |= setbit(rank, file);
 		}
 
-		//if (splitfen[1] == "w") wMoving = true;
+		if (splitfen[1] == "w") epc |= 0x80'80'00'00'00U;
 		if (!wToMove) flipQBB();
 
 		Bitboard halfMoves = static_cast<Bitboard>(std::stoi(splitfen[4])) << 24;
@@ -184,6 +184,12 @@ namespace board
 		epc = _byteswap_uint64(epc);
 	}
 
+	bool QBB::getEnpFile() const noexcept
+	{
+		Bitboard enpbb = epc & rankMask(a6);
+		return _tzcnt_u64(enpbb);
+	}
+
 	void QBB::makeMove(const Move m)
 	{
 		const auto fromSq = getMoveInfo<fromMask>(m);
@@ -193,10 +199,12 @@ namespace board
 		const auto fromPcType = getPieceType(static_cast<square>(fromSq)) >> 1;
 		const auto toPcType = getPieceType(static_cast<square>(fromSq)) >> 1;
 		
+		// 50 move rule counter and color flip
 		Bitboard add1 = 0x1'01'00'00'00U;
 		add1 *= 1U >> toPcType;
 		add1 *= 1U - (2U >> fromPcType);
 		epc += add1;
+		epc ^= 0x80'80'00'00'00U;
 
 		side &= ~fromBB;
 		side |= toBB;
@@ -241,5 +249,24 @@ namespace board
 
 		side = ~side & (pbq | nbk | rqk);
 		flipQBB();
+	}
+	// b1 is white to move and b2 is black to move
+	Bitboard getCastlingDiff(const board::QBB& b1, const board::QBB& b2)
+	{
+		Bitboard b1castling = b1.getCastling();
+		Bitboard b16 = _pext_u64(b1castling, 0x9100000000000091ULL);
+		Bitboard b2castling = _byteswap_uint64(b2.getCastling());
+		Bitboard b26 = _pext_u64(b2castling, 0x9100000000000091ULL);
+		
+		Bitboard b16king = b16 & 18ULL;
+		Bitboard b26king = b26 & 18ULL;
+
+		b16 = (b16 & (b16king >> 1)) | (b16 & (b16king << 1));
+		b26 = (b26 & (b26king >> 1)) | (b26 & (b26king << 1));
+		
+		Bitboard b14 = _pext_u64(b16, 45ULL);
+		Bitboard b24 = _pext_u64(b26, 45ULL);
+		
+		return b14 ^ b24;
 	}
 }

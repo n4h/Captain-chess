@@ -385,6 +385,8 @@ namespace board
 
 		unsigned getPieceType(square) const noexcept;
 
+		void flipQBB();
+
 		constexpr bool canCastleShort() const noexcept
 		{
 			return (epc & 0xF0U) == 0x90U;
@@ -394,6 +396,23 @@ namespace board
 		{
 			return (epc & 0x1FU) == 0x11U;
 		}
+
+		constexpr bool oppCanCastleShort() const noexcept
+		{
+			return (epc & 0xF000000000000000ULL) == 0x9000000000000000ULL;
+		}
+
+		constexpr bool oppCanCastleLong() const noexcept
+		{
+			return (epc & 0x1F00000000000000ULL) == 0x1100000000000000ULL;
+		}
+
+		constexpr bool enpExists() const noexcept
+		{
+			return epc & rankMask(a6)
+		}
+
+		bool getEnpFile() const noexcept;
 
 		constexpr Bitboard getOccupancy() const noexcept
 		{
@@ -460,9 +479,17 @@ namespace board
 			return _bextr_u64(epc, 24, 6);
 		}
 
-	private:
-		void flipQBB();
+		constexpr Bitboard getCastling() const noexcept
+		{
+			return epc & (rankMask(a1) | rankMask(a8));
+		}
 
+		constexpr bool isWhiteToPlay() const noexcept
+		{
+			return epc & 0x80'80'00'00'00U;
+		}
 	};
+
+	board::Bitboard getCastlingDiff(const board::QBB&, const board::QBB&);
 }
 #endif

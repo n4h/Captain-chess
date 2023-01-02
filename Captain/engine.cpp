@@ -47,7 +47,7 @@ namespace engine
 	}
 
 	std::string Engine::move2uciFormat(board::Move m)
-	{
+	{ // TODO only works for root move
 		std::ostringstream oss;
 		auto from = board::getMoveInfo<constants::fromMask>(m);
 		auto to = board::getMoveInfo<constants::toMask>(m);
@@ -78,9 +78,49 @@ namespace engine
 
 		return overtime || (nodes > settings.maxNodes) || (elapsed > settings.maxTime);
 	}
-	void Engine::initialHash()
+	void Engine::initialHash(const board::QBB& b)
 	{
+		hash = 0;
+		if (!tt) return;
+		for (std::size_t i = 0; i != 64; ++i)
+		{
+			auto piecetype = b.getPieceType(static_cast<board::square>(i));
+			if (b.isWhiteToPlay())
+			{
+				if (piecetype & 1)
+					hash ^= tt->whitePSQT[(piecetype >> 1) - 1][i];
+				else
+					hash ^= tt->blackPSQT[(piecetype >> 1) - 1][i];
+			}
+			else
+			{
+				if (piecetype & 1)
+					hash ^= tt->blackPSQT[(piecetype >> 1) - 1][aux::flip(i)];
+				else
+					hash ^= tt->whitePSQT[(piecetype >> 1) - 1][aux::flip(i)];
+			}
+		}
 		
+		if (b.isWhiteToPlay())
+			hash ^= tt->wToMove;
+
+		if (b.isWhiteToPlay())
+		{
+			hash ^= b.canCastleLong() ? tt->castling_first[0] : 0;
+			hash ^= b.canCastleShort() ? tt->castling_first[1] : 0;
+			hash ^= b.oppCanCastleLong() ? tt->castling_first[2] : 0;
+			hash ^= b.oppCanCastleShort() ? tt->castling_first[3] : 0;
+		}
+		else
+		{
+			hash ^= b.oppCanCastleLong() ? tt->castling_first[0] : 0;
+			hash ^= b.oppCanCastleShort() ? tt->castling_first[1] : 0;
+			hash ^= b.canCastleLong() ? tt->castling_first[3] : 0;
+			hash ^= b.canCastleShort() ? tt->castling_first[4] : 0;
+		}
+
+		if (b.enpExists())
+			hash ^= tt->enPassant[b.getEnpFile()];
 	}
 	
 	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s, board::ExtraBoardInfo e)
@@ -91,7 +131,7 @@ namespace engine
 		currIDdepth = 0;
 		nodes = 0;
 		if (tt != nullptr)
-			initialHash();
+			initialHash(b);
 		else
 			hash = 0;
 		auto mytime = engineW ? settings.wmsec : settings.bmsec;
@@ -123,12 +163,15 @@ namespace engine
 				if (!searchFlags::searching.test())
 					goto endsearch;
 				bcopy.makeMove(rootMoves[i].first);
+				auto oldhash = hash;
+				hash ^= tt->incrementalUpdate(rootMoves[i].first, b, bcopy);
 
 				sync_cout << "info currmove " << move2uciFormat(rootMoves[i].first) << sync_endl;
 				sync_cout << "info nodes " << nodes << sync_endl;
 				rootMoves[i].second =  -alphaBetaSearch(bcopy, negInf, -worstCase, k - 1, false);
 				score = std::max(score, rootMoves[i].second);
 				bcopy = b;
+				hash = oldhash;
 				if (score > worstCase)
 					worstCase = score;
 			}
@@ -178,9 +221,12 @@ namespace engine
 		{
 			if (!searchFlags::searching.test())
 				return alpha;
+			auto oldhash = hash;
 			bcopy.makeMove(ml[i]);
+			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
 			currEval = std::max(currEval, -quiesceSearch(bcopy, -beta, -alpha, depth - 1));
 			bcopy = b;
+			hash = oldhash;
 			alpha = std::max(currEval, alpha);
 			if (alpha > beta)
 				return currEval;
@@ -219,9 +265,12 @@ namespace engine
 		{
 			if (!searchFlags::searching.test())
 				return eval::evaluate(b);
+			auto oldhash = hash;
 			bcopy.makeMove(ml[i]);
+			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
 			currEval = std::max(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, !prevNull));
 			bcopy = b;
+			hash = oldhash;
 			alpha = std::max(currEval, alpha);
 			if (alpha > beta)
 				return currEval;
