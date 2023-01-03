@@ -2,8 +2,6 @@
 
 Captain is a UCI compliant chess engine written in C++. It can work with any chess GUI that supports UCI, although it has only been tested with the [Banksia chess GUI](https://banksiagui.com/).
 
-Captain has recently been rewritten, so it may be buggy.
-
 I have learned a lot from studying other chess engines and projects, including:
 
 * [Stockfish](https://github.com/official-stockfish/Stockfish)
