@@ -46,7 +46,7 @@ namespace uci
 		void UCIGoCommand(const std::vector<std::string>&);
 		void UCIStopCommand();
 		void UCISetOptionCommand(const std::vector<std::string>&);
-		std::string UCIName = "Captain";
+		std::string UCIName = "Captain v3.1";
 		std::string UCIAuthor = "Narbeh Mouradian";
 		bool initialized = false;
 		board::QBB b;
