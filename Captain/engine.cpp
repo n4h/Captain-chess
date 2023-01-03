@@ -142,7 +142,7 @@ namespace engine
 			hash = 0;
 		auto mytime = engineW ? settings.wmsec : settings.bmsec;
 		auto myinc = engineW ? settings.winc : settings.binc;
-		moveTime = e.moveNumber < 40 ? aux::castms((mytime / (40 - e.moveNumber)) + myinc/3) : aux::castms(mytime / 10);
+		moveTime = e.moveNumber < 40 ? std::min(aux::castms(mytime * 0.95), aux::castms((mytime / (40 - e.moveNumber)) + myinc/3)) : aux::castms(mytime / 10);
 
 		movegen::Movelist<218> moves;
 		movegen::genMoves(b, moves);
