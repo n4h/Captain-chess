@@ -383,6 +383,8 @@ namespace board
 		
 		void makeMove(const Move);
 
+		void doNullMove();
+
 		unsigned getPieceType(square) const noexcept;
 
 		void flipQBB();

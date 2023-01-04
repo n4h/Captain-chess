@@ -250,6 +250,13 @@ namespace board
 		side = ~side & (pbq | nbk | rqk);
 		flipQBB();
 	}
+	void QBB::doNullMove()
+	{
+		side = ~side & (pbq | nbk | rqk);
+		epc &= ~rankMask(a6);
+		epc ^= 0x80'80'00'00'00U;
+		flipQBB();
+	}
 	// b1 is white to move and b2 is black to move
 	Bitboard getCastlingDiff(const board::QBB& b1, const board::QBB& b2)
 	{

@@ -282,6 +282,17 @@ namespace engine
 			}
 		}
 
+		if (!prevNull)
+		{
+			board::QBB bnull = b;
+			bnull.doNullMove();
+			auto nulleval = -alphaBetaSearch(bnull, -beta, -alpha, depth - 2, true);
+			if (nulleval > beta)
+				return nulleval;
+			else if (nulleval > alpha)
+				alpha = nulleval;
+		}
+
 		movegen::Movelist<218> ml;
 		movegen::genMoves(b, ml); // TODO sort moves
 
@@ -295,7 +306,7 @@ namespace engine
 
 		std::int32_t currEval = negInf;
 
-		// TODO nullMove
+		
 		board::QBB bcopy = b;
 		for (std::size_t i = 0; i != ml.size(); ++i)
 		{
@@ -304,7 +315,7 @@ namespace engine
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i]);
 			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
-			currEval = std::max(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, !prevNull));
+			currEval = std::max(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, false));
 			bcopy = b;
 			hash = oldhash;
 			alpha = std::max(currEval, alpha);
