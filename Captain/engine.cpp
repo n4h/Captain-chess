@@ -282,7 +282,7 @@ namespace engine
 			}
 		}
 
-		if (!prevNull)
+		if (!prevNull && !movegen::isInCheck(b))
 		{
 			board::QBB bnull = b;
 			bnull.doNullMove();
