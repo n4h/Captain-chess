@@ -286,7 +286,7 @@ namespace engine
 		{
 			board::QBB bnull = b;
 			bnull.doNullMove();
-			auto nulleval = -alphaBetaSearch(bnull, -beta, -alpha, depth - 2, true);
+			auto nulleval = -alphaBetaSearch(bnull, -beta, -alpha, depth - 3, true);
 			if (nulleval > beta)
 				return nulleval;
 			else if (nulleval > alpha)
