@@ -204,4 +204,16 @@ namespace TTable
 		return update;
 	}
 
+	std::uint64_t TTable::nullUpdate(const board::QBB& b)
+	{
+		std::uint64_t update = 0;
+		update ^= this->wToMove;
+		auto ep = b.getEp();
+		unsigned long index;
+		if (_BitScanForward64(&index, ep))
+		{
+			update ^= enPassant[aux::file(index)];
+		}
+		return update;
+	}
 }

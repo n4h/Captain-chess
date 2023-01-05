@@ -289,11 +289,14 @@ namespace engine
 			}
 		}
 
-		if (!nullBranch && !movegen::isInCheck(b) && currIDdepth >= 5)
+		if (!nullBranch && !movegen::isInCheck(b))
 		{
 			board::QBB bnull = b;
+			auto oldhash = hash;
+			hash ^= tt->nullUpdate(bnull);
 			bnull.doNullMove();
 			auto nulleval = -alphaBetaSearch(bnull, -beta, -alpha, depth - 3, true);
+			hash = oldhash;
 			if (nulleval > beta)
 				return nulleval;
 			else if (nulleval > alpha)
