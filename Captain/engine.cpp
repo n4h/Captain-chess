@@ -289,7 +289,7 @@ namespace engine
 			}
 		}
 
-		if (!nullBranch && !movegen::isInCheck(b))
+		if (!nullBranch && !movegen::isInCheck(b) && currIDdepth >= 5)
 		{
 			board::QBB bnull = b;
 			bnull.doNullMove();
