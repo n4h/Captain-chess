@@ -38,6 +38,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace engine
 {
+	struct Timeout
+	{
+		Timeout() {}
+	};
+
 	using namespace std::literals::chrono_literals;
 
 	// 500000 is arbitrary 

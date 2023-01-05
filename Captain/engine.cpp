@@ -174,7 +174,14 @@ namespace engine
 
 				sync_cout << "info currmove " << move2uciFormat(rootMoves[i].first) << sync_endl;
 				sync_cout << "info nodes " << nodes << sync_endl;
-				rootMoves[i].second =  -alphaBetaSearch(bcopy, negInf, -worstCase, k - 1, false);
+				try 
+				{
+					rootMoves[i].second = -alphaBetaSearch(bcopy, negInf, -worstCase, k - 1, false);
+				}
+				catch (const Timeout&)
+				{
+					goto endsearch;
+				}
 				score = std::max(score, rootMoves[i].second);
 				bcopy = b;
 				hash = oldhash;
@@ -242,7 +249,7 @@ namespace engine
 		for (std::size_t i = 0; i != ml.size(); ++i)
 		{
 			if (!searchFlags::searching.test())
-				return alpha;
+				throw Timeout();
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i]);
 			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
@@ -256,7 +263,7 @@ namespace engine
 		return currEval;
 	}
 
-	std::int32_t Engine::alphaBetaSearch(const board::QBB& b, std::int32_t alpha, std::int32_t beta, int depth, bool prevNull)
+	std::int32_t Engine::alphaBetaSearch(const board::QBB& b, std::int32_t alpha, std::int32_t beta, int depth, bool nullBranch)
 	{
 		const auto oldAlpha = alpha;
 		if (shouldStop())
@@ -282,7 +289,7 @@ namespace engine
 			}
 		}
 
-		if (!prevNull && !movegen::isInCheck(b))
+		if (!nullBranch && !movegen::isInCheck(b))
 		{
 			board::QBB bnull = b;
 			bnull.doNullMove();
@@ -311,11 +318,11 @@ namespace engine
 		for (std::size_t i = 0; i != ml.size(); ++i)
 		{
 			if (!searchFlags::searching.test())
-				return eval::evaluate(b);
+				throw Timeout();
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i]);
 			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
-			currEval = std::max(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, false));
+			currEval = std::max(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
 			bcopy = b;
 			hash = oldhash;
 			alpha = std::max(currEval, alpha);
