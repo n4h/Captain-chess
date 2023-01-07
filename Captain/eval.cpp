@@ -53,6 +53,12 @@ namespace eval
 		return values[(b.getPieceType(to) >> 1) - 1] - values[(b.getPieceType(from) >> 1) - 1];
 	}
 
+	std::int32_t evalCapture(const board::QBB& b, board::Move m)
+	{
+		std::int32_t mvvlvaScore = mvvlva(b, m);
+		return mvvlvaScore >= 0 ? mvvlvaScore : see(b, m);
+	}
+
 	std::int32_t evaluate(const board::QBB& b)
 	{
 		std::int32_t totalW = 0;
