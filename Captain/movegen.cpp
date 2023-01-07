@@ -158,4 +158,14 @@ namespace movegen
 
 		return checkers;
 	}
+	Bitboard getSqAttackers(const board::QBB& b, board::square s)
+	{
+		AttackMap orth = hypqAllOrth(b.getOccupancy(), s) & b.getOrthSliders();
+		AttackMap diag = hypqAllDiag(b.getOccupancy(), s) & b.getDiagSliders();
+		AttackMap knight = knightAttacks(s) & b.getKnights();
+		AttackMap kings = kingAttacks(s) & b.getKings();
+		AttackMap pawns = pawnAttacks(s) & b.their(b.getPawns());
+		pawns |= enemyPawnAttacks(s) & b.my(b.getPawns());
+		return orth | diag | knight | kings | pawns;
+	}
 }
