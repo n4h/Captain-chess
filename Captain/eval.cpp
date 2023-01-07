@@ -44,6 +44,15 @@ namespace eval
 		}
 		return mval;
 	}
+
+	std::int32_t mvvlva(const board::QBB& b, board::Move m)
+	{
+		std::int32_t values[6] = {100, 300, 300, 500, 900, 1000}; //PNBRQK
+		board::square from = static_cast<board::square>(board::getMoveInfo<constants::fromMask>(m));
+		board::square to = static_cast<board::square>(board::getMoveInfo<constants::toMask>(m));
+		return values[(b.getPieceType(to) >> 1) - 1] - values[(b.getPieceType(from) >> 1) - 1];
+	}
+
 	std::int32_t evaluate(const board::QBB& b)
 	{
 		std::int32_t totalW = 0;

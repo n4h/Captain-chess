@@ -118,6 +118,10 @@ namespace eval
 		0, 0, 20, 0, 0, 0, 20, 0
 	};
 
+	
+	std::int32_t mvvlva(const board::QBB&, board::Move);
+	std::int32_t see(const board::QBB&, board::Move);
+	std::int32_t evalCapture(const board::QBB&, board::Move);
 
 	std::int32_t computeMaterialValue(board::Bitboard, const std::array<std::int32_t, 64>&);
 
