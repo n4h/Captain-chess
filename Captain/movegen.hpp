@@ -248,25 +248,84 @@ namespace movegen
 		return nnw | nne | nww | nee | ssw | sse | sww | see;
 	}
 
-	// pawn moves/attacks are generated setwise
-	constexpr AttackMap pawnAttacksLeft(Bitboard pawns)
+	template<typename T>
+	constexpr AttackMap pawnAttacksLeft(T pawns)
 	{
-		return (pawns << 7) & ~board::fileMask(board::h1);
+		if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			return (pawns << 7) & ~board::fileMask(board::h1);
+		}
+		else if constexpr(std::is_same_v<T, board::square>)
+		{
+			return pawnAttacksLeft(static_cast<Bitboard>(aux::setbit(pawns));
+		}
+		else
+		{
+			return 0;
+		}
 	}
 
-	constexpr AttackMap pawnAttacksRight(Bitboard pawns)
+	template<typename T>
+	constexpr AttackMap pawnAttacksRight(T pawns)
 	{
-		return (pawns << 9) & ~board::fileMask(board::a1);
+		if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			return (pawns << 9) & ~board::fileMask(board::a1);
+		}
+		else if constexpr (std::is_same_v<T, board::square>)
+		{
+			return pawnAttacksRight(static_cast<Bitboard>(aux::setbit(pawns));
+		}
+		else
+		{
+			return 0;
+		}
 	}
 
-	constexpr AttackMap enemyPawnAttacksLeft(Bitboard pawns)
+	template<typename T>
+	constexpr AttackMap enemyPawnAttacksLeft(T pawns)
 	{
-		return (pawns >> 9) & ~board::fileMask(board::h1);
+		if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			return (pawns >> 9) & ~board::fileMask(board::h1);
+		}
+		else if constexpr (std::is_same_v<T, board::square>)
+		{
+			return enemyPawnAttacksLeft(static_cast<Bitboard>(aux::setbit(pawns)));
+		}
+		else
+		{
+			return 0;
+		}
 	}
 
-	constexpr AttackMap enemyPawnAttacksRight(Bitboard pawns)
+	template<typename T>
+	constexpr AttackMap enemyPawnAttacksRight(T pawns)
 	{
-		return (pawns >> 7) & ~board::fileMask(board::a1);
+		if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			return (pawns >> 7) & ~board::fileMask(board::a1);
+		}
+		else if constexpr (std::is_same_v<T, board::square>)
+		{
+			return enemyPawnAttacksRight(static_cast<Bitboard>(aux::setbit(pawns)));
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
+	template<typename T>
+	constexpr AttackMap pawnAttacks(T pawns)
+	{
+		return pawnAttacksLeft(pawns) | pawnAttacksRight(pawns);
+	}
+
+	template<typename T>
+	constexpr AttackMap enemyPawnAttacks(T pawns)
+	{
+		return enemyPawnAttacksLeft(pawns) | enemyPawnAttacksRight(pawns);
 	}
 
 	constexpr Bitboard pawnMovesUp(Bitboard pawns)
@@ -302,6 +361,8 @@ namespace movegen
 	Bitboard getBetweenChecks(const board::QBB& b, Bitboard checkers);
 
 	Bitboard isInCheck(const board::QBB& b);
+
+	Bitboard getSqAttackers(const board::QBB& b, board::square s);
 
 	template<typename Attacks, std::size_t N>
 	void addMoves(Bitboard pieces, Movelist<N>& ml, Attacks dest)
@@ -570,4 +631,5 @@ namespace movegen
 		}
 	}
 }
+
 #endif
