@@ -118,7 +118,7 @@ namespace eval
 		0, 0, 20, 0, 0, 0, 20, 0
 	};
 
-	
+	std::uint32_t getLVA(const board::QBB&, board::Bitboard, board::Bitboard&);
 	std::int32_t mvvlva(const board::QBB&, board::Move);
 	std::int32_t see(const board::QBB&, board::Move);
 	std::int32_t evalCapture(const board::QBB&, board::Move);

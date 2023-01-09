@@ -45,12 +45,39 @@ namespace eval
 		return mval;
 	}
 
+	std::uint32_t getLVA(const board::QBB& b, board::Bitboard attackers, board::Bitboard& least)
+	{
+		if (b.pbq & attackers)
+		{
+			if (least = attackers & b.nbk) return constants::bishopCode;
+			if (least = attackers & b.rqk) return constants::queenCode;
+			return constants::pawnCode;
+		}
+		else
+		{
+			if (b.nbk & attackers)
+			{
+				if (least = attackers & b.getKnights()) return constants::knightCode;
+				return constants::kingCode;
+			}
+			else
+			{
+				return constants::rookCode;
+			}
+		}
+	}
+
 	std::int32_t mvvlva(const board::QBB& b, board::Move m)
 	{
 		std::int32_t values[6] = {100, 300, 300, 500, 900, 1000}; //PNBRQK
 		board::square from = static_cast<board::square>(board::getMoveInfo<constants::fromMask>(m));
 		board::square to = static_cast<board::square>(board::getMoveInfo<constants::toMask>(m));
 		return values[(b.getPieceType(to) >> 1) - 1] - values[(b.getPieceType(from) >> 1) - 1];
+	}
+
+	std::int32_t see(const board::QBB& b, board::Move m)
+	{
+		
 	}
 
 	std::int32_t evalCapture(const board::QBB& b, board::Move m)
