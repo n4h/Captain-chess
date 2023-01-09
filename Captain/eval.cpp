@@ -47,24 +47,19 @@ namespace eval
 
 	std::uint32_t getLVA(const board::QBB& b, board::Bitboard attackers, board::Bitboard& least)
 	{
-		if (b.pbq & attackers)
-		{
-			if (least = attackers & b.nbk) return constants::bishopCode;
-			if (least = attackers & b.rqk) return constants::queenCode;
+		// TODO rank promoting pawns higher
+		if (least = attackers & b.getPawns())
 			return constants::pawnCode;
-		}
-		else
-		{
-			if (b.nbk & attackers)
-			{
-				if (least = attackers & b.getKnights()) return constants::knightCode;
-				return constants::kingCode;
-			}
-			else
-			{
-				return constants::rookCode;
-			}
-		}
+		if (least = attackers & b.getKnights())
+			return constants::knightCode;
+		if (least = attackers & b.getBishops())
+			return constants::bishopCode;
+		if (least = attackers & b.getRooks())
+			return constants::rookCode;
+		if (least = attackers & b.getQueens())
+			return constants::queenCode;
+		least = attackers & b.getKings();
+		return constants::kingCode;
 	}
 
 	std::int32_t mvvlva(const board::QBB& b, board::Move m)
