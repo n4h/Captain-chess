@@ -170,8 +170,8 @@ namespace movegen
 	}
 	Bitboard getSliderAttackers(Bitboard occ, board::square s, Bitboard diag, Bitboard orth)
 	{
-		AttackMap orth = hypqAllOrth(occ, s) & orth;
-		AttackMap diag = hypqAllDiag(occ, s) & diag;
+		orth &= hypqAllOrth(occ, s);
+		diag &= hypqAllDiag(occ, s);
 		return orth | diag;
 	}
 }

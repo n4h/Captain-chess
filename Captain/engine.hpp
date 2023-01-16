@@ -46,8 +46,8 @@ namespace engine
 	using namespace std::literals::chrono_literals;
 
 	// 500000 is arbitrary 
-	constexpr auto negInf = -500000;
-	constexpr auto posInf = 500000;
+	constexpr auto negInf = -12000;
+	constexpr auto posInf = 12000;
 
 	struct SearchSettings
 	{

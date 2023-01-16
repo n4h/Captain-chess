@@ -135,7 +135,7 @@ namespace eval
 			attackertype = getLVA(b, attackers & side, attacker);
 		}
 		while (--i)
-			scores[i - 1] = std::min(scores[i - 1], -scores[i]);
+			scores[i - 1] = std::min(scores[i - 1], (std::int16_t)-scores[i]);
 		return scores[0];
 	}
 

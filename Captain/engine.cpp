@@ -253,7 +253,7 @@ namespace engine
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i]);
 			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
-			currEval = std::max(currEval, -quiesceSearch(bcopy, -beta, -alpha, depth - 1));
+			currEval = std::max(currEval, (std::int16_t)-quiesceSearch(bcopy, -beta, -alpha, depth - 1));
 			bcopy = b;
 			hash = oldhash;
 			alpha = std::max(currEval, alpha);
@@ -325,7 +325,7 @@ namespace engine
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i]);
 			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
-			currEval = std::max(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
+			currEval = std::max(currEval, (std::int16_t) -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
 			bcopy = b;
 			hash = oldhash;
 			alpha = std::max(currEval, alpha);

@@ -257,7 +257,7 @@ namespace movegen
 		}
 		else if constexpr(std::is_same_v<T, board::square>)
 		{
-			return pawnAttacksLeft(static_cast<Bitboard>(aux::setbit(pawns));
+			return pawnAttacksLeft(static_cast<Bitboard>(aux::setbit(pawns)));
 		}
 		else
 		{
@@ -274,7 +274,7 @@ namespace movegen
 		}
 		else if constexpr (std::is_same_v<T, board::square>)
 		{
-			return pawnAttacksRight(static_cast<Bitboard>(aux::setbit(pawns));
+			return pawnAttacksRight(static_cast<Bitboard>(aux::setbit(pawns)));
 		}
 		else
 		{
