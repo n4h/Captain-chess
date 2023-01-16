@@ -27,6 +27,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cassert>
 #include <vector>
 #include <array>
+#include <climits>
 
 #include "constants.hpp"
 #include "auxiliary.hpp"
@@ -45,6 +46,12 @@ namespace board
 	  Last 4: move type (8 possible move types)
 	*/
 	using Move = std::uint32_t;
+
+	constexpr void addMoveInfo(Move& m, std::unsigned_integral auto info)
+	{
+		static_assert(sizeof(info) * CHAR_BIT > 16);
+		m |= (info << 16);
+	}
 
 	template<std::uint32_t mask>
 	constexpr std::uint32_t getMoveInfo(Move m)
