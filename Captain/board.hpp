@@ -160,6 +160,21 @@ namespace board
 		a8, b8, c8, d8, e8, f8, g8, h8,
 	};
 
+	constexpr square castSq(std::unsigned_integral auto x)
+	{
+		return static_cast<square>(x);
+	}
+
+	constexpr square getMoveFromSq(Move m)
+	{
+		return static_cast<square>(getMoveInfo<fromMask>(m));
+	}
+
+	constexpr square getMoveToSq(Move m)
+	{
+		return static_cast<square>(getMoveInfo<toMask>(m));
+	}
+
 	namespace masks {
 		constexpr Bitboard rankMask[8] =
 		{
