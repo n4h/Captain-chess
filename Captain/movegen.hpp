@@ -363,6 +363,7 @@ namespace movegen
 	Bitboard isInCheck(const board::QBB& b);
 
 	Bitboard getSqAttackers(const board::QBB& b, board::square s);
+	Bitboard getSliderAttackers(Bitboard, board::square, Bitboard diag, Bitboard orth);
 
 	template<typename Attacks, std::size_t N>
 	void addMoves(Bitboard pieces, Movelist<N>& ml, Attacks dest)
