@@ -20,10 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #define DIVIDE_H
 
 #include <cstddef>
-#include <iostream>
 #include <string>
-#include <cassert>
-#include <array>
 
 #include "board.hpp"
 #include "movegen.hpp"

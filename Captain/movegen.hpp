@@ -29,7 +29,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstdint>
 #include <cstddef>
 #include <type_traits>
-#include <cassert>
 #include <array>
 
 #include "board.hpp"

@@ -22,10 +22,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "board.hpp"
 #include "movegen.hpp"
 
-#include <algorithm>
-#include <cstddef>
-#include <cassert>
-
 namespace perft
 {
 	class Perft

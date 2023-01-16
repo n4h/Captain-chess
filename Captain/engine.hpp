@@ -19,15 +19,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include <algorithm>
-#include <limits>
+#include <climits>
 #include <utility>
 #include <cstdint>
 #include <chrono>
-#include <atomic>
-#include <iterator>
-#include <array>
-#include <string>
 
 #include "board.hpp"
 #include "movegen.hpp"
