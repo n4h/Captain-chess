@@ -29,8 +29,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 namespace eval
 {
 	using namespace aux;
+	using Eval = std::int16_t;
 
-	constexpr std::array<std::int16_t, 64> PSQTknight = {
+	constexpr std::array<Eval, 64> PSQTknight = {
 		200, 250, 210, 210, 210, 210, 250, 200,
 		250, 210, 300, 300, 300, 300, 210, 250,
 		250, 300, 360, 360, 360, 360, 300, 250,
@@ -41,7 +42,7 @@ namespace eval
 		200, 250, 210, 210, 210, 210, 250, 200
 	};
 
-	constexpr std::array<std::int16_t, 64> PSQTbishop = {
+	constexpr std::array<Eval, 64> PSQTbishop = {
 		270, 270, 270, 270, 270, 270, 270, 270,
 		270, 330, 300, 300, 300, 300, 330, 270,
 		270, 300, 330, 330, 330, 330, 300, 270,
@@ -52,7 +53,7 @@ namespace eval
 		270, 270, 270, 270, 270, 270, 270, 270
 	};
 
-	constexpr std::array<std::int16_t, 64> PSQTrookw = {
+	constexpr std::array<Eval, 64> PSQTrookw = {
 		500, 500, 500, 525, 525, 500, 500, 500,
 		500, 500, 500, 525, 525, 500, 500, 500,
 		500, 500, 500, 525, 525, 500, 500, 500,
@@ -63,7 +64,7 @@ namespace eval
 		525, 525, 525, 525, 525, 525, 525, 525
 	};
 
-	constexpr std::array<std::int16_t, 64> PSQTrookb = {
+	constexpr std::array<Eval, 64> PSQTrookb = {
 		525, 525, 525, 525, 525, 525, 525, 525,
 		550, 550, 550, 550, 550, 550, 550, 550,
 		500, 500, 500, 525, 525, 500, 500, 500,
@@ -74,7 +75,7 @@ namespace eval
 		500, 500, 500, 525, 525, 500, 500, 500
 	};
 
-	constexpr std::array<std::int16_t, 64> PSQTpawnw = {
+	constexpr std::array<Eval, 64> PSQTpawnw = {
 		0, 0, 0, 0, 0, 0, 0, 0,
 		100, 100, 100, 80, 80, 100, 100, 100,
 		100, 100, 100, 100, 100, 100, 100, 100,
@@ -85,7 +86,7 @@ namespace eval
 		0, 0, 0, 0, 0, 0, 0, 0
 	};
 
-	constexpr std::array<std::int16_t, 64> PSQTpawnb = {
+	constexpr std::array<Eval, 64> PSQTpawnb = {
 		0, 0, 0, 0, 0, 0, 0, 0,
 		200, 200, 200, 200, 200, 200, 200, 200,
 		150, 150, 150, 150, 150, 150, 150, 150,
@@ -96,7 +97,7 @@ namespace eval
 		0, 0, 0, 0, 0, 0, 0, 0
 	};
 
-	constexpr std::array<std::int16_t, 64> PSQTqueen = {
+	constexpr std::array<Eval, 64> PSQTqueen = {
 		810, 810, 810, 810, 810, 810, 810, 810,
 		810, 810, 810, 900, 900, 810, 810, 810,
 		900, 900, 900, 900, 900, 900, 900, 900,
@@ -107,7 +108,7 @@ namespace eval
 		810, 810, 810, 810, 810, 810, 810, 810
 	};
 
-	constexpr std::array<std::int16_t, 64> PSQTking = {
+	constexpr std::array<Eval, 64> PSQTking = {
 		0, 0, 20, 0, 0, 0, 20, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -119,13 +120,13 @@ namespace eval
 	};
 
 	std::uint32_t getLVA(const board::QBB&, board::Bitboard, board::Bitboard&);
-	std::int16_t mvvlva(const board::QBB&, board::Move);
-	std::int16_t see(const board::QBB&, board::Move);
-	std::int16_t evalCapture(const board::QBB&, board::Move);
+	Eval mvvlva(const board::QBB&, board::Move);
+	Eval see(const board::QBB&, board::Move);
+	Eval evalCapture(const board::QBB&, board::Move);
 
-	std::int16_t computeMaterialValue(board::Bitboard, const std::array<std::int16_t, 64>&);
+	Eval computeMaterialValue(board::Bitboard, const std::array<Eval, 64>&);
 
-	std::int16_t evaluate(const board::QBB& b);
+	Eval evaluate(const board::QBB& b);
 
 }
 #endif

@@ -67,7 +67,7 @@ namespace TTable
 		}
 	}
 
-	void TTable::store(std::uint64_t hash, int depth, std::int16_t eval, char nodetype)
+	void TTable::store(std::uint64_t hash, int depth, Eval eval, char nodetype)
 	{
 		(*this)[hash].key = hash;
 		(*this)[hash].depth = depth;

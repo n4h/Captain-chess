@@ -32,9 +32,9 @@ namespace eval
 	using namespace aux;
 	using namespace constants;
 
-	std::int16_t computeMaterialValue(board::Bitboard bb, const std::array<std::int16_t, 64>& PSQT)
+	Eval computeMaterialValue(board::Bitboard bb, const std::array<Eval, 64>& PSQT)
 	{
-		std::int16_t mval = 0;
+		Eval mval = 0;
 
 		unsigned long index;
 
@@ -84,9 +84,9 @@ namespace eval
 		return 0;
 	}
 
-	std::int16_t mvvlva(const board::QBB& b, board::Move m)
+	Eval mvvlva(const board::QBB& b, board::Move m)
 	{
-		std::int16_t values[6] = {100, 300, 300, 500, 900, 10000}; //PNBRQK
+		Eval values[6] = {100, 300, 300, 500, 900, 10000}; //PNBRQK
 		board::square from = static_cast<board::square>(board::getMoveInfo<constants::fromMask>(m));
 		board::square to = static_cast<board::square>(board::getMoveInfo<constants::toMask>(m));
 		return values[(b.getPieceType(to) >> 1) - 1] - values[(b.getPieceType(from) >> 1) - 1];
@@ -94,7 +94,7 @@ namespace eval
 
 	// adapted from iterative SEE
 	// https://www.chessprogramming.org/SEE_-_The_Swap_Algorithm
-	std::int16_t see(const board::QBB& b, board::Move m)
+	Eval see(const board::QBB& b, board::Move m)
 	{
 		const board::square target = board::getMoveToSq(m);
 		auto targettype = (b.getPieceType(target) >> 1) - 1;
@@ -108,8 +108,8 @@ namespace eval
 		board::Bitboard diag = b.getDiagSliders();
 		board::Bitboard side = b.side;
 
-		std::array<std::int16_t, 6> pieceval = {100, 300, 300, 500, 900, 10000};
-		std::array<std::int16_t, 32> scores;
+		std::array<Eval, 6> pieceval = {100, 300, 300, 500, 900, 10000};
+		std::array<Eval, 32> scores;
 
 		scores[0] = pieceval[targettype];
 		targettype = attackertype;
@@ -135,19 +135,19 @@ namespace eval
 			attackertype = getLVA(b, attackers & side, attacker);
 		}
 		while (--i)
-			scores[i - 1] = std::min(scores[i - 1], (std::int16_t)-scores[i]);
+			scores[i - 1] = std::min<Eval>(scores[i - 1], -scores[i]);
 		return scores[0];
 	}
 
-	std::int16_t evalCapture(const board::QBB& b, board::Move m)
+	Eval evalCapture(const board::QBB& b, board::Move m)
 	{
-		std::int16_t mvvlvaScore = mvvlva(b, m);
+		Eval mvvlvaScore = mvvlva(b, m);
 		return mvvlvaScore >= 0 ? mvvlvaScore : see(b, m);
 	}
 
-	std::int16_t evaluate(const board::QBB& b)
+	Eval evaluate(const board::QBB& b)
 	{
-		std::int16_t totalW = 0;
+		Eval totalW = 0;
 
 		totalW += computeMaterialValue(b.my(b.getPawns()), PSQTpawnw);
 		totalW += computeMaterialValue(b.my(b.getKnights()), PSQTknight);
@@ -155,7 +155,7 @@ namespace eval
 		totalW += computeMaterialValue(b.my(b.getRooks()), PSQTrookw);
 		totalW += computeMaterialValue(b.my(b.getQueens()), PSQTqueen);
 
-		std::int16_t totalB = 0;
+		Eval totalB = 0;
 
 		totalB += computeMaterialValue(b.their(b.getPawns()), PSQTpawnb);
 		totalB += computeMaterialValue(b.their(b.getKnights()), PSQTknight);
@@ -169,7 +169,7 @@ namespace eval
 			totalB += computeMaterialValue(b.their(b.getKings()), PSQTking);
 		}
 
-		std::int16_t eval = totalW - totalB;
+		Eval eval = totalW - totalB;
 
 		return eval;
 	}

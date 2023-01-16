@@ -147,14 +147,14 @@ namespace engine
 		movegen::Movelist<218> moves;
 		movegen::genMoves(b, moves);
 		
-		std::array<std::pair<board::Move, std::int16_t>, 218> rootMoves;
+		std::array<std::pair<board::Move, Eval>, 218> rootMoves;
 		for (std::size_t i = 0; i != moves.size(); ++i)
 		{
 			rootMoves[i].first = moves[i];
 			rootMoves[i].second = negInf;
 		}
 
-		std::int16_t worstCase = negInf;
+		Eval worstCase = negInf;
 
 		board::QBB bcopy = b;
 		for (unsigned int k = 1; k <= posInf; ++k)
@@ -162,7 +162,7 @@ namespace engine
 			sync_cout << "info string iterative deepening " << k << sync_endl;
 			currIDdepth = k;
 			worstCase = negInf;
-			std::int16_t score = negInf;
+			Eval score = negInf;
 
 			for (std::size_t i = 0; i != moves.size(); ++i)
 			{
@@ -198,9 +198,9 @@ namespace engine
 		sync_cout << "bestmove " << move2uciFormat(rootMoves[0].first) << sync_endl;
 	}
 
-	std::int16_t Engine::quiesceSearch(const board::QBB& b, std::int16_t alpha, std::int16_t beta, int depth)
+	Eval Engine::quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth)
 	{
-		const std::int16_t checkpos = eval::evaluate(b);
+		const Eval checkpos = eval::evaluate(b);
 		if (b.get50() == 50)
 			return 0;
 		if (checkpos > beta)
@@ -243,7 +243,7 @@ namespace engine
 			}
 		}
 
-		std::int16_t currEval = checkpos;
+		Eval currEval = checkpos;
 
 		board::QBB bcopy = b;
 		for (std::size_t i = 0; i != ml.size(); ++i)
@@ -253,7 +253,7 @@ namespace engine
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i]);
 			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
-			currEval = std::max(currEval, (std::int16_t)-quiesceSearch(bcopy, -beta, -alpha, depth - 1));
+			currEval = std::max(currEval, (Eval)-quiesceSearch(bcopy, -beta, -alpha, depth - 1));
 			bcopy = b;
 			hash = oldhash;
 			alpha = std::max(currEval, alpha);
@@ -263,7 +263,7 @@ namespace engine
 		return currEval;
 	}
 
-	std::int16_t Engine::alphaBetaSearch(const board::QBB& b, std::int16_t alpha, std::int16_t beta, int depth, bool nullBranch)
+	Eval Engine::alphaBetaSearch(const board::QBB& b, Eval alpha, Eval beta, int depth, bool nullBranch)
 	{
 		const auto oldAlpha = alpha;
 		if (shouldStop())
@@ -314,7 +314,7 @@ namespace engine
 				return 0;
 		}
 
-		std::int16_t currEval = negInf;
+		Eval currEval = negInf;
 
 		
 		board::QBB bcopy = b;
@@ -325,7 +325,7 @@ namespace engine
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i]);
 			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
-			currEval = std::max(currEval, (std::int16_t) -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
+			currEval = std::max(currEval, (Eval) -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
 			bcopy = b;
 			hash = oldhash;
 			alpha = std::max(currEval, alpha);

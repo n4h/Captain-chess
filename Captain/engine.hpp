@@ -44,7 +44,7 @@ namespace engine
 	};
 
 	using namespace std::literals::chrono_literals;
-
+	using eval::Eval;
 	// 500000 is arbitrary 
 	constexpr auto negInf = -12000;
 	constexpr auto posInf = 12000;
@@ -85,11 +85,11 @@ namespace engine
 		bool shouldStop() noexcept;
 		void initialHash(const board::QBB&);
 		// TODO 3-fold repetition
-		std::int16_t quiesceSearch(const board::QBB& b, std::int16_t alpha, std::int16_t beta, int depth);
+		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
 
-		std::int16_t alphaBetaSearch(const board::QBB& , std::int16_t, std::int16_t, int, bool);
+		Eval alphaBetaSearch(const board::QBB& , Eval, Eval, int, bool);
 		
-		std::int16_t eval = 0;
+		Eval eval = 0;
 		// 218 = current max number of moves in chess position
 		// 256 = leeway for pseudolegal move generation
 	};
