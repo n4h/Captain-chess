@@ -85,11 +85,11 @@ namespace engine
 		bool shouldStop() noexcept;
 		void initialHash(const board::QBB&);
 		// TODO 3-fold repetition
-		std::int32_t quiesceSearch(const board::QBB& b, std::int32_t alpha, std::int32_t beta, int depth);
+		std::int16_t quiesceSearch(const board::QBB& b, std::int16_t alpha, std::int16_t beta, int depth);
 
-		std::int32_t alphaBetaSearch(const board::QBB& , std::int32_t, std::int32_t, int, bool);
+		std::int16_t alphaBetaSearch(const board::QBB& , std::int16_t, std::int16_t, int, bool);
 		
-		std::int32_t eval = 0;
+		std::int16_t eval = 0;
 		// 218 = current max number of moves in chess position
 		// 256 = leeway for pseudolegal move generation
 	};
