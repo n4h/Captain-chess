@@ -17,11 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <intrin.h>
+#include <algorithm>
 
 #pragma intrinsic(_BitScanForward64)
 
 #include "eval.hpp"
 #include "board.hpp"
+#include "movegen.hpp"
 #include "auxiliary.hpp"
 #include "constants.hpp"
 
@@ -30,9 +32,9 @@ namespace eval
 	using namespace aux;
 	using namespace constants;
 
-	std::int32_t computeMaterialValue(board::Bitboard bb, const std::array<std::int32_t, 64>& PSQT)
+	std::int16_t computeMaterialValue(board::Bitboard bb, const std::array<std::int16_t, 64>& PSQT)
 	{
-		std::int32_t mval = 0;
+		std::int16_t mval = 0;
 
 		unsigned long index;
 
@@ -48,42 +50,104 @@ namespace eval
 	std::uint32_t getLVA(const board::QBB& b, board::Bitboard attackers, board::Bitboard& least)
 	{
 		// TODO rank promoting pawns higher
-		if (least = attackers & b.getPawns())
+		if (attackers & b.getPawns())
+		{
+			least = _blsi_u64(attackers & b.getPawns());
 			return constants::pawnCode;
-		if (least = attackers & b.getKnights())
+		}
+		if (attackers & b.getKnights())
+		{
+			least = _blsi_u64(attackers & b.getKnights());
 			return constants::knightCode;
-		if (least = attackers & b.getBishops())
+		}
+		if (attackers & b.getBishops())
+		{
+			least = _blsi_u64(attackers & b.getBishops());
 			return constants::bishopCode;
-		if (least = attackers & b.getRooks())
+		}
+		if (attackers & b.getRooks())
+		{
+			least = _blsi_u64(attackers & b.getRooks());
 			return constants::rookCode;
-		if (least = attackers & b.getQueens())
+		}
+		if (attackers & b.getQueens())
+		{
+			least = _blsi_u64(attackers & b.getQueens());
 			return constants::queenCode;
-		least = attackers & b.getKings();
-		return constants::kingCode;
+		}
+		if (attackers & b.getKings())
+		{
+			least = _blsi_u64(attackers & b.getKings());
+			return constants::kingCode;
+		}
+		least = 0;
+		return 0;
 	}
 
-	std::int32_t mvvlva(const board::QBB& b, board::Move m)
+	std::int16_t mvvlva(const board::QBB& b, board::Move m)
 	{
-		std::int32_t values[6] = {100, 300, 300, 500, 900, 1000}; //PNBRQK
+		std::int16_t values[6] = {100, 300, 300, 500, 900, 10000}; //PNBRQK
 		board::square from = static_cast<board::square>(board::getMoveInfo<constants::fromMask>(m));
 		board::square to = static_cast<board::square>(board::getMoveInfo<constants::toMask>(m));
 		return values[(b.getPieceType(to) >> 1) - 1] - values[(b.getPieceType(from) >> 1) - 1];
 	}
 
-	std::int32_t see(const board::QBB& b, board::Move m)
+	// adapted from iterative SEE
+	// https://www.chessprogramming.org/SEE_-_The_Swap_Algorithm
+	std::int16_t see(const board::QBB& b, board::Move m)
 	{
-		
+		const board::square target = board::getMoveToSq(m);
+		auto targettype = (b.getPieceType(target) >> 1) - 1;
+
+		board::Bitboard attackers = movegen::getSqAttackers(b, target);
+		board::Bitboard attacker = aux::setbit(board::getMoveInfo<board::fromMask>(m));
+		auto attackertype = b.getPieceType(board::getMoveFromSq(m));
+
+		board::Bitboard occ = b.getOccupancy();
+		board::Bitboard orth = b.getOrthSliders();
+		board::Bitboard diag = b.getDiagSliders();
+		board::Bitboard side = b.side;
+
+		std::array<std::int16_t, 6> pieceval = {100, 300, 300, 500, 900, 10000};
+		std::array<std::int16_t, 32> scores;
+
+		scores[0] = pieceval[targettype];
+		targettype = attackertype;
+		attackers ^= attacker;
+		occ ^= attacker;
+		diag &= ~attacker;
+		orth &= ~attacker;
+		side = ~side;
+		attackers |= movegen::getSliderAttackers(occ, target, diag, orth);
+		attackertype = getLVA(b, attackers & side, attacker);
+		std::size_t i = 1;
+		for (; i != 32 && attackertype; ++i)
+		{
+			scores[i] = pieceval[targettype] - scores[i - 1];
+			if (scores[i] < 0) break;
+			targettype = attackertype;
+			attackers ^= attacker;
+			occ ^= attacker;
+			diag &= ~attacker;
+			orth &= ~attacker;
+			side = ~side;
+			attackers |= movegen::getSliderAttackers(occ, target, diag, orth);
+			attackertype = getLVA(b, attackers & side, attacker);
+		}
+		while (--i)
+			scores[i - 1] = std::min(scores[i - 1], -scores[i]);
+		return scores[0];
 	}
 
-	std::int32_t evalCapture(const board::QBB& b, board::Move m)
+	std::int16_t evalCapture(const board::QBB& b, board::Move m)
 	{
-		std::int32_t mvvlvaScore = mvvlva(b, m);
+		std::int16_t mvvlvaScore = mvvlva(b, m);
 		return mvvlvaScore >= 0 ? mvvlvaScore : see(b, m);
 	}
 
-	std::int32_t evaluate(const board::QBB& b)
+	std::int16_t evaluate(const board::QBB& b)
 	{
-		std::int32_t totalW = 0;
+		std::int16_t totalW = 0;
 
 		totalW += computeMaterialValue(b.my(b.getPawns()), PSQTpawnw);
 		totalW += computeMaterialValue(b.my(b.getKnights()), PSQTknight);
@@ -91,7 +155,7 @@ namespace eval
 		totalW += computeMaterialValue(b.my(b.getRooks()), PSQTrookw);
 		totalW += computeMaterialValue(b.my(b.getQueens()), PSQTqueen);
 
-		std::int32_t totalB = 0;
+		std::int16_t totalB = 0;
 
 		totalB += computeMaterialValue(b.their(b.getPawns()), PSQTpawnb);
 		totalB += computeMaterialValue(b.their(b.getKnights()), PSQTknight);
@@ -105,7 +169,7 @@ namespace eval
 			totalB += computeMaterialValue(b.their(b.getKings()), PSQTking);
 		}
 
-		std::int32_t eval = totalW - totalB;
+		std::int16_t eval = totalW - totalB;
 
 		return eval;
 	}
