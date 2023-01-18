@@ -74,9 +74,10 @@ namespace movegen
 		}
 	};
 
+	bool isLegalMove(const board::QBB& b, board::Move m);
+
 	// move generation is based on "Hyperbola Quintessence" algorithm
 	// https://www.chessprogramming.org/Hyperbola_Quintessence
-
 
 	template<typename T>
 	AttackMap hypqDiag(Bitboard o, T idx)
@@ -338,6 +339,26 @@ namespace movegen
 		pawns &= board::rankMask(board::a2);
 		Bitboard upOnce = (pawns << 8) & empty;
 		return (upOnce << 8) & empty;
+	}
+
+	template<typename T>
+	constexpr Bitboard forwardPawnMoves(Bitboard occ, T pawns)
+	{
+		if constexpr (std::is_same_v<T, Bitboard>)
+		{
+			Bitboard moves = (pawns << 8) & ~occ;
+			Bitboard moves2 = moves & board::rankMask(board::a3);
+			moves2 = (moves2 << 8) & ~occ;
+			return moves | moves2;
+		}
+		else if constexpr (std::is_same_v<T, board::square>)
+		{
+			return forwardPawnMoves(occ, aux::setbit(pawns));
+		}
+		else
+		{
+			return 0;
+		}
 	}
 
 	// generate attacks given a bitboard (as opposed to a square)

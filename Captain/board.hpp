@@ -399,8 +399,7 @@ namespace board
 		std::uint64_t epc = 0;
 		QBB() {}
 		QBB(const std::string&, ExtraBoardInfo&);
-		
-		
+
 		void makeMove(const Move);
 
 		void doNullMove();

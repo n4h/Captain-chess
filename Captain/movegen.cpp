@@ -30,6 +30,160 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace movegen
 {
+	bool isLegalMove(const board::QBB& b, board::Move m)
+	{
+		const auto moveType = board::getMoveInfo<constants::moveTypeMask>(m);
+		if (moveType > constants::queenPromo)
+			return false;
+
+		board::square fromSq = board::getMoveFromSq(m);
+		auto fromPcType = b.getPieceType(fromSq);
+
+		if (!(fromPcType & 1))
+		{
+			return false;
+		}
+		const Bitboard occ = b.getOccupancy();
+		auto toSq = board::getMoveToSq(m);
+		switch ((fromPcType >> 1) - 1)
+		{
+		case constants::pawnCode:
+			AttackMap pAttacks = pawnAttacks(fromSq) & b.their(occ);
+			AttackMap pEpAttacks = pawnAttacks(fromSq) & b.getEp();
+			Bitboard pMoves = forwardPawnMoves(occ, fromSq);
+
+			if ( !((pMoves|pEpAttacks|pAttacks) & aux::setbit(toSq)) )
+			{
+				return false;
+			}
+
+			if (toSq >= 56)
+			{
+				if (moveType < constants::knightPromo)
+				{
+					return false;
+				}
+			}
+			else if (aux::setbit(toSq) & pEpAttacks)
+			{
+				if (moveType != constants::enPCap)
+				{
+					return false;
+				}
+			}
+			else if (moveType != constants::QMove)
+			{
+				return false;
+			}
+
+			break;
+		case constants::knightCode:
+			AttackMap nAttacks = knightAttacks(fromSq) & ~b.my(occ);
+			if (!(nAttacks & aux::setbit(toSq)))
+			{
+				return false;
+			}
+			if (moveType != constants::QMove)
+			{
+				return false;
+			}
+			break;
+		case constants::bishopCode:
+			AttackMap bAttacks = hypqAllDiag(occ, fromSq) & ~b.my(occ);
+			if (!(bAttacks & aux::setbit(toSq)))
+			{
+				return false;
+			}
+			if (moveType != constants::QMove)
+			{
+				return false;
+			}
+			break;
+		case constants::rookCode:
+			AttackMap rAttacks = hypqAllOrth(occ, fromSq) & ~b.my(occ);
+			if (!(rAttacks & aux::setbit(toSq)))
+			{
+				return false;
+			}
+			if (moveType != constants::QMove)
+			{
+				return false;
+			}
+			break;
+		case constants::queenCode:
+			AttackMap qAttacks = (hypqAllOrth(occ, fromSq) | hypqAllDiag(occ, fromSq)) & ~b.my(occ);
+			if (!(qAttacks & aux::setbit(toSq)))
+			{
+				return false;
+			}
+			if (moveType != constants::QMove)
+			{
+				return false;
+			}
+			break;
+		case constants::kingCode:
+			if (moveType == constants::KSCastle)
+			{
+				if (fromSq != board::e1 || toSq != board::g1)
+					return false;
+				if (!b.canCastleShort())
+					return false;
+				if (occ & (aux::setbit(board::f1) | aux::setbit(board::g1)))
+					return false;
+				if (b.their(getSqAttackers(b, board::e1)) || b.their(getSqAttackers(b, board::f1)) || b.their(getSqAttackers(b, board::g1)))
+					return false;
+				return true;
+			}
+			else if (moveType == constants::QSCastle)
+			{
+				if (fromSq != board::e1 || toSq != board::c1)
+					return false;
+				if (!b.canCastleLong())
+					return false;
+				if (occ & (aux::setbit(board::d1) | aux::setbit(board::c1) | aux::setbit(board::b1)))
+					return false;
+				if (b.their(getSqAttackers(b, board::e1)) || b.their(getSqAttackers(b, board::d1)) || b.their(getSqAttackers(b, board::c1)))
+					return false;
+				return true;
+			}
+			else if (moveType == constants::QMove)
+			{
+				AttackMap kAttacks = kingAttacks(fromSq) & ~b.my(occ);
+				if (!(kAttacks & aux::setbit(toSq)))
+					return false;
+				auto attackers = kingAttacks(toSq) & b.their(b.getKings());
+				attackers |= knightAttacks(toSq) & b.their(b.getKnights());
+				attackers |= hypqAllDiag(occ & ~aux::setbit(fromSq), toSq) & b.their(b.getDiagSliders());
+				attackers |= hypqAllOrth(occ & ~aux::setbit(fromSq), toSq) & b.their(b.getOrthSliders());
+				attackers |= pawnAttacks(toSq) & b.their(b.getPawns());
+				if (attackers)
+				{
+					return false;
+				}
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+			break;
+		default:
+			return false;
+		}
+		Bitboard newOcc = (occ | aux::setbit(toSq)) & ~aux::setbit(fromSq);
+		if (moveType == constants::enPCap)
+			newOcc &= ~(aux::setbit(toSq) >> 8);
+		Bitboard myKing = b.my(b.getKings());
+		auto attackers = kingAttacks(myKing) & b.their(b.getKings());
+		attackers |= knightAttacks(myKing) & b.their(b.getKnights());
+		attackers |= hypqAllDiag(newOcc, myKing) & b.their(b.getDiagSliders());
+		attackers |= hypqAllOrth(newOcc, myKing) & b.their(b.getOrthSliders());
+		attackers |= pawnAttacks(myKing) & b.their(b.getPawns());
+		attackers &= ~aux::setbit(toSq);
+		
+		return attackers;
+	}
+
 	// generate attacks given a bitboard (as opposed to a square)
 	AttackMap genDiagAttackSet(Bitboard occ, Bitboard diag)
 	{
