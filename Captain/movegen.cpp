@@ -45,14 +45,15 @@ namespace movegen
 		}
 		const Bitboard occ = b.getOccupancy();
 		auto toSq = board::getMoveToSq(m);
-		switch ((fromPcType >> 1) - 1)
+		switch (fromPcType >> 1)
 		{
 		case constants::pawnCode:
+		{
 			AttackMap pAttacks = pawnAttacks(fromSq) & b.their(occ);
 			AttackMap pEpAttacks = pawnAttacks(fromSq) & b.getEp();
 			Bitboard pMoves = forwardPawnMoves(occ, fromSq);
 
-			if ( !((pMoves|pEpAttacks|pAttacks) & aux::setbit(toSq)) )
+			if (!((pMoves | pEpAttacks | pAttacks) & aux::setbit(toSq)))
 			{
 				return false;
 			}
@@ -77,7 +78,9 @@ namespace movegen
 			}
 
 			break;
+		}
 		case constants::knightCode:
+		{
 			AttackMap nAttacks = knightAttacks(fromSq) & ~b.my(occ);
 			if (!(nAttacks & aux::setbit(toSq)))
 			{
@@ -88,7 +91,9 @@ namespace movegen
 				return false;
 			}
 			break;
+		}
 		case constants::bishopCode:
+		{
 			AttackMap bAttacks = hypqAllDiag(occ, fromSq) & ~b.my(occ);
 			if (!(bAttacks & aux::setbit(toSq)))
 			{
@@ -99,7 +104,9 @@ namespace movegen
 				return false;
 			}
 			break;
+		}
 		case constants::rookCode:
+		{
 			AttackMap rAttacks = hypqAllOrth(occ, fromSq) & ~b.my(occ);
 			if (!(rAttacks & aux::setbit(toSq)))
 			{
@@ -110,7 +117,9 @@ namespace movegen
 				return false;
 			}
 			break;
+		}
 		case constants::queenCode:
+		{
 			AttackMap qAttacks = (hypqAllOrth(occ, fromSq) | hypqAllDiag(occ, fromSq)) & ~b.my(occ);
 			if (!(qAttacks & aux::setbit(toSq)))
 			{
@@ -121,7 +130,9 @@ namespace movegen
 				return false;
 			}
 			break;
+		}
 		case constants::kingCode:
+		{
 			if (moveType == constants::KSCastle)
 			{
 				if (fromSq != board::e1 || toSq != board::g1)
@@ -167,6 +178,7 @@ namespace movegen
 				return false;
 			}
 			break;
+		}
 		default:
 			return false;
 		}
@@ -181,7 +193,7 @@ namespace movegen
 		attackers |= pawnAttacks(myKing) & b.their(b.getPawns());
 		attackers &= ~aux::setbit(toSq);
 		
-		return attackers;
+		return !attackers;
 	}
 
 	// generate attacks given a bitboard (as opposed to a square)
