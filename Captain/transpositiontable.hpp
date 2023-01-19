@@ -29,15 +29,14 @@ namespace TTable
 {
 	enum : char {PV = 0, ALL = 1, CUT = 2};
 	using eval::Eval;
-
+	
 	struct Entry
 	{
 		std::uint64_t key = 0;
-		Eval eval = 0;
 		int depth = 0;
+		Eval eval = 0;
 		char nodeType = 0; // 0 = PV (exact score), 1 = all (upper bound), 2 = cut (lower bound)
 	};
-
 
 	class TTable
 	{
