@@ -87,8 +87,8 @@ namespace eval
 	Eval mvvlva(const board::QBB& b, board::Move m)
 	{
 		Eval values[6] = {100, 300, 300, 500, 900, 10000}; //PNBRQK
-		board::square from = static_cast<board::square>(board::getMoveInfo<constants::fromMask>(m));
-		board::square to = static_cast<board::square>(board::getMoveInfo<constants::toMask>(m));
+		board::square from = board::getMoveFromSq(m);
+		board::square to = board::getMoveToSq(m);
 		return values[(b.getPieceType(to) >> 1) - 1] - values[(b.getPieceType(from) >> 1) - 1];
 	}
 
@@ -101,7 +101,7 @@ namespace eval
 
 		board::Bitboard attackers = movegen::getSqAttackers(b, target);
 		board::Bitboard attacker = aux::setbit(board::getMoveInfo<board::fromMask>(m));
-		auto attackertype = b.getPieceType(board::getMoveFromSq(m));
+		auto attackertype = b.getPieceType(board::getMoveFromSq(m)) >> 1;
 
 		board::Bitboard occ = b.getOccupancy();
 		board::Bitboard orth = b.getOrthSliders();
@@ -112,7 +112,7 @@ namespace eval
 		std::array<Eval, 32> scores;
 
 		scores[0] = pieceval[targettype];
-		targettype = attackertype;
+		targettype = attackertype - 1;
 		attackers ^= attacker;
 		occ ^= attacker;
 		diag &= ~attacker;
@@ -125,7 +125,7 @@ namespace eval
 		{
 			scores[i] = pieceval[targettype] - scores[i - 1];
 			if (scores[i] < 0) break;
-			targettype = attackertype;
+			targettype = attackertype - 1;
 			attackers ^= attacker;
 			occ ^= attacker;
 			diag &= ~attacker;
