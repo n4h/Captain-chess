@@ -78,9 +78,9 @@ namespace engine
 
 		return overtime || (nodes > settings.maxNodes) || (elapsed > settings.maxTime);
 	}
-	void Engine::initialHash(const board::QBB& b)
+	std::uint64_t Engine::initialHash(const board::QBB& b)
 	{
-		hash = 0;
+		std::uint64_t inithash = 0;
 		if (!tt) return;
 		for (std::size_t i = 0; i != 64; ++i)
 		{
@@ -90,9 +90,9 @@ namespace engine
 				if (piecetype)
 				{
 					if (piecetype & 1)
-						hash ^= tt->whitePSQT[(piecetype >> 1) - 1][i];
+						inithash ^= tt->whitePSQT[(piecetype >> 1) - 1][i];
 					else
-						hash ^= tt->blackPSQT[(piecetype >> 1) - 1][i];
+						inithash ^= tt->blackPSQT[(piecetype >> 1) - 1][i];
 				}
 			}
 			else
@@ -100,33 +100,34 @@ namespace engine
 				if (piecetype)
 				{
 					if (piecetype & 1)
-						hash ^= tt->blackPSQT[(piecetype >> 1) - 1][aux::flip(i)];
+						inithash ^= tt->blackPSQT[(piecetype >> 1) - 1][aux::flip(i)];
 					else
-						hash ^= tt->whitePSQT[(piecetype >> 1) - 1][aux::flip(i)];
+						inithash ^= tt->whitePSQT[(piecetype >> 1) - 1][aux::flip(i)];
 				}
 			}
 		}
 		
 		if (b.isWhiteToPlay())
-			hash ^= tt->wToMove;
+			inithash ^= tt->wToMove;
 
 		if (b.isWhiteToPlay())
 		{
-			hash ^= b.canCastleLong() ? tt->castling_first[0] : 0;
-			hash ^= b.canCastleShort() ? tt->castling_first[1] : 0;
-			hash ^= b.oppCanCastleLong() ? tt->castling_first[2] : 0;
-			hash ^= b.oppCanCastleShort() ? tt->castling_first[3] : 0;
+			inithash ^= b.canCastleLong() ? tt->castling_first[0] : 0;
+			inithash ^= b.canCastleShort() ? tt->castling_first[1] : 0;
+			inithash ^= b.oppCanCastleLong() ? tt->castling_first[2] : 0;
+			inithash ^= b.oppCanCastleShort() ? tt->castling_first[3] : 0;
 		}
 		else
 		{
-			hash ^= b.oppCanCastleLong() ? tt->castling_first[0] : 0;
-			hash ^= b.oppCanCastleShort() ? tt->castling_first[1] : 0;
-			hash ^= b.canCastleLong() ? tt->castling_first[3] : 0;
-			hash ^= b.canCastleShort() ? tt->castling_first[4] : 0;
+			inithash ^= b.oppCanCastleLong() ? tt->castling_first[0] : 0;
+			inithash ^= b.oppCanCastleShort() ? tt->castling_first[1] : 0;
+			inithash ^= b.canCastleLong() ? tt->castling_first[3] : 0;
+			inithash ^= b.canCastleShort() ? tt->castling_first[4] : 0;
 		}
 
 		if (b.enpExists())
-			hash ^= tt->enPassant[b.getEnpFile()];
+			inithash ^= tt->enPassant[b.getEnpFile()];
+		return inithash;
 	}
 	
 	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s, board::ExtraBoardInfo e)
@@ -137,7 +138,7 @@ namespace engine
 		currIDdepth = 0;
 		nodes = 0;
 		if (tt != nullptr)
-			initialHash(b);
+			hash = initialHash(b);
 		else
 			hash = 0;
 		auto mytime = engineW ? settings.wmsec : settings.bmsec;
