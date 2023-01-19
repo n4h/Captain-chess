@@ -184,10 +184,10 @@ namespace board
 		epc = _byteswap_uint64(epc);
 	}
 
-	bool QBB::getEnpFile() const noexcept
+	unsigned QBB::getEnpFile() const noexcept
 	{
 		Bitboard enpbb = epc & rankMask(a6);
-		return _tzcnt_u64(enpbb);
+		return file(_tzcnt_u64(enpbb));
 	}
 
 	void QBB::makeMove(const Move m)

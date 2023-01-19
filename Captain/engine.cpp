@@ -25,6 +25,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <chrono>
 #include <string>
 #include <sstream>
+#include <cassert>
 
 #include "engine.hpp"
 #include "board.hpp"
@@ -78,10 +79,11 @@ namespace engine
 
 		return overtime || (nodes > settings.maxNodes) || (elapsed > settings.maxTime);
 	}
+
 	std::uint64_t Engine::initialHash(const board::QBB& b)
 	{
 		std::uint64_t inithash = 0;
-		if (!tt) return;
+		if (!tt) return 0;
 		for (std::size_t i = 0; i != 64; ++i)
 		{
 			auto piecetype = b.getPieceType(static_cast<board::square>(i));
@@ -121,8 +123,8 @@ namespace engine
 		{
 			inithash ^= b.oppCanCastleLong() ? tt->castling_first[0] : 0;
 			inithash ^= b.oppCanCastleShort() ? tt->castling_first[1] : 0;
-			inithash ^= b.canCastleLong() ? tt->castling_first[3] : 0;
-			inithash ^= b.canCastleShort() ? tt->castling_first[4] : 0;
+			inithash ^= b.canCastleLong() ? tt->castling_first[2] : 0;
+			inithash ^= b.canCastleShort() ? tt->castling_first[3] : 0;
 		}
 
 		if (b.enpExists())
@@ -172,7 +174,7 @@ namespace engine
 				bcopy.makeMove(rootMoves[i].first);
 				auto oldhash = hash;
 				hash ^= tt->incrementalUpdate(rootMoves[i].first, b, bcopy);
-
+				assert(hash == initialHash(bcopy));
 				sync_cout << "info currmove " << move2uciFormat(rootMoves[i].first) << sync_endl;
 				sync_cout << "info nodes " << nodes << sync_endl;
 				try 
@@ -254,6 +256,7 @@ namespace engine
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i]);
 			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
+			assert(hash == initialHash(bcopy));
 			currEval = std::max<Eval>(currEval, -quiesceSearch(bcopy, -beta, -alpha, depth - 1));
 			bcopy = b;
 			hash = oldhash;
@@ -296,6 +299,7 @@ namespace engine
 			auto oldhash = hash;
 			hash ^= tt->nullUpdate(bnull);
 			bnull.doNullMove();
+			assert(hash == initialHash(bnull));
 			Eval nulleval = -alphaBetaSearch(bnull, -beta, -alpha, depth - 3, true);
 			hash = oldhash;
 			if (nulleval > beta)
@@ -326,6 +330,7 @@ namespace engine
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i]);
 			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
+			assert(hash == initialHash(bcopy));
 			currEval = std::max<Eval>(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
 			bcopy = b;
 			hash = oldhash;

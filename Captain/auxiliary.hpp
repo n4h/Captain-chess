@@ -80,7 +80,7 @@ namespace aux
 
 	constexpr std::unsigned_integral auto rank(uintOrSquare auto x)
 	{
-		return x / 8;;
+		return x / 8;
 	}
 
 	// file and rank satisfy index(rank(x),file(x)) = x;

@@ -433,7 +433,7 @@ namespace board
 			return epc & rankMask(a6);
 		}
 
-		bool getEnpFile() const noexcept;
+		unsigned getEnpFile() const noexcept;
 
 		constexpr Bitboard getOccupancy() const noexcept
 		{
