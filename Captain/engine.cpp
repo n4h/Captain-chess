@@ -232,10 +232,10 @@ namespace engine
 
 		movegen::Movelist<218> ml;
 		movegen::genMoves<movegen::QSearch>(b, ml); // TODO sort moves in Q search
-
+		bool check = movegen::isInCheck(b);
 		if (!ml.size())
 		{
-			if (movegen::isInCheck(b))
+			if (check)
 				return negInf;
 			else
 			{

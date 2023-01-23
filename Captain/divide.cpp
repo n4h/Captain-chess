@@ -69,7 +69,8 @@ namespace divide
 	std::size_t perftDivide(const board::QBB& b, board::ExtraBoardInfo ebi, std::size_t t)
 	{
 		movegen::Movelist<218> moves;
-		movegen::genMoves(b, moves);
+		movegen::genMoves<movegen::QSearch>(b, moves);
+		movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, moves);
 		std::size_t total = 0;
 
 		board::QBB bcopy = b;

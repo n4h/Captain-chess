@@ -471,9 +471,11 @@ namespace movegen
 		}
 	}
 	constexpr bool QSearch = true;
-	template<bool qSearch = false, std::size_t N>
+	constexpr bool Quiets = true;
+	template<bool qSearch = false, bool quietsOnly = false, std::size_t N>
 	void genMoves(const board::QBB& b, Movelist<N>& ml)
 	{
+		static_assert(!(qSearch && quietsOnly));
 		Bitboard checkers = isInCheck(b);
 
 		if (!checkers)
@@ -514,7 +516,13 @@ namespace movegen
 			diag -= antiDiagPinned;
 
 			if constexpr (qSearch)
+			{
 				mine = ~theirs;
+			}
+			else if constexpr (quietsOnly)
+			{
+				mine |= theirs;
+			}
 			addMoves(horPinned, ml, [occ, mine](board::square idx) {
 				return hypqRank(occ, idx) & ~mine; });
 
@@ -527,15 +535,18 @@ namespace movegen
 			addMoves(antiDiagPinned, ml, [occ, mine](board::square idx) {
 				return hypqAntiDiag(occ, idx) & ~mine; });
 
-			addLeftPMoves(diagPinnedPawns, ml, [theirs](Bitboard pawns) 
-				{return pawnAttacksLeft(pawns) & theirs; });
+			if constexpr (!quietsOnly)
+			{
+				addLeftPMoves(diagPinnedPawns, ml, [theirs](Bitboard pawns)
+					{return pawnAttacksLeft(pawns) & theirs; });
 
-			addRightPMoves(antiDiagPinnedPawns, ml, [theirs](Bitboard pawns) {
-				return pawnAttacksRight(pawns) & theirs; });
+				addRightPMoves(antiDiagPinnedPawns, ml, [theirs](Bitboard pawns) {
+					return pawnAttacksRight(pawns) & theirs; });
 
-			Bitboard pinnedPawnEP = (enemyPawnAttacksLeft(b.getEp()) & antiDiagPinnedPawns) | (enemyPawnAttacksRight(b.getEp()) & diagPinnedPawns);
-			addEPMoves(ml, pinnedPawnEP, b.getEp());
-			
+				Bitboard pinnedPawnEP = (enemyPawnAttacksLeft(b.getEp()) & antiDiagPinnedPawns) | (enemyPawnAttacksRight(b.getEp()) & diagPinnedPawns);
+				addEPMoves(ml, pinnedPawnEP, b.getEp());
+			}
+
 			if constexpr (!qSearch)
 			{
 				addPinUpPMove(vertPinnedPawns, ml, [occ](Bitboard pawns) {
@@ -557,11 +568,14 @@ namespace movegen
 			addMoves(myKing, ml, [mine, enemyAttacks](board::square idx) {
 				return kingAttacks(idx) & ~mine & ~enemyAttacks; });
 			
-			addLeftPMoves(pawns, ml, [theirs](Bitboard pawns) {
-				return pawnAttacksLeft(pawns) & theirs; });
+			if constexpr (!quietsOnly)
+			{
+				addLeftPMoves(pawns, ml, [theirs](Bitboard pawns) {
+					return pawnAttacksLeft(pawns) & theirs; });
 
-			addRightPMoves(pawns, ml, [theirs](Bitboard pawns) {
-				return pawnAttacksRight(pawns) & theirs; });
+				addRightPMoves(pawns, ml, [theirs](Bitboard pawns) {
+					return pawnAttacksRight(pawns) & theirs; });
+			}
 
 			if constexpr (!qSearch)
 			{
@@ -572,10 +586,13 @@ namespace movegen
 					return pawn2MovesUp(pawns, occ); });
 			}
 
-			Bitboard myKing5 = myKing & board::rankMask(board::a5);
-			Bitboard theirOrth5 = b.their(b.getOrthSliders()) & board::rankMask(board::a5);
-			Bitboard EPPin = getHorPinnedPieces(occ & ~(b.getEp() >> 8), myKing5, theirOrth5);
-			addEPMoves(ml, pawns & ~EPPin, b.getEp());
+			if constexpr (!quietsOnly)
+			{
+				Bitboard myKing5 = myKing & board::rankMask(board::a5);
+				Bitboard theirOrth5 = b.their(b.getOrthSliders()) & board::rankMask(board::a5);
+				Bitboard EPPin = getHorPinnedPieces(occ & ~(b.getEp() >> 8), myKing5, theirOrth5);
+				addEPMoves(ml, pawns & ~EPPin, b.getEp());
+			}
 			if constexpr (!qSearch)
 			{
 				constexpr Bitboard betweenKSCastle = aux::setbit(board::f1) | aux::setbit(board::g1);
@@ -613,32 +630,48 @@ namespace movegen
 			Bitboard enemyAttacks = genEnemyAttacks(occ & ~myKing, b);
 
 			Bitboard mine = b.side;
-
+			Bitboard theirs = occ & ~mine;
+			if constexpr (qSearch)
+			{
+				mine = ~theirs;
+			}
+			else if constexpr (quietsOnly)
+			{
+				mine |= theirs;
+			}
 			addMoves(myKing, ml, [enemyAttacks, mine](board::square idx) {
 				return kingAttacks(idx) & ~enemyAttacks & ~mine; });
 
-			addMoves(b.my(b.getKnights()) & ~pinned, ml, [checkers](board::square idx) {
-				return knightAttacks(idx) & checkers; });
+			addMoves(b.my(b.getKnights()) & ~pinned, ml, [checkers, mine](board::square idx) {
+				return knightAttacks(idx) & checkers & ~mine; });
 
-			addMoves(b.my(b.getDiagSliders()) & ~pinned, ml, [occ, checkers](board::square idx) {
-				return hypqAllDiag(occ, idx) & checkers; });
+			addMoves(b.my(b.getDiagSliders()) & ~pinned, ml, [occ, checkers, mine](board::square idx) {
+				return hypqAllDiag(occ, idx) & checkers & ~mine; });
 
-			addMoves(b.my(b.getOrthSliders()) & ~pinned, ml, [occ, checkers](board::square idx) {
-				return hypqAllOrth(occ, idx) & checkers; });
+			addMoves(b.my(b.getOrthSliders()) & ~pinned, ml, [occ, checkers, mine](board::square idx) {
+				return hypqAllOrth(occ, idx) & checkers & ~mine; });
 
-			addLeftPMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers, occ](Bitboard pawns) {
-				return pawnAttacksLeft(pawns) & checkers & occ; });
+			if constexpr (!quietsOnly)
+			{
+				addLeftPMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers, occ](Bitboard pawns) {
+					return pawnAttacksLeft(pawns) & checkers & occ; });
 
-			addRightPMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers, occ](Bitboard pawns) {
-				return pawnAttacksRight(pawns) & checkers & occ; });
+				addRightPMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers, occ](Bitboard pawns) {
+					return pawnAttacksRight(pawns) & checkers & occ; });
+			}
 
-			addUpPMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers, occ](Bitboard pawns) {
-				return pawnMovesUp(pawns) & checkers & ~occ; });
+			if constexpr (!qSearch)
+			{
+				addUpPMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers, occ](Bitboard pawns) {
+					return pawnMovesUp(pawns) & checkers & ~occ; });
 
-			addUp2PMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers, occ](Bitboard pawns) {
-				return pawn2MovesUp(pawns, occ) & checkers; });
-
-			addEPMoves(ml, b.my(b.getPawns()) & ~pinned, enpChecker);
+				addUp2PMoves(b.my(b.getPawns()) & ~pinned, ml, [checkers, occ](Bitboard pawns) {
+					return pawn2MovesUp(pawns, occ) & checkers; });
+			}
+			if constexpr (!quietsOnly)
+			{
+				addEPMoves(ml, b.my(b.getPawns()) & ~pinned, enpChecker);
+			}
 		}
 		else // >1 checkers (double check)
 		{
@@ -648,6 +681,16 @@ namespace movegen
 			occ &= ~myKing; // remove king to generate X rays through king
 
 			AttackMap attacks = genEnemyAttacks(occ, b);
+			if constexpr (qSearch)
+			{
+				Bitboard theirs = occ & ~mine;
+				mine = ~theirs;
+			}
+			else if constexpr (quietsOnly)
+			{
+				Bitboard theirs = occ & ~mine;
+				mine |= theirs;
+			}
 			addMoves(myKing, ml, [mine, attacks](board::square idx) {return kingAttacks(idx) & ~attacks & ~mine; });
 		}
 	}

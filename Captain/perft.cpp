@@ -39,7 +39,8 @@ namespace perft
 			return;
 		}
 		movegen::Movelist<218> moveList;
-		movegen::genMoves(b, moveList);
+		movegen::genMoves<movegen::QSearch>(b, moveList);
+		movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, moveList);
 
 		board::QBB bcopy = b;
 
