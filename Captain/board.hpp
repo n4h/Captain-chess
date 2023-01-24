@@ -43,7 +43,7 @@ namespace board
 	  Next 6 bits: index of to square
 	  Last 4: move type (8 possible move types)
 	*/
-	using Move = std::uint32_t;
+	using Move = std::uint16_t;
 
 	constexpr void addMoveInfo(Move& m, std::unsigned_integral auto info)
 	{
