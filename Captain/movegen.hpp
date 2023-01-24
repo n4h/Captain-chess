@@ -41,18 +41,45 @@ namespace movegen
 	using AttackMap = board::Bitboard;
 	using board::Bitboard;
 
-	template<std::size_t N>
+	struct ScoredMove
+	{
+		board::Move m = 0;
+		std::int16_t score = 0;
+	};
+	constexpr bool operator<(const ScoredMove& s1, const ScoredMove& s2)
+	{
+		return s1.score < s2.score;
+	}
+	constexpr bool operator>(const ScoredMove& s1, const ScoredMove& s2)
+	{
+		return s1.score > s2.score;
+	}
+	constexpr bool operator==(const ScoredMove& s1, const ScoredMove& s2)
+	{
+		return s1.score == s2.score;
+	}
+	constexpr bool operator<=(const ScoredMove& s1, const ScoredMove& s2)
+	{
+		return s1.score <= s2.score;
+	}
+	constexpr bool operator>=(const ScoredMove& s1, const ScoredMove& s2)
+	{
+		return s1.score >= s2.score;
+	}
+
+	template<typename T = board::Move, std::size_t N = 218>
 	struct Movelist
 	{
+		static_assert(std::is_same_v<T, board::Move> || std::is_same_v<T, ScoredMove>);
 	private:
-		std::array<board::Move, N> ml;
+		std::array<T, N> ml;
 		std::size_t i = 0;
 	public:
-		void push_back(board::Move m)
+		void push_back(T m)
 		{
 			ml[i++] = m;
 		}
-		board::Move& operator[](std::size_t k)
+		T& operator[](std::size_t k)
 		{
 			return ml[k];
 		}
@@ -63,6 +90,10 @@ namespace movegen
 		auto end()
 		{
 			return ml.begin() + i;
+		}
+		auto back()
+		{
+			return this->end() - 1;
 		}
 		constexpr std::size_t size() const noexcept
 		{
@@ -385,8 +416,8 @@ namespace movegen
 	Bitboard getSqAttackers(const board::QBB& b, board::square s);
 	Bitboard getSliderAttackers(Bitboard, board::square, Bitboard diag, Bitboard orth);
 
-	template<typename Attacks, std::size_t N>
-	void addMoves(Bitboard pieces, Movelist<N>& ml, Attacks dest)
+	template<typename Attacks, typename T, std::size_t N>
+	void addMoves(Bitboard pieces, Movelist<T, N>& ml, Attacks dest)
 	{
 		unsigned long index;
 		while (_BitScanForward64(&index, pieces))
@@ -404,8 +435,8 @@ namespace movegen
 		}
 	}
 
-	template<bool promos, std::size_t offset, typename Attacks, std::size_t N>
-	void addPawnMoves(Bitboard pawns, Movelist<N>& ml, Attacks dest)
+	template<bool promos, std::size_t offset, typename Attacks, typename T, std::size_t N>
+	void addPawnMoves(Bitboard pawns, Movelist<T, N>& ml, Attacks dest)
 	{
 		AttackMap attacks = dest(pawns);
 		unsigned long index;
@@ -449,8 +480,8 @@ namespace movegen
 #define addPinUpPMove movegen::addPawnMoves<false, 8>
 #define addUp2PMoves movegen::addPawnMoves<false, 16>
 
-	template<std::size_t N>
-	void addEPMoves(Movelist<N>& ml, Bitboard pawns, Bitboard enp)
+	template<typename T, std::size_t N>
+	void addEPMoves(Movelist<T, N>& ml, Bitboard pawns, Bitboard enp)
 	{
 		AttackMap enpAttacksL = enemyPawnAttacksLeft(enp) & pawns;
 		AttackMap enpAttacksR = enemyPawnAttacksRight(enp) & pawns;
@@ -472,8 +503,8 @@ namespace movegen
 	}
 	constexpr bool QSearch = true;
 	constexpr bool Quiets = true;
-	template<bool qSearch = false, bool quietsOnly = false, std::size_t N>
-	void genMoves(const board::QBB& b, Movelist<N>& ml)
+	template<bool qSearch = false, bool quietsOnly = false, typename T, std::size_t N>
+	void genMoves(const board::QBB& b, Movelist<T, N>& ml)
 	{
 		static_assert(!(qSearch && quietsOnly));
 		Bitboard checkers = isInCheck(b);

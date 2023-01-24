@@ -38,7 +38,7 @@ namespace perft
 			++perftResult;
 			return;
 		}
-		movegen::Movelist<218> moveList;
+		movegen::Movelist moveList;
 		movegen::genMoves<movegen::QSearch>(b, moveList);
 		movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, moveList);
 

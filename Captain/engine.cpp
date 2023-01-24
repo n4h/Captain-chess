@@ -147,7 +147,7 @@ namespace engine
 		auto myinc = engineW ? settings.winc : settings.binc;
 		moveTime = e.moveNumber < 40 ? std::min(aux::castms(mytime * 0.95), aux::castms((mytime / (40 - e.moveNumber)) + myinc/3)) : aux::castms(mytime / 10);
 
-		movegen::Movelist<218> moves;
+		movegen::Movelist moves;
 		movegen::genMoves(b, moves);
 		
 		std::array<std::pair<board::Move, Eval>, 218> rootMoves;
@@ -230,7 +230,7 @@ namespace engine
 		}
 
 
-		movegen::Movelist<218> ml;
+		movegen::Movelist ml;
 		movegen::genMoves<movegen::QSearch>(b, ml); // TODO sort moves in Q search
 		bool check = movegen::isInCheck(b);
 		if (!ml.size())
@@ -308,7 +308,7 @@ namespace engine
 				alpha = nulleval;
 		}
 
-		movegen::Movelist<218> ml;
+		movegen::Movelist ml;
 		movegen::genMoves(b, ml); // TODO sort moves
 
 		if (!ml.size())
