@@ -89,6 +89,8 @@ namespace eval
 		Eval values[6] = {100, 300, 300, 500, 900, 10000}; //PNBRQK
 		board::square from = board::getMoveFromSq(m);
 		board::square to = board::getMoveToSq(m);
+		if (board::getMoveInfo<constants::moveTypeMask>(m) == constants::enPCap)
+			return 0;
 		return values[(b.getPieceType(to) >> 1) - 1] - values[(b.getPieceType(from) >> 1) - 1];
 	}
 
