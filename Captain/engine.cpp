@@ -273,6 +273,18 @@ namespace engine
 					}
 					continue;
 				}
+				if (ml[i].score < 0)
+				{
+					ml[i].score = eval::see(b, ml[i].m);
+					if (ml[i].score < 0)
+					{
+						if (check && i + 1 == captureIterations)
+						{
+							movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);
+						}
+						continue;
+					}
+				}
 			}
 			if (!searchFlags::searching.test())
 				throw Timeout();
