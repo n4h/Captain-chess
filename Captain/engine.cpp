@@ -230,32 +230,44 @@ namespace engine
 		}
 
 
-		movegen::Movelist ml;
-		movegen::genMoves<movegen::QSearch>(b, ml); // TODO sort moves in Q search
+		movegen::Movelist<movegen::ScoredMove> ml;
+		movegen::genMoves<movegen::QSearch>(b, ml);
+		auto captureIterations = ml.size();
 		bool check = movegen::isInCheck(b);
 		if (!ml.size())
 		{
-			if (check)
-				return negInf;
+			movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);
+			if (!ml.size())
+			{
+				return check ? negInf : 0;
+			}
 			else
 			{
-				if (movegen::genMoves(b, ml); ml.size())
-					return checkpos;
-				else
-					return 0;
+				return checkpos;
 			}
 		}
+
 
 		Eval currEval = checkpos;
 
 		board::QBB bcopy = b;
+
+		for (auto& [move, score] : ml)
+		{
+			score = eval::mvvlva(b, move);
+		}
+
 		for (std::size_t i = 0; i != ml.size(); ++i)
 		{
+			if (i + 1 < captureIterations)
+			{
+				std::iter_swap(ml.begin() + i, std::max_element(ml.begin() + i, ml.end()));
+			}
 			if (!searchFlags::searching.test())
 				throw Timeout();
 			auto oldhash = hash;
-			bcopy.makeMove(ml[i]);
-			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
+			bcopy.makeMove(ml[i].m);
+			hash ^= tt->incrementalUpdate(ml[i].m, b, bcopy);
 			assert(hash == initialHash(bcopy));
 			currEval = std::max<Eval>(currEval, -quiesceSearch(bcopy, -beta, -alpha, depth - 1));
 			bcopy = b;
@@ -263,6 +275,10 @@ namespace engine
 			alpha = std::max(currEval, alpha);
 			if (alpha > beta)
 				return currEval;
+			if (check && i + 1 == captureIterations)
+			{
+				movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);
+			}
 		}
 		return currEval;
 	}

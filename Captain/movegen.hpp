@@ -44,6 +44,7 @@ namespace movegen
 	struct ScoredMove
 	{
 		ScoredMove(board::Move _m): m(_m), score(0) {}
+		ScoredMove() {}
 		board::Move m = 0;
 		std::int16_t score = 0;
 	};
