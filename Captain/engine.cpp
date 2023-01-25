@@ -262,6 +262,10 @@ namespace engine
 			if (i + 1 < captureIterations)
 			{
 				std::iter_swap(ml.begin() + i, std::max_element(ml.begin() + i, ml.end()));
+				if (eval::getCaptureValue(b, ml[i].m) + 200 + checkpos <= alpha)
+				{
+					goto endloop;
+				}
 			}
 			if (!searchFlags::searching.test())
 				throw Timeout();
@@ -275,6 +279,7 @@ namespace engine
 			alpha = std::max(currEval, alpha);
 			if (alpha > beta)
 				return currEval;
+			endloop:
 			if (check && i + 1 == captureIterations)
 			{
 				movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);

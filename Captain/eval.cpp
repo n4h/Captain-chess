@@ -84,6 +84,19 @@ namespace eval
 		return 0;
 	}
 
+	Eval getCaptureValue(const board::QBB& b, board::Move m)
+	{
+		Eval values[6] = { 100, 300, 300, 500, 900, 10000 };
+		if (board::getMoveInfo<constants::moveTypeMask>(m) == constants::enPCap)
+		{
+			return 100;
+		}
+		else
+		{
+			return values[(b.getPieceType(board::getMoveToSq(m)) >> 1) - 1];
+		}
+	}
+
 	Eval mvvlva(const board::QBB& b, board::Move m)
 	{
 		Eval values[6] = {100, 300, 300, 500, 900, 10000}; //PNBRQK
