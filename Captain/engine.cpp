@@ -234,16 +234,24 @@ namespace engine
 		movegen::genMoves<movegen::QSearch>(b, ml);
 		auto captureIterations = ml.size();
 		bool check = movegen::isInCheck(b);
-		if (!ml.size())
+		if (!check && !ml.size())
 		{
 			movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);
 			if (!ml.size())
 			{
-				return check ? negInf : 0;
+				return 0;
 			}
 			else
 			{
 				return checkpos;
+			}
+		}
+		else if (check && !ml.size())
+		{
+			movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);
+			if (!ml.size())
+			{
+				return negInf;
 			}
 		}
 
