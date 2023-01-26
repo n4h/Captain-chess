@@ -97,6 +97,11 @@ namespace movegen
 		{
 			return this->end() - 1;
 		}
+		void remove_moves_if(auto criteria)
+		{
+			auto last = std::remove_if(begin(), end(), criteria);
+			i -= std::distance(last, end());
+		}
 		constexpr std::size_t size() const noexcept
 		{
 			return i;

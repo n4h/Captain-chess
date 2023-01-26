@@ -260,9 +260,11 @@ namespace engine
 
 		board::QBB bcopy = b;
 
-		for (auto& [move, score] : ml)
+		for (std::size_t i = 0; auto& [move, score] : ml)
 		{
-			score = eval::mvvlva(b, move);
+			if (i < captureIterations)
+				score = eval::mvvlva(b, move);
+			++i;
 		}
 
 		for (std::size_t i = 0; i != ml.size(); ++i)
@@ -386,7 +388,7 @@ namespace engine
 			return movegen::isInCheck(b) ? negInf : 0;
 		}
 
-		std::remove_if(ml.begin(), ml.end(), [hashMove](movegen::ScoredMove sm) {return sm.m == hashMove; });
+		ml.remove_moves_if([hashMove](movegen::ScoredMove sm) {return sm.m == hashMove; });
 
 		Eval currEval = negInf;
 
