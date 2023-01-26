@@ -316,7 +316,7 @@ namespace engine
 
 	Eval Engine::alphaBetaSearch(const board::QBB& b, Eval alpha, Eval beta, int depth, bool nullBranch)
 	{
-		const auto oldAlpha = alpha;
+		auto nodeType = TTable::ALL;
 		if (shouldStop())
 			searchFlags::searching.clear();
 		if (b.get50() == 50)
@@ -355,7 +355,7 @@ namespace engine
 				alpha = nulleval;
 		}
 
-		movegen::Movelist ml;
+		movegen::Movelist<movegen::ScoredMove> ml;
 		movegen::genMoves(b, ml); // TODO sort moves
 
 		if (!ml.size())
@@ -370,27 +370,34 @@ namespace engine
 
 		
 		board::QBB bcopy = b;
+		board::Move topMove = 0;
 		for (std::size_t i = 0; i != ml.size(); ++i)
 		{
 			if (!searchFlags::searching.test())
 				throw Timeout();
 			auto oldhash = hash;
-			bcopy.makeMove(ml[i]);
-			hash ^= tt->incrementalUpdate(ml[i], b, bcopy);
+			bcopy.makeMove(ml[i].m);
+			hash ^= tt->incrementalUpdate(ml[i].m, b, bcopy);
 			assert(hash == initialHash(bcopy));
 			currEval = std::max<Eval>(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
 			bcopy = b;
 			hash = oldhash;
-			alpha = std::max(currEval, alpha);
+			if (currEval > alpha)
+			{
+				nodeType = TTable::PV;
+				topMove = ml[i].m;
+				alpha = currEval;
+			}
 			if (alpha > beta)
 			{
+				nodeType = TTable::CUT;
 				if (tt)
-					tt->store(hash, depth, currEval, TTable::CUT);
+					tt->store(hash, depth, currEval, nodeType);
 				return currEval;
 			}
 		}
 		if (tt)
-			tt->store(hash, depth, currEval, alpha > oldAlpha ? TTable::PV : TTable::ALL);
+			tt->store(hash, depth, currEval, nodeType);
 		return currEval;
 	}
 }
