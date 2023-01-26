@@ -355,22 +355,43 @@ namespace engine
 				alpha = nulleval;
 		}
 
+		board::Move hashMove = 0;
+		if (tt && (*tt)[hash].move && movegen::isLegalMove(b, (*tt)[hash].move))
+		{
+			hashMove = (*tt)[hash].move;
+			board::QBB bcopy = b;
+			auto oldhash = hash;
+			bcopy.makeMove(hashMove);
+			hash ^= tt->incrementalUpdate(hashMove, b, bcopy);
+			auto eval = -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch);
+			hash = oldhash;
+			if (eval > alpha)
+			{
+				alpha = eval;
+			}
+			if (alpha > beta)
+			{
+				tt->store(hash, depth, eval, hashMove, TTable::CUT);
+				return eval;
+			}
+		}
+
+		board::Move topMove = hashMove;
+
 		movegen::Movelist<movegen::ScoredMove> ml;
 		movegen::genMoves(b, ml); // TODO sort moves
 
 		if (!ml.size())
 		{
-			if (movegen::isInCheck(b))
-				return negInf;
-			else
-				return 0;
+			return movegen::isInCheck(b) ? negInf : 0;
 		}
+
+		std::remove_if(ml.begin(), ml.end(), [hashMove](movegen::ScoredMove sm) {return sm.m == hashMove; });
 
 		Eval currEval = negInf;
 
 		
 		board::QBB bcopy = b;
-		board::Move topMove = 0;
 		for (std::size_t i = 0; i != ml.size(); ++i)
 		{
 			if (!searchFlags::searching.test())
@@ -392,12 +413,12 @@ namespace engine
 			{
 				nodeType = TTable::CUT;
 				if (tt)
-					tt->store(hash, depth, currEval, nodeType);
+					tt->store(hash, depth, currEval, topMove, nodeType);
 				return currEval;
 			}
 		}
 		if (tt)
-			tt->store(hash, depth, currEval, nodeType);
+			tt->store(hash, depth, currEval, topMove, nodeType);
 		return currEval;
 	}
 }

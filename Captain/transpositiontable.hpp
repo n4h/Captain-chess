@@ -33,11 +33,12 @@ namespace TTable
 	struct Entry
 	{
 		std::uint64_t key = 0;
-		int depth = 0;
+		std::int16_t depth = 0;
 		Eval eval = 0;
+		board::Move move = 0;
 		char nodeType = 0; // 0 = PV (exact score), 1 = all (upper bound), 2 = cut (lower bound)
 	};
-
+	
 	class TTable
 	{
 		Entry* table = nullptr;
@@ -58,7 +59,7 @@ namespace TTable
 		
 		void clear();
 
-		void store(std::uint64_t hash, int depth, Eval eval, char nodetype);
+		void store(std::uint64_t hash, int depth, Eval eval, board::Move m, char nodetype);
 
 		Entry& operator[](std::uint64_t hash) noexcept;
 
