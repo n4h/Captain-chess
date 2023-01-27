@@ -732,6 +732,119 @@ namespace movegen
 			addMoves(myKing, ml, [mine, attacks](board::square idx) {return kingAttacks(idx) & ~attacks & ~mine; });
 		}
 	}
+
+	template<typename Ttable>
+	class MoveOrder
+	{
+	public:
+		MoveOrder(Ttable* _tt, const board::QBB& _b, std::uint64_t h)
+			: tt(_tt), b(_b), hash(h){}
+		bool next(const board::QBB& b, board::Move& m)
+		{
+			switch (stage)
+			{
+			case hashStage:
+				if (tt && (*tt)[hash].key == hash && (*tt)[hash].move)
+				{
+					board::Move hashmove = (*tt)[hash].move;
+					if (isLegalMove(b, hashmove))
+					{
+						m = hashmove;
+						stage = captureStageGen;
+						return true;
+					}
+				}
+				stage = captureStageGen;
+				[[fallthrough]];
+			case captureStageGen:
+				genMoves<QSearch>(b, ml);
+				for (auto [move, score] : ml)
+				{
+					score = eval::mvvlva(b, move);
+				}
+				captureBegin = ml.begin();
+				captureEnd = ml.end();
+				if (captureBegin == captureEnd)
+				{
+					stage = quietsGen;
+				}
+				else
+				{
+					stage = captureStage;
+				}
+				[[fallthrough]];
+			case captureStage:
+				if (captureBegin == captureEnd)
+				{
+					stage = quietsGen;
+				}
+				else
+				{
+					auto bestCapture = std::max_element(captureBegin, captureEnd);
+					if (bestCapture->score < 0)
+					{
+						losingCapturesBegin = captureBegin;
+						stage = quietsGen;
+					}
+					else
+					{
+						std::iter_swap(captureBegin, bestCapture);
+						m = captureBegin->m;
+						++captureBegin;
+						return true;
+					}
+				}
+				[[fallthrough]];
+			case quietsGen:
+				quietsCurrent = captureEnd;
+				genMoves<!QSearch, Quiets>(b, ml);
+				quietsEnd = ml.end();
+				if (quietsCurrent == quietsEnd)
+				{
+					stage = losingCaptures;
+				}
+				[[fallthrough]];
+			case quiets:
+				if (quietsCurrent == quietsEnd)
+				{
+					stage = losingCaptures;
+				}
+				else
+				{
+					m = quietsCurrent->m;
+					++quietsCurrent;
+					return true;
+				}
+				[[fallthrough]];
+			case losingCaptures:
+				if (losingCapturesBegin == captureEnd)
+				{
+					return false;
+				}
+				else
+				{
+					m = losingCapturesBegin->m;
+					++losingCapturesBegin;
+					return true;
+				}
+			default:
+				return false;
+			}
+		}
+	private:
+		MoveOrder() {}
+		Movelist<ScoredMove, 218> ml;
+		decltype(ml.begin()) captureBegin = ml.begin();
+		decltype(ml.end()) captureEnd = ml.end();
+		decltype(ml.begin()) quietsCurrent;
+		decltype(ml.begin()) quietsEnd;
+		decltype(ml.begin()) losingCapturesBegin = ml.begin();
+		const board::QBB& b;
+		std::uint64_t hash = 0;
+		Ttable* tt = nullptr;
+		enum class Stage : unsigned {hash, captureStageGen, captureStage, quietsGen, quiets, losingCaptures};
+		Stage stage = 0;
+	};
 }
 
 #endif
