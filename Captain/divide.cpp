@@ -66,7 +66,7 @@ namespace divide
 			return p.str();
 		}
 	}
-	std::size_t perftDivide(const board::QBB& b, board::ExtraBoardInfo ebi, std::size_t t)
+	std::size_t perftDivide(const board::QBB& b, std::size_t t)
 	{
 		movegen::Movelist moves;
 		movegen::genMoves<movegen::QSearch>(b, moves);
@@ -79,7 +79,8 @@ namespace divide
 			bcopy.makeMove(moves[i]);
 			perft::Perft p{ bcopy, t - 1 };
 			total += p.getResult();
-			sync_cout << prettyPrintMove(moves[i], ebi.initialMover) << ": " << p.getResult() << sync_endl;
+			board::Color stm = b.isWhiteToPlay() ? board::Color::White : board::Color::Black;
+			sync_cout << prettyPrintMove(moves[i], stm) << ": " << p.getResult() << sync_endl;
 			p.reset();
 			bcopy = b;
 		}

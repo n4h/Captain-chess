@@ -101,47 +101,30 @@ namespace uci
 		e.setTTable(&tt);
 		if (command[1] == "startpos")
 		{
-			b = board::QBB{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", ebi};
+			b = board::QBB{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"};
 			if (command.size() >= 3 && command[2] == "moves")
 			{
-				board::Color c = ebi.initialMover;
 				for (std::size_t i = 3; i < command.size(); ++i)
 				{
-					auto [move, halfMove] = uciMove2boardMove(b, command[i], c);
+					auto [move, halfMove] = uciMove2boardMove(b, command[i], b.getColorToPlay());
 					b.makeMove(move);
-					if (halfMove)
-						++ebi.halfMoves;
-					else
-						ebi.halfMoves = 0;
-					if (c == board::Color::Black)
-						++ebi.moveNumber;
-					c = c * -1;
+					moves.push_back(move);
 				}
-				ebi.initialMover = c;
 			}
 		}
 		else if (command[1] == "fen" && command.size() >= 8)
 		{
 			// FEN string contains 6 space separated fields
 			b = board::QBB{command[2] + " " + command[3] + " " + command[4] + " " + command[5] + " "
-			 + command[6] + " " + command[7], ebi};
+			 + command[6] + " " + command[7]};
 
 			if (command.size() >= 9 && command[8] == "moves")
 			{
-				board::Color c = ebi.initialMover;
 				for (std::size_t i = 9; i < command.size(); ++i)
-				{
-					auto [move, halfMove] = uciMove2boardMove(b, command[i], c);
-					b.makeMove(move);
-					if (halfMove)
-						++ebi.halfMoves;
-					else
-						ebi.halfMoves = 0;
-					if (c == board::Color::Black)
-						++ebi.moveNumber;
-					c = c * -1;
+				{// TODO vector of positions
+					auto [move, halfMove] = uciMove2boardMove(b, command[i], b.getColorToPlay());
+					moves.push_back(move);
 				}
-				ebi.initialMover = c;
 			}
 		}
 	}
@@ -179,7 +162,7 @@ namespace uci
 			else if (i == "perft")
 			{
 				auto start = std::chrono::steady_clock::now();
-				divide::perftDivide(b, ebi, std::stoi(command[index + 1]));
+				divide::perftDivide(b, std::stoi(command[index + 1]));
 				auto end = std::chrono::steady_clock::now();
 				std::chrono::milliseconds time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 				sync_cout << "Time: " << time << sync_endl;
@@ -190,7 +173,7 @@ namespace uci
 		e.setSettings(ss);
 
 		sf.searching.test_and_set();
-		auto tmp = std::async(&engine::Engine::rootSearch, &e, std::cref(b), startTime, ebi);
+		auto tmp = std::async(&engine::Engine::rootSearch, &e, std::cref(b), startTime, moves);
 		engineResult = std::move(tmp);
 	}
 

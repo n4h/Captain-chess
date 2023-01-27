@@ -47,15 +47,15 @@ namespace engine
 		tt = x;
 	}
 
-	std::string Engine::move2uciFormat(board::Move m)
+	std::string Engine::move2uciFormat(const board::QBB& b, board::Move m)
 	{ // TODO only works for root move
 		std::ostringstream oss;
 		auto from = board::getMoveInfo<constants::fromMask>(m);
 		auto to = board::getMoveInfo<constants::toMask>(m);
 		auto fromfile = aux::file(from);
-		auto fromrank = ebi.initialMover == board::Color::White ? aux::rank(from) + 1 : 7 - aux::rank(from) + 1;
+		auto fromrank = b.getColorToPlay() == board::Color::White ? aux::rank(from) + 1 : 7 - aux::rank(from) + 1;
 		auto tofile = aux::file(to);
-		auto torank = ebi.initialMover == board::Color::White ? aux::rank(to) + 1 : 7 - aux::rank(to) + 1;
+		auto torank = b.getColorToPlay() == board::Color::White ? aux::rank(to) + 1 : 7 - aux::rank(to) + 1;
 
 		oss << aux::file2char(fromfile);
 		oss << fromrank;
@@ -132,11 +132,12 @@ namespace engine
 		return inithash;
 	}
 	
-	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s, board::ExtraBoardInfo e)
+	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s, std::vector<board::Move> pastMoves)
 	{
 		searchStart = s;
-		ebi = e;
-		engineW = ebi.initialMover == board::Color::White;
+		moves = pastMoves;
+		// TODO hash positions of past moves
+		engineW = b.isWhiteToPlay();
 		currIDdepth = 0;
 		nodes = 0;
 		if (tt != nullptr)

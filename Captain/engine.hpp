@@ -61,19 +61,20 @@ namespace engine
 	class Engine
 	{
 	public:
-		void rootSearch(const board::QBB&, std::chrono::time_point<std::chrono::steady_clock>, board::ExtraBoardInfo);
+		void rootSearch(const board::QBB&, std::chrono::time_point<std::chrono::steady_clock>, std::vector<board::Move>);
 		double getEval();
 		Engine() {}
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
 		void setTTable(TTable::TTable*);
 	private:
-		std::string move2uciFormat(board::Move);
+		std::string move2uciFormat(const board::QBB&, board::Move);
 		SearchSettings settings;
 		std::chrono::time_point<std::chrono::steady_clock> searchStart;
 		std::size_t nodes = 0;
 		std::size_t hash = 0;
 		std::size_t currIDdepth = 0;
-		board::ExtraBoardInfo ebi;
+		std::vector<board::Move> moves;
+		std::vector<std::uint64_t> positions;
 		bool engineW = true;
 		std::chrono::milliseconds moveTime = 0ms;
 		TTable::TTable* tt = nullptr;

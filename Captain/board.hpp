@@ -502,6 +502,11 @@ namespace board
 		{
 			return epc & 0x80'80'00'00'00U;
 		}
+		// TODO refactor program to use getColorToPlay where appropriate
+		constexpr Color getColorToPlay() const noexcept
+		{
+			return epc & 0x80'80'00'00'00U ? Color::White : Color::Black;
+		}
 	};
 
 	board::Bitboard getCastlingDiff(const board::QBB&, const board::QBB&);
