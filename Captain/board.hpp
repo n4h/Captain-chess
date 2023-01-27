@@ -377,13 +377,6 @@ namespace board
 		return static_cast<Color>(static_cast<int>(c) * -1);
 	}
 
-	struct ExtraBoardInfo
-	{
-		Color initialMover;
-		std::size_t halfMoves = 0;
-		std::size_t moveNumber = 0;
-	};
-
 #include <xmmintrin.h>
 	using QBBDelta = std::array<std::uint64_t, 4>;
 	struct QBB
@@ -398,7 +391,7 @@ namespace board
 		// has never moved
 		std::uint64_t epc = 0;
 		QBB() {}
-		QBB(const std::string&, ExtraBoardInfo&);
+		QBB(const std::string&);
 
 		void makeMove(const Move);
 

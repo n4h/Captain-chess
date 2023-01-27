@@ -82,7 +82,7 @@ namespace board
 	}
 
 	// see https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
-	QBB::QBB(const std::string& fen, ExtraBoardInfo& EBI)
+	QBB::QBB(const std::string& fen)
 	{
 		unsigned int currFile = 0;
 		
@@ -90,11 +90,6 @@ namespace board
 		auto splitboard = splitString(splitfen[0], '/');
 
 		bool wToMove = splitfen[1] == "w";
-
-		if (wToMove)
-			EBI.initialMover = Color::White;
-		else
-			EBI.initialMover = Color::Black;
 
 		for (unsigned int i = 0; i != 8; ++i)
 		{
@@ -161,8 +156,6 @@ namespace board
 		Bitboard halfMoves = static_cast<Bitboard>(std::stoi(splitfen[4])) << 24;
 		halfMoves |= halfMoves << 8;
 		epc += halfMoves;
-		EBI.halfMoves = (std::uint16_t)(std::stoi(splitfen[4]));
-		EBI.moveNumber = std::stoi(splitfen[5]);
 	}
 
 	// adapted from https://www.chessprogramming.org/AVX2#VerticalNibble
