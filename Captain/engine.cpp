@@ -79,7 +79,7 @@ namespace engine
 
 		return overtime || (nodes > settings.maxNodes) || (elapsed > settings.maxTime);
 	}
-
+	// TODO initialHash should be a member of transposition table
 	std::uint64_t Engine::initialHash(const board::QBB& b)
 	{
 		std::uint64_t inithash = 0;
