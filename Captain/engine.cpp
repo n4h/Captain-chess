@@ -357,50 +357,21 @@ namespace engine
 				alpha = nulleval;
 		}
 
-		board::Move hashMove = 0;
-		if (tt && (*tt)[hash].move && movegen::isLegalMove(b, (*tt)[hash].move))
-		{
-			hashMove = (*tt)[hash].move;
-			board::QBB bcopy = b;
-			auto oldhash = hash;
-			bcopy.makeMove(hashMove);
-			hash ^= tt->incrementalUpdate(hashMove, b, bcopy);
-			auto eval = -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch);
-			hash = oldhash;
-			if (eval > alpha)
-			{
-				alpha = eval;
-			}
-			if (alpha > beta)
-			{
-				tt->store(hash, depth, eval, hashMove, TTable::CUT);
-				return eval;
-			}
-		}
 
-		board::Move topMove = hashMove;
-
-		movegen::Movelist<movegen::ScoredMove> ml;
-		movegen::genMoves(b, ml); // TODO sort moves
-
-		if (!ml.size())
-		{
-			return movegen::isInCheck(b) ? negInf : 0;
-		}
-
-		ml.remove_moves_if([hashMove](movegen::ScoredMove sm) {return sm.m == hashMove; });
+		board::Move topMove = 0;
 
 		Eval currEval = negInf;
-
-		
+		movegen::MoveOrder moves(tt, b, hash);
+		board::Move nextMove = 0;
 		board::QBB bcopy = b;
-		for (std::size_t i = 0; i != ml.size(); ++i)
+		std::size_t i = 0;
+		for (; moves.next(b, nextMove); ++i)
 		{
 			if (!searchFlags::searching.test())
 				throw Timeout();
 			auto oldhash = hash;
-			bcopy.makeMove(ml[i].m);
-			hash ^= tt->incrementalUpdate(ml[i].m, b, bcopy);
+			bcopy.makeMove(nextMove);
+			hash ^= tt->incrementalUpdate(nextMove, b, bcopy);
 			assert(hash == initialHash(bcopy));
 			currEval = std::max<Eval>(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
 			bcopy = b;
@@ -408,7 +379,7 @@ namespace engine
 			if (currEval > alpha)
 			{
 				nodeType = TTable::PV;
-				topMove = ml[i].m;
+				topMove = nextMove;
 				alpha = currEval;
 			}
 			if (alpha > beta)
@@ -418,6 +389,10 @@ namespace engine
 					tt->store(hash, depth, currEval, topMove, nodeType);
 				return currEval;
 			}
+		}
+		if (i == 0)
+		{
+			return movegen::isInCheck(b) ? negInf : 0;
 		}
 		if (tt)
 			tt->store(hash, depth, currEval, topMove, nodeType);

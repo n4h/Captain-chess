@@ -743,20 +743,20 @@ namespace movegen
 		{
 			switch (stage)
 			{
-			case hashStage:
+			case Stage::hash:
 				if (tt && (*tt)[hash].key == hash && (*tt)[hash].move)
 				{
 					board::Move hashmove = (*tt)[hash].move;
 					if (isLegalMove(b, hashmove))
 					{
 						m = hashmove;
-						stage = captureStageGen;
+						stage = Stage::captureStageGen;
 						return true;
 					}
 				}
-				stage = captureStageGen;
+				stage = Stage::captureStageGen;
 				[[fallthrough]];
-			case captureStageGen:
+			case Stage::captureStageGen:
 				genMoves<QSearch>(b, ml);
 				for (auto [move, score] : ml)
 				{
@@ -766,17 +766,17 @@ namespace movegen
 				captureEnd = ml.end();
 				if (captureBegin == captureEnd)
 				{
-					stage = quietsGen;
+					stage = Stage::quietsGen;
 				}
 				else
 				{
-					stage = captureStage;
+					stage = Stage::captureStage;
 				}
 				[[fallthrough]];
-			case captureStage:
+			case Stage::captureStage:
 				if (captureBegin == captureEnd)
 				{
-					stage = quietsGen;
+					stage = Stage::quietsGen;
 				}
 				else
 				{
@@ -784,7 +784,7 @@ namespace movegen
 					if (bestCapture->score < 0)
 					{
 						losingCapturesBegin = captureBegin;
-						stage = quietsGen;
+						stage = Stage::quietsGen;
 					}
 					else
 					{
@@ -795,19 +795,23 @@ namespace movegen
 					}
 				}
 				[[fallthrough]];
-			case quietsGen:
+			case Stage::quietsGen:
 				quietsCurrent = captureEnd;
 				genMoves<!QSearch, Quiets>(b, ml);
 				quietsEnd = ml.end();
 				if (quietsCurrent == quietsEnd)
 				{
-					stage = losingCaptures;
+					stage = Stage::losingCaptures;
+				}
+				else
+				{
+					stage = Stage::quiets;
 				}
 				[[fallthrough]];
-			case quiets:
+			case Stage::quiets:
 				if (quietsCurrent == quietsEnd)
 				{
-					stage = losingCaptures;
+					stage = Stage::losingCaptures;
 				}
 				else
 				{
@@ -816,7 +820,7 @@ namespace movegen
 					return true;
 				}
 				[[fallthrough]];
-			case losingCaptures:
+			case Stage::losingCaptures:
 				if (losingCapturesBegin == captureEnd)
 				{
 					return false;
@@ -839,11 +843,11 @@ namespace movegen
 		decltype(ml.begin()) quietsCurrent;
 		decltype(ml.begin()) quietsEnd;
 		decltype(ml.begin()) losingCapturesBegin = ml.begin();
+		Ttable* tt = nullptr;
 		const board::QBB& b;
 		std::uint64_t hash = 0;
-		Ttable* tt = nullptr;
 		enum class Stage : unsigned {hash, captureStageGen, captureStage, quietsGen, quiets, losingCaptures};
-		Stage stage = 0;
+		Stage stage = Stage::hash;
 	};
 }
 
