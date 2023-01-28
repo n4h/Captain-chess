@@ -79,7 +79,7 @@ namespace engine
 		std::chrono::milliseconds moveTime = 0ms;
 		TTable::TTable* tt = nullptr;
 		bool shouldStop() noexcept;
-		std::uint64_t initialHash(const board::QBB&);
+		
 		// TODO 3-fold repetition
 		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
 

@@ -79,58 +79,6 @@ namespace engine
 
 		return overtime || (nodes > settings.maxNodes) || (elapsed > settings.maxTime);
 	}
-	// TODO initialHash should be a member of transposition table
-	std::uint64_t Engine::initialHash(const board::QBB& b)
-	{
-		std::uint64_t inithash = 0;
-		if (!tt) return 0;
-		for (std::size_t i = 0; i != 64; ++i)
-		{
-			auto piecetype = b.getPieceType(static_cast<board::square>(i));
-			if (b.isWhiteToPlay())
-			{
-				if (piecetype)
-				{
-					if (piecetype & 1)
-						inithash ^= tt->whitePSQT[(piecetype >> 1) - 1][i];
-					else
-						inithash ^= tt->blackPSQT[(piecetype >> 1) - 1][i];
-				}
-			}
-			else
-			{
-				if (piecetype)
-				{
-					if (piecetype & 1)
-						inithash ^= tt->blackPSQT[(piecetype >> 1) - 1][aux::flip(i)];
-					else
-						inithash ^= tt->whitePSQT[(piecetype >> 1) - 1][aux::flip(i)];
-				}
-			}
-		}
-		
-		if (b.isWhiteToPlay())
-			inithash ^= tt->wToMove;
-
-		if (b.isWhiteToPlay())
-		{
-			inithash ^= b.canCastleLong() ? tt->castling_first[0] : 0;
-			inithash ^= b.canCastleShort() ? tt->castling_first[1] : 0;
-			inithash ^= b.oppCanCastleLong() ? tt->castling_first[2] : 0;
-			inithash ^= b.oppCanCastleShort() ? tt->castling_first[3] : 0;
-		}
-		else
-		{
-			inithash ^= b.oppCanCastleLong() ? tt->castling_first[0] : 0;
-			inithash ^= b.oppCanCastleShort() ? tt->castling_first[1] : 0;
-			inithash ^= b.canCastleLong() ? tt->castling_first[2] : 0;
-			inithash ^= b.canCastleShort() ? tt->castling_first[3] : 0;
-		}
-
-		if (b.enpExists())
-			inithash ^= tt->enPassant[b.getEnpFile()];
-		return inithash;
-	}
 	
 	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s, std::vector<board::Move> pastMoves)
 	{
@@ -141,7 +89,7 @@ namespace engine
 		currIDdepth = 0;
 		nodes = 0;
 		if (tt != nullptr)
-			hash = initialHash(b);
+			hash = tt->initialHash(b);
 		else
 			hash = 0;
 		auto mytime = engineW ? settings.wmsec : settings.bmsec;
@@ -175,7 +123,7 @@ namespace engine
 				bcopy.makeMove(rootMoves[i].first);
 				auto oldhash = hash;
 				hash ^= tt->incrementalUpdate(rootMoves[i].first, b, bcopy);
-				assert(hash == initialHash(bcopy));
+				
 				sync_cout << "info currmove " << move2uciFormat(rootMoves[i].first) << sync_endl;
 				sync_cout << "info nodes " << nodes << sync_endl;
 				try 
@@ -302,7 +250,7 @@ namespace engine
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i].m);
 			hash ^= tt->incrementalUpdate(ml[i].m, b, bcopy);
-			assert(hash == initialHash(bcopy));
+			
 			currEval = std::max<Eval>(currEval, -quiesceSearch(bcopy, -beta, -alpha, depth - 1));
 			bcopy = b;
 			hash = oldhash;
@@ -349,7 +297,7 @@ namespace engine
 			auto oldhash = hash;
 			hash ^= tt->nullUpdate(bnull);
 			bnull.doNullMove();
-			assert(hash == initialHash(bnull));
+			
 			Eval nulleval = -alphaBetaSearch(bnull, -beta, -alpha, depth - 3, true);
 			hash = oldhash;
 			if (nulleval > beta)
@@ -373,7 +321,7 @@ namespace engine
 			auto oldhash = hash;
 			bcopy.makeMove(nextMove);
 			hash ^= tt->incrementalUpdate(nextMove, b, bcopy);
-			assert(hash == initialHash(bcopy));
+			
 			currEval = std::max<Eval>(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
 			bcopy = b;
 			hash = oldhash;

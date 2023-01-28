@@ -64,7 +64,7 @@ namespace TTable
 		Entry& operator[](std::uint64_t hash) noexcept;
 
 		void resize(std::size_t);
-
+		std::uint64_t initialHash(const board::QBB&);
 		std::uint64_t incrementalUpdate(board::Move, const board::QBB&, const board::QBB&);
 		std::uint64_t nullUpdate(const board::QBB&);
 		TTable(const TTable&) = delete;

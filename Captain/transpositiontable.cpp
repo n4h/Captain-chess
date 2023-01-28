@@ -128,6 +128,57 @@ namespace TTable
 		}
 	}
 
+	std::uint64_t TTable::initialHash(const board::QBB& b)
+	{
+		std::uint64_t inithash = 0;
+		
+		for (std::size_t i = 0; i != 64; ++i)
+		{
+			auto piecetype = b.getPieceType(static_cast<board::square>(i));
+			if (b.isWhiteToPlay())
+			{
+				if (piecetype)
+				{
+					if (piecetype & 1)
+						inithash ^= whitePSQT[(piecetype >> 1) - 1][i];
+					else
+						inithash ^= blackPSQT[(piecetype >> 1) - 1][i];
+				}
+			}
+			else
+			{
+				if (piecetype)
+				{
+					if (piecetype & 1)
+						inithash ^= blackPSQT[(piecetype >> 1) - 1][aux::flip(i)];
+					else
+						inithash ^= whitePSQT[(piecetype >> 1) - 1][aux::flip(i)];
+				}
+			}
+		}
+
+		if (b.isWhiteToPlay())
+			inithash ^= wToMove;
+
+		if (b.isWhiteToPlay())
+		{
+			inithash ^= b.canCastleLong() ? castling_first[0] : 0;
+			inithash ^= b.canCastleShort() ? castling_first[1] : 0;
+			inithash ^= b.oppCanCastleLong() ? castling_first[2] : 0;
+			inithash ^= b.oppCanCastleShort() ? castling_first[3] : 0;
+		}
+		else
+		{
+			inithash ^= b.oppCanCastleLong() ? castling_first[0] : 0;
+			inithash ^= b.oppCanCastleShort() ? castling_first[1] : 0;
+			inithash ^= b.canCastleLong() ? castling_first[2] : 0;
+			inithash ^= b.canCastleShort() ? castling_first[3] : 0;
+		}
+
+		if (b.enpExists())
+			inithash ^= enPassant[b.getEnpFile()];
+		return inithash;
+	}
 
 	std::uint64_t TTable::incrementalUpdate(board::Move m, const board::QBB& old, const board::QBB& newb)
 	{
