@@ -18,21 +18,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <iostream>
 #include <string>
-#include <chrono>
 
-
-#include "board.hpp"
-#include "movegen.hpp"
-#include "perft.hpp"
-#include "divide.hpp"
-#include "engine.hpp"
 #include "uci.hpp"
 
 int main()
 {
 	std::string init;
 	std::getline(std::cin, init);
-	board::ExtraBoardInfo ebi;
 	if (init == "uci")
 	{
 		uci::UCIProtocol ucip;
