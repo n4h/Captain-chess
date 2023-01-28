@@ -74,6 +74,8 @@ namespace uci
 					e.setTTable(&tt);
 					initialized = true;
 				}
+				moves.clear();
+				pos.clear();
 				tt.clear();
 			}
 			if (UCIMessage[0] == "position" && UCIMessage.size() >= 2)
@@ -99,9 +101,12 @@ namespace uci
 			initialized = true;
 		}
 		e.setTTable(&tt);
+		moves.clear();
+		pos.clear();
 		if (command[1] == "startpos")
 		{
 			b = board::QBB{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"};
+			pos.push_back(tt.initialHash(b));
 			if (command.size() >= 3 && command[2] == "moves")
 			{
 				for (std::size_t i = 3; i < command.size(); ++i)
@@ -109,6 +114,7 @@ namespace uci
 					auto [move, halfMove] = uciMove2boardMove(b, command[i], b.getColorToPlay());
 					b.makeMove(move);
 					moves.push_back(move);
+					pos.push_back(tt.initialHash(b));
 				}
 			}
 		}
@@ -117,13 +123,15 @@ namespace uci
 			// FEN string contains 6 space separated fields
 			b = board::QBB{command[2] + " " + command[3] + " " + command[4] + " " + command[5] + " "
 			 + command[6] + " " + command[7]};
-
+			pos.push_back(tt.initialHash(b));
 			if (command.size() >= 9 && command[8] == "moves")
 			{
 				for (std::size_t i = 9; i < command.size(); ++i)
-				{// TODO vector of positions
+				{
 					auto [move, halfMove] = uciMove2boardMove(b, command[i], b.getColorToPlay());
+					b.makeMove(move);
 					moves.push_back(move);
+					pos.push_back(tt.initialHash(b));
 				}
 			}
 		}
@@ -173,7 +181,7 @@ namespace uci
 		e.setSettings(ss);
 
 		sf.searching.test_and_set();
-		auto tmp = std::async(&engine::Engine::rootSearch, &e, std::cref(b), startTime, moves);
+		auto tmp = std::async(&engine::Engine::rootSearch, &e, std::cref(b), startTime, std::cref(moves), std::cref(pos));
 		engineResult = std::move(tmp);
 	}
 

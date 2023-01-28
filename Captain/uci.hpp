@@ -49,7 +49,8 @@ namespace uci
 		std::string UCIAuthor = "Narbeh Mouradian";
 		bool initialized = false;
 		board::QBB b;
-		std::vector<board::Move> moves;
+		engine::MoveHistory moves;
+		engine::PositionHistory pos;
 		engine::Engine e;
 		TTable::TTable tt;
 		std::future<void> engineResult;
