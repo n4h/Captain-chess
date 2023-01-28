@@ -96,7 +96,9 @@ namespace engine
 			hash = 0;
 		auto mytime = engineW ? settings.wmsec : settings.bmsec;
 		auto myinc = engineW ? settings.winc : settings.binc;
-		moveTime = e.moveNumber < 40 ? std::min(aux::castms(mytime * 0.95), aux::castms((mytime / (40 - e.moveNumber)) + myinc/3)) : aux::castms(mytime / 10);
+		auto moveNumber = (prevPos.size() + 2) / 2;
+		
+		moveTime = moveNumber < 41 ? std::min(aux::castms(mytime * 0.95), aux::castms((mytime / (41 - moveNumber)) + myinc/3)) : aux::castms(mytime / 10);
 
 		movegen::Movelist moves;
 		movegen::genMoves(b, moves);
@@ -126,7 +128,7 @@ namespace engine
 				auto oldhash = hash;
 				hash ^= tt->incrementalUpdate(rootMoves[i].first, b, bcopy);
 				
-				sync_cout << "info currmove " << move2uciFormat(rootMoves[i].first) << sync_endl;
+				sync_cout << "info currmove " << move2uciFormat(b, rootMoves[i].first) << sync_endl;
 				sync_cout << "info nodes " << nodes << sync_endl;
 				try 
 				{
@@ -149,7 +151,7 @@ namespace engine
 		}
 	endsearch:
 		searchFlags::searching.clear();
-		sync_cout << "bestmove " << move2uciFormat(rootMoves[0].first) << sync_endl;
+		sync_cout << "bestmove " << move2uciFormat(b, rootMoves[0].first) << sync_endl;
 	}
 
 	Eval Engine::quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth)
