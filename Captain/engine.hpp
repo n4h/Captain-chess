@@ -40,6 +40,8 @@ namespace engine
 
 	using namespace std::literals::chrono_literals;
 	using eval::Eval;
+	using MoveHistory = std::vector<board::Move>;
+	using PositionHistory = std::vector<std::uint64_t>;
 	// 500000 is arbitrary 
 	constexpr auto negInf = -12000;
 	constexpr auto posInf = 12000;
@@ -61,7 +63,8 @@ namespace engine
 	class Engine
 	{
 	public:
-		void rootSearch(const board::QBB&, std::chrono::time_point<std::chrono::steady_clock>, std::vector<board::Move>);
+		void rootSearch(const board::QBB&, std::chrono::time_point<std::chrono::steady_clock>,
+			const MoveHistory&, const PositionHistory&);
 		double getEval();
 		Engine() {}
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
@@ -73,8 +76,8 @@ namespace engine
 		std::size_t nodes = 0;
 		std::size_t hash = 0;
 		std::size_t currIDdepth = 0;
-		std::vector<board::Move> moves;
-		std::vector<std::uint64_t> positions;
+		std::vector<board::Move> prevMoves;
+		std::vector<std::uint64_t> prevPos;
 		bool engineW = true;
 		std::chrono::milliseconds moveTime = 0ms;
 		TTable::TTable* tt = nullptr;

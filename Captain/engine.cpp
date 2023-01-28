@@ -80,11 +80,13 @@ namespace engine
 		return overtime || (nodes > settings.maxNodes) || (elapsed > settings.maxTime);
 	}
 	
-	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s, std::vector<board::Move> pastMoves)
+	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s,
+		const MoveHistory& moveHist, const PositionHistory& posHist)
 	{
 		searchStart = s;
-		moves = pastMoves;
-		// TODO hash positions of past moves
+		prevMoves = moveHist;
+		prevPos = posHist;
+		
 		engineW = b.isWhiteToPlay();
 		currIDdepth = 0;
 		nodes = 0;
