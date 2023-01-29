@@ -97,8 +97,14 @@ namespace engine
 		auto mytime = engineW ? settings.wmsec : settings.bmsec;
 		auto myinc = engineW ? settings.winc : settings.binc;
 		auto moveNumber = (prevPos.size() + 2) / 2;
-		
-		moveTime = moveNumber < 41 ? std::min(aux::castms(mytime * 0.95), aux::castms((mytime / (41 - moveNumber)) + myinc/3)) : aux::castms(mytime / 10);
+		if (settings.movestogo == std::numeric_limits<std::size_t>::max() || settings.movestogo == 0)
+		{
+			moveTime = aux::castms(moveNumber < 12 ? mytime / 40 : 0.1 * mytime);
+		}
+		else
+		{
+			moveTime = aux::castms( ((0.95*mytime) / settings.movestogo) + (myinc / 3));
+		}
 
 		movegen::Movelist moves;
 		movegen::genMoves(b, moves);
