@@ -15,20 +15,3 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 */
-
-#include <ostream>
-#include <mutex>
-
-#include "auxiliary.hpp"
-
-
-// from Stockfish
-std::ostream& operator<<(std::ostream& o, SyncCout s)
-{
-	static std::mutex m;
-	if (s == ioLock)
-		m.lock();
-	if (s == ioUnlock)
-		m.unlock();
-	return o;
-}

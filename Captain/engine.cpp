@@ -68,16 +68,19 @@ namespace engine
 		return oss.str();
 	}
 
+	std::chrono::milliseconds Engine::elapsed() const
+	{
+		return aux::castms(std::chrono::steady_clock::now() - searchStart);
+	}
+
 	bool Engine::shouldStop() noexcept
 	{
 		if (settings.ponder)
 			return false;
 
-		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - searchStart);
+		bool overtime = !settings.infiniteSearch && (elapsed() > moveTime || elapsed() > settings.maxTime);
 
-		bool overtime = !settings.infiniteSearch && (elapsed > moveTime || elapsed > settings.maxTime);
-
-		return overtime || (nodes > settings.maxNodes) || (elapsed > settings.maxTime);
+		return overtime || (nodes > settings.maxNodes) || (elapsed() > settings.maxTime);
 	}
 	
 	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s,
@@ -121,7 +124,8 @@ namespace engine
 		board::QBB bcopy = b;
 		for (unsigned int k = 1; k <= posInf; ++k)
 		{
-			sync_cout << "info string iterative deepening " << k << sync_endl;
+			engine_out << "info string iterative deepening " << k << std::endl;
+			engine_out.emit();
 			currIDdepth = k;
 			worstCase = negInf;
 			Eval score = negInf;
@@ -134,8 +138,6 @@ namespace engine
 				auto oldhash = hash;
 				hash ^= tt->incrementalUpdate(rootMoves[i].first, b, bcopy);
 				
-				sync_cout << "info currmove " << move2uciFormat(b, rootMoves[i].first) << sync_endl;
-				sync_cout << "info nodes " << nodes << sync_endl;
 				try 
 				{
 					rootMoves[i].second = -alphaBetaSearch(bcopy, negInf, -worstCase, k - 1, false);
@@ -154,10 +156,16 @@ namespace engine
 			std::stable_sort(rootMoves.begin(), rootMoves.begin() + moves.size(), [](const auto& a, const auto& b) {
 				return a.second > b.second;
 				});
+			if (aux::castsec(elapsed()).count() > 0)
+			{
+				engine_out << "info nodes " << nodes << " nps " << nodes / aux::castsec(elapsed()).count() << std::endl;
+			}
+			engine_out.emit();
 		}
 	endsearch:
 		searchFlags::searching.clear();
-		sync_cout << "bestmove " << move2uciFormat(b, rootMoves[0].first) << sync_endl;
+		engine_out << "bestmove " << move2uciFormat(b, rootMoves[0].first) << std::endl;
+		engine_out.emit();
 	}
 
 	Eval Engine::quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth)

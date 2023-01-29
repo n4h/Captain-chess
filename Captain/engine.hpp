@@ -23,6 +23,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <utility>
 #include <cstdint>
 #include <chrono>
+#include <syncstream>
 
 #include "board.hpp"
 #include "movegen.hpp"
@@ -66,10 +67,11 @@ namespace engine
 		void rootSearch(const board::QBB&, std::chrono::time_point<std::chrono::steady_clock>,
 			const MoveHistory&, const PositionHistory&);
 		double getEval();
-		Engine() {}
+		Engine():engine_out(std::cout) {}
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
 		void setTTable(TTable::TTable*);
 	private:
+		std::osyncstream engine_out;
 		std::string move2uciFormat(const board::QBB&, board::Move);
 		SearchSettings settings;
 		std::chrono::time_point<std::chrono::steady_clock> searchStart;
@@ -82,6 +84,7 @@ namespace engine
 		std::chrono::milliseconds moveTime = 0ms;
 		TTable::TTable* tt = nullptr;
 		bool shouldStop() noexcept;
+		std::chrono::milliseconds elapsed() const;
 		
 		// TODO 3-fold repetition
 		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);

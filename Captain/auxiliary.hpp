@@ -29,13 +29,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <type_traits>
 #include <chrono>
 
-
-// from Stockfish
-enum SyncCout { ioLock, ioUnlock };
-std::ostream& operator<<(std::ostream&, SyncCout);
-#define sync_cout std::cout << ioLock
-#define sync_endl std::endl << ioUnlock
-
 // auxiliary functions that have broad applicability throughout
 // the codebase, such as functions for converting between array
 // indices and rank and file numbers.
@@ -220,6 +213,11 @@ namespace aux
 	std::chrono::milliseconds castms(auto s)
 	{
 		return std::chrono::duration_cast<std::chrono::milliseconds>(s);
+	}
+
+	std::chrono::seconds castsec(auto s)
+	{
+		return std::chrono::duration_cast<std::chrono::seconds>(s);
 	}
 }
 #endif

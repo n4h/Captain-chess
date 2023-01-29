@@ -21,6 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <sstream>
 #include <string>
 #include <cassert>
+#include <syncstream>
 
 #include "divide.hpp"
 #include "board.hpp"
@@ -31,7 +32,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace divide
 {
-	std::string prettyPrintMove(board::Move m, board::Color stm)
+	std::string printMove(board::Move m, board::Color stm)
 	{
 		bool wmove = stm == board::Color::White;
 		board::square from = static_cast<board::square>(board::getMoveInfo<constants::fromMask>(m));
@@ -72,7 +73,7 @@ namespace divide
 		movegen::genMoves<movegen::QSearch>(b, moves);
 		movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, moves);
 		std::size_t total = 0;
-
+		std::osyncstream perftdivide_out(std::cout);
 		board::QBB bcopy = b;
 		for (std::size_t i = 0; i != moves.size(); ++i)
 		{
@@ -80,11 +81,13 @@ namespace divide
 			perft::Perft p{ bcopy, t - 1 };
 			total += p.getResult();
 			board::Color stm = b.isWhiteToPlay() ? board::Color::White : board::Color::Black;
-			sync_cout << prettyPrintMove(moves[i], stm) << ": " << p.getResult() << sync_endl;
+			perftdivide_out << printMove(moves[i], stm) << ": " << p.getResult() << std::endl;
+			perftdivide_out.emit();
 			p.reset();
 			bcopy = b;
 		}
-		std::cout << "total: " << total << std::endl;
+		perftdivide_out << "total: " << total << std::endl;
+		perftdivide_out.emit();
 		return total;
 	}
 }

@@ -41,10 +41,11 @@ namespace uci
 
 	void UCIProtocol::UCIStartup()
 	{
-		sync_cout << "id name " << UCIName << sync_endl;
-		sync_cout << "id author " << UCIAuthor << sync_endl;
-		sync_cout << "option name Hash type spin default 1 min 1 max 256" << sync_endl;
-		sync_cout << "uciok" << sync_endl;
+		uci_out << "id name " << UCIName << std::endl;
+		uci_out << "id author " << UCIAuthor << std::endl;
+		uci_out << "option name Hash type spin default 1 min 1 max 256" << std::endl;
+		uci_out << "uciok" << std::endl;
+		uci_out.emit();
 	}
 
 	void UCIProtocol::UCIStartLoop()
@@ -61,7 +62,10 @@ namespace uci
 				UCIMessage.push_back(term);
 			}
 			if (UCIMessage[0] == "isready")
-				sync_cout << "readyok" << sync_endl;
+			{
+				uci_out << "readyok" << std::endl;
+				uci_out.emit();
+			}
 			if (UCIMessage[0] == "quit")
 				std::exit(EXIT_SUCCESS);
 			if (UCIMessage[0] == "setoption")
@@ -173,7 +177,8 @@ namespace uci
 				divide::perftDivide(b, std::stoi(command[index + 1]));
 				auto end = std::chrono::steady_clock::now();
 				std::chrono::milliseconds time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-				sync_cout << "Time: " << time << sync_endl;
+				uci_out << "Time: " << time << std::endl;
+				uci_out.emit();
 				return;
 			}
 			++index;

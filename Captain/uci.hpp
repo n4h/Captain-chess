@@ -22,6 +22,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <vector>
 #include <string>
 #include <future>
+#include <syncstream>
 
 #include "board.hpp"
 #include "engine.hpp"
@@ -35,7 +36,7 @@ namespace uci
 	public:
 		void UCIStartup();
 		void UCIStartLoop();
-		UCIProtocol()
+		UCIProtocol(): uci_out(std::cout)
 		{
 			tt.resize((1024*1024) / sizeof(TTable::Entry));
 			e.setTTable(&tt);
@@ -45,6 +46,7 @@ namespace uci
 		void UCIGoCommand(const std::vector<std::string>&);
 		void UCIStopCommand();
 		void UCISetOptionCommand(const std::vector<std::string>&);
+		std::osyncstream uci_out;
 		std::string UCIName = "Captain v3.1";
 		std::string UCIAuthor = "Narbeh Mouradian";
 		bool initialized = false;
