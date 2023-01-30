@@ -161,6 +161,7 @@ namespace engine
 				if (!searchFlags::searching.test())
 					goto endsearch;
 				bcopy.makeMove(rootMoves[i].first);
+				prevMoves.push_back(rootMoves[i].first);
 				auto oldhash = hash;
 				hash ^= tt->incrementalUpdate(rootMoves[i].first, b, bcopy);
 				try 
@@ -169,9 +170,11 @@ namespace engine
 				}
 				catch (const Timeout&)
 				{
+					prevMoves.pop_back();
 					goto endsearch;
 				}
 				score = std::max(score, rootMoves[i].second);
+				prevMoves.pop_back();
 				bcopy = b;
 				hash = oldhash;
 				if (score > worstCase)
@@ -291,9 +294,11 @@ namespace engine
 				throw Timeout();
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i].m);
+			prevMoves.push_back(ml[i].m);
 			hash ^= tt->incrementalUpdate(ml[i].m, b, bcopy);
 			
 			currEval = std::max<Eval>(currEval, -quiesceSearch(bcopy, -beta, -alpha, depth - 1));
+			prevMoves.pop_back();
 			bcopy = b;
 			hash = oldhash;
 			alpha = std::max(currEval, alpha);
@@ -344,9 +349,10 @@ namespace engine
 			auto oldhash = hash;
 			hash ^= tt->nullUpdate(bnull);
 			bnull.doNullMove();
-			
+			prevMoves.push_back(0);
 			Eval nulleval = -alphaBetaSearch(bnull, -beta, -alpha, depth - 3, true);
 			hash = oldhash;
+			prevMoves.pop_back();
 			if (nulleval > beta)
 				return nulleval;
 			else if (nulleval > alpha)
@@ -367,9 +373,11 @@ namespace engine
 				throw Timeout();
 			auto oldhash = hash;
 			bcopy.makeMove(nextMove);
+			prevMoves.push_back(nextMove);
 			hash ^= tt->incrementalUpdate(nextMove, b, bcopy);
 			
 			currEval = std::max<Eval>(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
+			prevMoves.pop_back();
 			bcopy = b;
 			hash = oldhash;
 			if (currEval > alpha)
