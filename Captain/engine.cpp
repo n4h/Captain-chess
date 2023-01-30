@@ -73,6 +73,20 @@ namespace engine
 		return aux::castms(std::chrono::steady_clock::now() - searchStart);
 	}
 
+	void Engine::uciUpdate()
+	{
+		if (aux::castsec(std::chrono::steady_clock::now() - lastUpdate).count() >= 2)
+		{
+			lastUpdate = std::chrono::steady_clock::now();
+			auto seconds = aux::castsec(elapsed()).count();
+			if (seconds > 0)
+			{
+				engine_out << "info depth " << currIDdepth << " nodes " << nodes << " nps " << nodes / seconds << std::endl;
+				engine_out.emit();
+			}
+		}
+	}
+
 	bool Engine::shouldStop() noexcept
 	{
 		if (settings.ponder)
@@ -87,6 +101,7 @@ namespace engine
 		const MoveHistory& moveHist, const PositionHistory& posHist)
 	{
 		searchStart = s;
+		lastUpdate = s;
 		prevMoves = moveHist;
 		prevPos = posHist;
 		
@@ -124,8 +139,6 @@ namespace engine
 		board::QBB bcopy = b;
 		for (unsigned int k = 1; k <= posInf; ++k)
 		{
-			engine_out << "info string iterative deepening " << k << std::endl;
-			engine_out.emit();
 			currIDdepth = k;
 			worstCase = negInf;
 			Eval score = negInf;
@@ -156,11 +169,6 @@ namespace engine
 			std::stable_sort(rootMoves.begin(), rootMoves.begin() + moves.size(), [](const auto& a, const auto& b) {
 				return a.second > b.second;
 				});
-			if (aux::castsec(elapsed()).count() > 0)
-			{
-				engine_out << "info nodes " << nodes << " nps " << nodes / aux::castsec(elapsed()).count() << std::endl;
-			}
-			engine_out.emit();
 		}
 	endsearch:
 		searchFlags::searching.clear();
@@ -288,6 +296,7 @@ namespace engine
 		auto nodeType = TTable::ALL;
 		if (shouldStop())
 			searchFlags::searching.clear();
+		uciUpdate();
 		if (b.get50() == 50)
 			return 0;
 		if (depth <= 0)

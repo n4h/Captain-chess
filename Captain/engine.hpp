@@ -75,6 +75,7 @@ namespace engine
 		std::string move2uciFormat(const board::QBB&, board::Move);
 		SearchSettings settings;
 		std::chrono::time_point<std::chrono::steady_clock> searchStart;
+		std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
 		std::size_t nodes = 0;
 		std::size_t hash = 0;
 		std::size_t currIDdepth = 0;
@@ -84,6 +85,7 @@ namespace engine
 		std::chrono::milliseconds moveTime = 0ms;
 		TTable::TTable* tt = nullptr;
 		bool shouldStop() noexcept;
+		void uciUpdate();
 		std::chrono::milliseconds elapsed() const;
 		
 		// TODO 3-fold repetition
