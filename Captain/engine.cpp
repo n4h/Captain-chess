@@ -163,7 +163,6 @@ namespace engine
 				bcopy.makeMove(rootMoves[i].first);
 				auto oldhash = hash;
 				hash ^= tt->incrementalUpdate(rootMoves[i].first, b, bcopy);
-				
 				try 
 				{
 					rootMoves[i].second = -alphaBetaSearch(bcopy, negInf, -worstCase, k - 1, false);

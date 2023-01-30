@@ -73,7 +73,7 @@ namespace engine
 	private:
 		struct AddPosition
 		{
-			AddPosition(PositionHistory hist, std::uint64_t hash): h(hist)
+			AddPosition(PositionHistory& x, std::uint64_t hash) : h(x)
 			{
 				h.push_back(hash);
 			}
@@ -82,9 +82,8 @@ namespace engine
 				h.pop_back();
 			}
 		private:
-			PositionHistory& h
+			PositionHistory& h;
 		};
-
 		std::osyncstream engine_out;
 		std::string move2uciFormat(const board::QBB&, board::Move);
 		SearchSettings settings;
