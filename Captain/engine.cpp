@@ -350,10 +350,10 @@ namespace engine
 			hash ^= tt->nullUpdate(bnull);
 			bnull.doNullMove();
 			prevMoves.push_back(0);
-			Eval nulleval = -alphaBetaSearch(bnull, -beta, -alpha, depth - 3, true);
+			Eval nulleval = -alphaBetaSearch(bnull, -beta, -beta + 1, depth - 3, true);
 			hash = oldhash;
 			prevMoves.pop_back();
-			if (nulleval > beta)
+			if (nulleval >= beta)
 				return nulleval;
 		}
 
