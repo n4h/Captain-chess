@@ -219,5 +219,15 @@ namespace aux
 	{
 		return std::chrono::duration_cast<std::chrono::seconds>(s);
 	}
+
+	template<typename Action>
+	struct AtExit
+	{
+		AtExit(Action) {}
+		~AtExit(Action a)
+		{
+			a();
+		}
+	};
 }
 #endif

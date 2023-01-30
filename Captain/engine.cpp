@@ -26,6 +26,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <string>
 #include <sstream>
 #include <cassert>
+#include <ranges>
 
 #include "engine.hpp"
 #include "board.hpp"
@@ -73,6 +74,18 @@ namespace engine
 		return aux::castms(std::chrono::steady_clock::now() - searchStart);
 	}
 
+	bool Engine::threeFoldRep() const
+	{
+		std::size_t cnt = 0;
+		std::uint64_t currHash = prevPos.back();
+		for (int i = prevPos.size() - 1; i >= 0; i -= 2)
+		{
+			if (prevPos[i] == currHash)
+				++cnt;
+		}
+		return cnt >= 3;
+	}
+
 	void Engine::uciUpdate()
 	{
 		if (aux::castsec(std::chrono::steady_clock::now() - lastUpdate).count() >= 2)
@@ -109,7 +122,7 @@ namespace engine
 		currIDdepth = 0;
 		nodes = 0;
 		if (tt != nullptr)
-			hash = tt->initialHash(b);
+			hash = prevPos.back();
 		else
 			hash = 0;
 		auto mytime = engineW ? settings.wmsec : settings.bmsec;
@@ -179,6 +192,12 @@ namespace engine
 	Eval Engine::quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth)
 	{
 		const Eval checkpos = eval::evaluate(b);
+		auto& tmpPosHist = prevPos;
+		prevPos.push_back(hash);
+		aux::AtExit recordNode([&tmpPosHist]() {tmpPosHist.pop_back(); });
+
+		if (threeFoldRep())
+			return 0;
 		if (b.get50() == 50)
 			return 0;
 		if (checkpos > beta)
@@ -294,6 +313,12 @@ namespace engine
 	Eval Engine::alphaBetaSearch(const board::QBB& b, Eval alpha, Eval beta, int depth, bool nullBranch)
 	{
 		auto nodeType = TTable::ALL;
+		auto& tmpPosHist = prevPos;
+		prevPos.push_back(hash);
+		aux::AtExit recordNode([&tmpPosHist]() {tmpPosHist.pop_back(); });
+
+		if (threeFoldRep())
+			return 0;
 		if (shouldStop())
 			searchFlags::searching.clear();
 		uciUpdate();

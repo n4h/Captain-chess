@@ -88,7 +88,7 @@ namespace engine
 		void uciUpdate();
 		std::chrono::milliseconds elapsed() const;
 		
-		// TODO 3-fold repetition
+		bool threeFoldRep() const;
 		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
 
 		Eval alphaBetaSearch(const board::QBB& , Eval, Eval, int, bool);
