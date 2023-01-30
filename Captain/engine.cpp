@@ -192,9 +192,7 @@ namespace engine
 	Eval Engine::quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth)
 	{
 		const Eval checkpos = eval::evaluate(b);
-		auto& tmpPosHist = prevPos;
-		prevPos.push_back(hash);
-		aux::AtExit recordNode([&tmpPosHist]() {tmpPosHist.pop_back(); });
+		AddPosition recordNode(prevPos, hash);
 
 		if (threeFoldRep())
 			return 0;
@@ -313,9 +311,7 @@ namespace engine
 	Eval Engine::alphaBetaSearch(const board::QBB& b, Eval alpha, Eval beta, int depth, bool nullBranch)
 	{
 		auto nodeType = TTable::ALL;
-		auto& tmpPosHist = prevPos;
-		prevPos.push_back(hash);
-		aux::AtExit recordNode([&tmpPosHist]() {tmpPosHist.pop_back(); });
+		AddPosition recordNode(prevPos, hash);
 
 		if (threeFoldRep())
 			return 0;

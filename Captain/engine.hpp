@@ -71,6 +71,20 @@ namespace engine
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
 		void setTTable(TTable::TTable*);
 	private:
+		struct AddPosition
+		{
+			AddPosition(PositionHistory hist, std::uint64_t hash): h(hist)
+			{
+				h.push_back(hash);
+			}
+			~AddPosition()
+			{
+				h.pop_back();
+			}
+		private:
+			PositionHistory& h
+		};
+
 		std::osyncstream engine_out;
 		std::string move2uciFormat(const board::QBB&, board::Move);
 		SearchSettings settings;
