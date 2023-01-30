@@ -355,8 +355,6 @@ namespace engine
 			prevMoves.pop_back();
 			if (nulleval > beta)
 				return nulleval;
-			else if (nulleval > alpha)
-				alpha = nulleval;
 		}
 
 
