@@ -136,7 +136,7 @@ namespace engine
 		{
 			moveTime = aux::castms( ((0.95*mytime) / settings.movestogo) + (myinc / 3));
 		}
-
+		rootMoves.clear();
 		movegen::genMoves(b, rootMoves);
 		
 		for (auto i : rootMoves)
