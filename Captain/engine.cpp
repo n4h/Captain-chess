@@ -61,9 +61,13 @@ namespace engine
 			if (movegen::isLegalMove(b, nextmove))
 			{
 				PV << " " << move2uciFormat(b, nextmove);
+				b.makeMove(nextmove);
+				bhash ^= tt->incrementalUpdate(nextmove, oldb, b);
 			}
-			b.makeMove(nextmove);
-			bhash ^= tt->incrementalUpdate(nextmove, oldb, b);
+			else
+			{
+				break;
+			}
 		}
 		return PV.str();
 	}
@@ -330,10 +334,7 @@ namespace engine
 	Eval Engine::alphaBetaSearch(const board::QBB& b, Eval alpha, Eval beta, int depth, bool nullBranch)
 	{
 		auto nodeType = TTable::ALL;
-		AddPosition recordNode(prevPos, hash);
 
-		if (threeFoldRep())
-			return 0;
 		if (shouldStop())
 			searchFlags::searching.clear();
 		uciUpdate();
@@ -341,6 +342,10 @@ namespace engine
 			return 0;
 		if (depth <= 0)
 			return quiesceSearch(b, alpha, beta, depth);
+
+		AddPosition recordNode(prevPos, hash);
+		if (threeFoldRep())
+			return 0;
 		++nodes;
 		
 		if (tt)
