@@ -333,15 +333,17 @@ namespace engine
 
 	Eval Engine::alphaBetaSearch(const board::QBB& b, Eval alpha, Eval beta, int depth, bool nullBranch)
 	{
+		if (depth <= 0)
+			return quiesceSearch(b, alpha, beta, depth);
 		auto nodeType = TTable::ALL;
 
 		if (shouldStop())
 			searchFlags::searching.clear();
+
 		uciUpdate();
+
 		if (b.get50() == 50)
 			return 0;
-		if (depth <= 0)
-			return quiesceSearch(b, alpha, beta, depth);
 
 		AddPosition recordNode(prevPos, hash);
 		if (threeFoldRep())
