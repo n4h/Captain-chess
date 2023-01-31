@@ -137,57 +137,52 @@ namespace engine
 			moveTime = aux::castms( ((0.95*mytime) / settings.movestogo) + (myinc / 3));
 		}
 
-		movegen::Movelist moves;
-		movegen::genMoves(b, moves);
+		movegen::genMoves(b, rootMoves);
 		
-		std::array<std::pair<board::Move, Eval>, 218> rootMoves;
-		for (std::size_t i = 0; i != moves.size(); ++i)
+		for (auto i : rootMoves)
 		{
-			rootMoves[i].first = moves[i];
-			rootMoves[i].second = negInf;
+			i.score = negInf;
 		}
 
 		Eval worstCase = negInf;
-
+		this->eval = negInf;
 		board::QBB bcopy = b;
 		for (unsigned int k = 1; k <= posInf; ++k)
 		{
 			currIDdepth = k;
 			worstCase = negInf;
-			Eval score = negInf;
 
-			for (std::size_t i = 0; i != moves.size(); ++i)
+			for (auto& [move, score] : rootMoves)
 			{
 				if (!searchFlags::searching.test())
 					goto endsearch;
-				bcopy.makeMove(rootMoves[i].first);
-				prevMoves.push_back(rootMoves[i].first);
+				bcopy.makeMove(move);
+				prevMoves.push_back(move);
 				auto oldhash = hash;
-				hash ^= tt->incrementalUpdate(rootMoves[i].first, b, bcopy);
+				hash ^= tt->incrementalUpdate(move, b, bcopy);
 				try 
 				{
-					rootMoves[i].second = -alphaBetaSearch(bcopy, negInf, -worstCase, k - 1, false);
+					score = -alphaBetaSearch(bcopy, negInf, -worstCase, k - 1, false);
 				}
 				catch (const Timeout&)
 				{
 					prevMoves.pop_back();
 					goto endsearch;
 				}
-				score = std::max(score, rootMoves[i].second);
+				worstCase = std::max(worstCase, score);
 				prevMoves.pop_back();
 				bcopy = b;
 				hash = oldhash;
-				if (score > worstCase)
-					worstCase = score;
 			}
 
-			std::stable_sort(rootMoves.begin(), rootMoves.begin() + moves.size(), [](const auto& a, const auto& b) {
-				return a.second > b.second;
+			std::stable_sort(rootMoves.begin(), rootMoves.end(), [](const auto& a, const auto& b) {
+				return a > b;
 				});
+			eval = rootMoves[0].score;
 		}
 	endsearch:
 		searchFlags::searching.clear();
-		engine_out << "bestmove " << move2uciFormat(b, rootMoves[0].first) << std::endl;
+		engine_out << "bestmove " << move2uciFormat(b, rootMoves[0].m) << std::endl;
 		engine_out.emit();
 	}
 

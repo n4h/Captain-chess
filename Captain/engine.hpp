@@ -94,6 +94,7 @@ namespace engine
 		std::size_t currIDdepth = 0;
 		std::vector<board::Move> prevMoves;
 		std::vector<std::uint64_t> prevPos;
+		movegen::Movelist<movegen::ScoredMove> rootMoves;
 		bool engineW = true;
 		std::chrono::milliseconds moveTime = 0ms;
 		TTable::TTable* tt = nullptr;
