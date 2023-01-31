@@ -129,7 +129,7 @@ namespace board
 		case knightPromo:
 			return 'n';
 		default:
-			// to notify GUI of any bug
+			// to stand out in logs
 			return 'X';
 		}
 	}

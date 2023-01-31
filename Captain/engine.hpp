@@ -86,6 +86,7 @@ namespace engine
 		};
 		std::osyncstream engine_out;
 		std::string move2uciFormat(const board::QBB&, board::Move);
+		std::string getPVuciformat(board::QBB b, board::Move bestmove);
 		SearchSettings settings;
 		std::chrono::time_point<std::chrono::steady_clock> searchStart;
 		std::chrono::time_point<std::chrono::steady_clock> lastUpdate;

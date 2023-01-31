@@ -48,8 +48,28 @@ namespace engine
 		tt = x;
 	}
 
+	std::string Engine::getPVuciformat(board::QBB b, board::Move bestmove)
+	{
+		std::ostringstream PV;
+		PV << move2uciFormat(b, bestmove);
+		b.makeMove(bestmove);
+		std::uint64_t bhash = tt->initialHash(b);
+		while ((*tt)[bhash].key == bhash && (*tt)[bhash].nodeType == TTable::PV)
+		{
+			const board::QBB oldb = b;
+			board::Move nextmove = (*tt)[bhash].move;
+			if (movegen::isLegalMove(b, nextmove))
+			{
+				PV << " " << move2uciFormat(b, nextmove);
+			}
+			b.makeMove(nextmove);
+			bhash ^= tt->incrementalUpdate(nextmove, oldb, b);
+		}
+		return PV.str();
+	}
+
 	std::string Engine::move2uciFormat(const board::QBB& b, board::Move m)
-	{ // TODO only works for root move
+	{
 		std::ostringstream oss;
 		auto from = board::getMoveInfo<constants::fromMask>(m);
 		auto to = board::getMoveInfo<constants::toMask>(m);
