@@ -181,7 +181,7 @@ namespace engine
 				if (!searchFlags::searching.test())
 					goto endsearch;
 				bcopy.makeMove(move);
-				prevMoves.push_back(move);
+				StoreInfo recordMove(prevMoves, move);
 				auto oldhash = hash;
 				hash ^= tt->incrementalUpdate(move, b, bcopy);
 				try 
@@ -190,11 +190,9 @@ namespace engine
 				}
 				catch (const Timeout&)
 				{
-					prevMoves.pop_back();
 					goto endsearch;
 				}
 				worstCase = std::max(worstCase, score);
-				prevMoves.pop_back();
 				bcopy = b;
 				hash = oldhash;
 			}
@@ -213,7 +211,7 @@ namespace engine
 	Eval Engine::quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth)
 	{
 		const Eval checkpos = eval::evaluate(b);
-		AddPosition recordNode(prevPos, hash);
+		StoreInfo recordNode(prevPos, hash);
 
 		if (threeFoldRep())
 			return 0;
@@ -313,11 +311,10 @@ namespace engine
 				throw Timeout();
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i].m);
-			prevMoves.push_back(ml[i].m);
+			StoreInfo recordMove(prevMoves, ml[i].m);
 			hash ^= tt->incrementalUpdate(ml[i].m, b, bcopy);
 			
 			currEval = std::max<Eval>(currEval, -quiesceSearch(bcopy, -beta, -alpha, depth - 1));
-			prevMoves.pop_back();
 			bcopy = b;
 			hash = oldhash;
 			alpha = std::max(currEval, alpha);
@@ -345,7 +342,7 @@ namespace engine
 		if (b.get50() == 50)
 			return 0;
 
-		AddPosition recordNode(prevPos, hash);
+		StoreInfo recordNode(prevPos, hash);
 		if (threeFoldRep())
 			return 0;
 		++nodes;
@@ -371,10 +368,9 @@ namespace engine
 			auto oldhash = hash;
 			hash ^= tt->nullUpdate(bnull);
 			bnull.doNullMove();
-			prevMoves.push_back(0);
+			StoreInfo recordMove(prevMoves, 0);
 			Eval nulleval = -alphaBetaSearch(bnull, -beta, -beta + 1, depth - 3, true);
 			hash = oldhash;
-			prevMoves.pop_back();
 			if (nulleval >= beta)
 				return nulleval;
 		}
@@ -393,11 +389,10 @@ namespace engine
 				throw Timeout();
 			auto oldhash = hash;
 			bcopy.makeMove(nextMove);
-			prevMoves.push_back(nextMove);
+			StoreInfo recordMove(prevMoves, nextMove);
 			hash ^= tt->incrementalUpdate(nextMove, b, bcopy);
 			
 			currEval = std::max<Eval>(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
-			prevMoves.pop_back();
 			bcopy = b;
 			hash = oldhash;
 			if (currEval > alpha)

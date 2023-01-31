@@ -71,18 +71,19 @@ namespace engine
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
 		void setTTable(TTable::TTable*);
 	private:
-		struct AddPosition
+		template<typename T, typename T2>
+		struct StoreInfo
 		{
-			AddPosition(PositionHistory& x, std::uint64_t hash) : h(x)
+			StoreInfo(T& x, T2 item) : h(x)
 			{
-				h.push_back(hash);
+				h.push_back(item);
 			}
-			~AddPosition()
+			~StoreInfo()
 			{
 				h.pop_back();
 			}
 		private:
-			PositionHistory& h;
+			T& h;
 		};
 		std::osyncstream engine_out;
 		std::string move2uciFormat(const board::QBB&, board::Move);
@@ -91,7 +92,7 @@ namespace engine
 		std::chrono::time_point<std::chrono::steady_clock> searchStart;
 		std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
 		std::size_t nodes = 0;
-		std::size_t hash = 0;
+		std::uint64_t hash = 0;
 		std::size_t currIDdepth = 0;
 		std::vector<board::Move> prevMoves;
 		std::vector<std::uint64_t> prevPos;
