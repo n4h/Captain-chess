@@ -210,17 +210,12 @@ namespace engine
 
 	Eval Engine::quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth)
 	{
-		const Eval checkpos = eval::evaluate(b);
 		StoreInfo recordNode(prevPos, hash);
 
 		if (threeFoldRep())
 			return 0;
 		if (b.get50() == 50)
 			return 0;
-		if (checkpos > beta)
-			return checkpos;
-		else if (checkpos > alpha)
-			alpha = checkpos;
 		if (shouldStop())
 			searchFlags::searching.clear();
 		++nodes;
@@ -245,6 +240,19 @@ namespace engine
 		movegen::genMoves<movegen::QSearch>(b, ml);
 		auto captureIterations = ml.size();
 		bool check = movegen::isInCheck(b);
+		Eval standpat = negInf;
+		if (!check)
+		{
+			standpat = eval::evaluate(b);
+			if (standpat >= beta)
+			{
+				return standpat;
+			}
+			else if (standpat >= alpha)
+			{
+				alpha = standpat;
+			}
+		}
 		if (!check && !ml.size())
 		{
 			movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);
@@ -254,7 +262,7 @@ namespace engine
 			}
 			else
 			{
-				return checkpos;
+				return standpat;
 			}
 		}
 		else if (check && !ml.size())
@@ -267,7 +275,7 @@ namespace engine
 		}
 
 
-		Eval currEval = checkpos;
+		Eval currEval = standpat;
 
 		board::QBB bcopy = b;
 
@@ -286,12 +294,8 @@ namespace engine
 			}
 			if (i < captureIterations)
 			{
-				if (eval::getCaptureValue(b, ml[i].m) + 200 + checkpos <= alpha)
+				if (!check && eval::getCaptureValue(b, ml[i].m) + 200 + standpat <= alpha)
 				{
-					if (check && i + 1 == captureIterations)
-					{
-						movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);
-					}
 					continue;
 				}
 				if (ml[i].score < 0)
@@ -318,7 +322,7 @@ namespace engine
 			bcopy = b;
 			hash = oldhash;
 			alpha = std::max(currEval, alpha);
-			if (alpha > beta)
+			if (alpha >= beta)
 				return currEval;
 			if (check && i + 1 == captureIterations)
 			{
@@ -395,13 +399,13 @@ namespace engine
 			currEval = std::max<Eval>(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
 			bcopy = b;
 			hash = oldhash;
-			if (currEval > alpha)
+			if (currEval >= alpha)
 			{
 				nodeType = TTable::PV;
 				topMove = nextMove;
 				alpha = currEval;
 			}
-			if (alpha > beta)
+			if (alpha >= beta)
 			{
 				nodeType = TTable::CUT;
 				if (tt)
