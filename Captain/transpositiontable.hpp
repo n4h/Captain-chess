@@ -27,7 +27,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace TTable
 {
-	enum : char {PV = 0, ALL = 1, CUT = 2};
+	enum : char {NONE = 0, PV = 1, ALL = 2, CUT = 3};
 	using eval::Eval;
 	
 	struct Entry
@@ -36,7 +36,8 @@ namespace TTable
 		std::int16_t depth = 0;
 		Eval eval = 0;
 		board::Move move = 0;
-		char nodeType = 0; // 0 = PV (exact score), 1 = all (upper bound), 2 = cut (lower bound)
+		char nodeType = NONE;
+		unsigned char age = 0;
 	};
 	
 	class TTable
@@ -58,8 +59,9 @@ namespace TTable
 		~TTable();
 		
 		void clear();
-
-		void store(std::uint64_t hash, int depth, Eval eval, board::Move m, char nodetype);
+		
+		void tryStore(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age);
+		void store(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age);
 
 		Entry& operator[](std::uint64_t hash) noexcept;
 

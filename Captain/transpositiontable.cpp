@@ -67,13 +67,32 @@ namespace TTable
 		}
 	}
 
-	void TTable::store(std::uint64_t hash, int depth, Eval eval, board::Move m, char nodetype)
+	void TTable::tryStore(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age)
+	{
+		const auto& currEntry = (*this)[hash];
+		if (currEntry.nodeType == PV && currEntry.age == age)
+		{
+			return;
+		}
+		if (currEntry.depth <= 0 || currEntry.age < age)
+		{
+			store(hash, depth, eval, m, nodetype, age);
+			return;
+		}
+		if (depth > currEntry.depth)
+		{
+			store(hash, depth, eval, m, nodetype, age);
+		}
+	}
+
+	void TTable::store(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age)
 	{
 		(*this)[hash].key = hash;
 		(*this)[hash].depth = depth;
 		(*this)[hash].eval = eval;
 		(*this)[hash].move = m;
 		(*this)[hash].nodeType = nodetype;
+		(*this)[hash].age = age;
 	}
 
 	TTable::TTable(std::size_t N)

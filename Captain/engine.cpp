@@ -425,7 +425,7 @@ namespace engine
 			{
 				nodeType = TTable::CUT;
 				if (tt)
-					tt->store(hash, depth, currEval, topMove, nodeType);
+					tt->tryStore(hash, depth, currEval, topMove, nodeType, initialPos);
 				return currEval;
 			}
 		}
@@ -434,7 +434,16 @@ namespace engine
 			return movegen::isInCheck(b) ? negInf : 0;
 		}
 		if (tt)
-			tt->store(hash, depth, currEval, topMove, nodeType);
+		{
+			if (nodeType == TTable::PV)
+			{
+				tt->store(hash, depth, currEval, topMove, nodeType, initialPos);
+			}
+			else
+			{
+				tt->tryStore(hash, depth, currEval, topMove, nodeType, initialPos);
+			}
+		}
 		return currEval;
 	}
 }
