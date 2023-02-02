@@ -50,26 +50,12 @@ namespace engine
 
 	std::string Engine::getPVuciformat(board::QBB b, board::Move bestmove)
 	{
-		std::ostringstream PV;
-		PV << move2uciFormat(b, bestmove);
-		b.makeMove(bestmove);
-		std::uint64_t bhash = tt->initialHash(b);
-		while ((*tt)[bhash].key == bhash && (*tt)[bhash].nodeType == TTable::PV)
-		{
-			const board::QBB oldb = b;
-			board::Move nextmove = (*tt)[bhash].move;
-			if (movegen::isLegalMove(b, nextmove))
-			{
-				PV << " " << move2uciFormat(b, nextmove);
-				b.makeMove(nextmove);
-				bhash ^= tt->incrementalUpdate(nextmove, oldb, b);
-			}
-			else
-			{
-				break;
-			}
-		}
-		return PV.str();
+		return ""; //UNDONE PV string
+	}
+
+	std::size_t Engine::ply() const
+	{
+		return prevPos.size() - initialPos;
 	}
 
 	std::string Engine::move2uciFormat(const board::QBB& b, board::Move m)
@@ -141,7 +127,8 @@ namespace engine
 		lastUpdate = s;
 		prevMoves = moveHist;
 		prevPos = posHist;
-		
+		initialPos = prevPos.size();
+		std::fill(PV.begin(), PV.end(), 0);
 		engineW = b.isWhiteToPlay();
 		currIDdepth = 0;
 		nodes = 0;
@@ -171,7 +158,7 @@ namespace engine
 		Eval worstCase = negInf;
 		this->eval = negInf;
 		board::QBB bcopy = b;
-		for (unsigned int k = 1; k <= posInf; ++k)
+		for (unsigned int k = 1; k <= 128; ++k)
 		{
 			currIDdepth = k;
 			worstCase = negInf;
@@ -192,7 +179,10 @@ namespace engine
 				{
 					goto endsearch;
 				}
-				worstCase = std::max(worstCase, score);
+				if (score > worstCase)
+				{
+					worstCase = score;
+				}
 				bcopy = b;
 				hash = oldhash;
 			}
