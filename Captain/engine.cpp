@@ -50,6 +50,7 @@ namespace engine
 
 	std::string Engine::getPVuciformat(board::QBB b, board::Move bestmove)
 	{
+		b; bestmove;
 		return ""; //UNDONE PV string
 	}
 
