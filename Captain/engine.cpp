@@ -194,7 +194,8 @@ namespace engine
 		}
 	endsearch:
 		searchFlags::searching.clear();
-		engine_out << "bestmove " << move2uciFormat(b, rootMoves[0].m) << std::endl;
+		auto finalMove = std::max_element(rootMoves.begin(), rootMoves.end());
+		engine_out << "bestmove " << move2uciFormat(b, finalMove->m) << std::endl;
 		engine_out.emit();
 	}
 
