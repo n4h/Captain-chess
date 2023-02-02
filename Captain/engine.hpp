@@ -67,10 +67,7 @@ namespace engine
 		void rootSearch(const board::QBB&, std::chrono::time_point<std::chrono::steady_clock>,
 			const MoveHistory&, const PositionHistory&);
 		double getEval();
-		Engine() :engine_out(std::cout)
-		{
-			PV.reserve(32 * (64 - 1));
-		}
+		Engine() :engine_out(std::cout) {}
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
 		void setTTable(TTable::TTable*);
 	private:
@@ -97,7 +94,6 @@ namespace engine
 		std::size_t nodes = 0;
 		std::uint64_t hash = 0;
 		std::size_t currIDdepth = 0;
-		std::vector<board::Move> PV;
 		std::vector<board::Move> prevMoves;
 		std::vector<std::uint64_t> prevPos;
 		std::size_t initialPos = 0;

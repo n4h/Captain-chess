@@ -50,9 +50,25 @@ namespace engine
 
 	std::string Engine::getPVuciformat(board::QBB b, board::Move bestmove)
 	{
-		(void)b;
-		(void)bestmove;
-		return ""; //UNDONE PV string
+		std::ostringstream PV;
+		PV << move2uciFormat(b, bestmove);
+		b.makeMove(bestmove);
+		std::uint64_t bhash = tt->initialHash(b);
+		unsigned i = 0;
+		while ((*tt)[bhash].key == bhash && (*tt)[bhash].nodeType == TTable::PV && i < 64)
+		{
+			const auto bcopy = b;
+			auto m = (*tt)[bhash].move;
+			if (!movegen::isLegalMove(b, m))
+			{
+				break;
+			}
+			PV << " " << move2uciFormat(b, m);
+			b.makeMove(m);
+			bhash ^= tt->incrementalUpdate(m, bcopy, b);
+			++i;
+		}
+		return PV.str();
 	}
 
 	std::size_t Engine::ply() const
@@ -130,7 +146,6 @@ namespace engine
 		prevMoves = moveHist;
 		prevPos = posHist;
 		initialPos = prevPos.size();
-		std::fill(PV.begin(), PV.end(), 0);
 		engineW = b.isWhiteToPlay();
 		currIDdepth = 0;
 		nodes = 0;
@@ -187,12 +202,20 @@ namespace engine
 				}
 				bcopy = b;
 				hash = oldhash;
+
 			}
 
 			std::stable_sort(rootMoves.begin(), rootMoves.end(), [](const auto& a, const auto& b) {
 				return a > b;
 				});
 			eval = rootMoves[0].score;
+			engine_out << "info depth " << currIDdepth << " "
+				<< "score cp " << eval << " "
+				<< "time " << elapsed().count() << " "
+				<< "nodes " << nodes << " "
+				<< "nps " << nodes / std::max(aux::castsec(elapsed()).count(), 1LL) << " "
+				<< "pv " << getPVuciformat(b, rootMoves[0].m) << std::endl;
+			engine_out.emit();
 		}
 	endsearch:
 		searchFlags::searching.clear();
@@ -330,7 +353,7 @@ namespace engine
 		if (depth <= 0)
 			return quiesceSearch(b, alpha, beta, depth);
 		auto nodeType = TTable::ALL;
-
+		
 		if (shouldStop())
 			searchFlags::searching.clear();
 
