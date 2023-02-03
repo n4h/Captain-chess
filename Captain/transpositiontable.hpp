@@ -69,6 +69,10 @@ namespace TTable
 		std::uint64_t initialHash(const board::QBB&);
 		std::uint64_t incrementalUpdate(board::Move, const board::QBB&, const board::QBB&);
 		std::uint64_t nullUpdate(const board::QBB&);
+
+		double capturePct(const board::QBB& b) const;
+		double nodeTypePct(char nodetype) const;
+		double usedPct() const;
 		TTable(const TTable&) = delete;
 		TTable& operator=(const TTable&) = delete;
 		TTable(TTable&&) = delete;

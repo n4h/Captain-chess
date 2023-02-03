@@ -401,6 +401,14 @@ namespace board
 
 		void flipQBB();
 
+		constexpr bool isCapture(Move m) const noexcept
+		{
+			auto movetype = getMoveInfo<moveTypeMask>(m);
+			auto toBB = setbit(getMoveToSq(m));
+			toBB &= getOccupancy();
+			return toBB || movetype == enPCap;
+		}
+
 		constexpr bool canCastleShort() const noexcept
 		{
 			return (epc & 0xF0U) == 0x90U;

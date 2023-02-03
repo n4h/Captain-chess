@@ -123,6 +123,7 @@ namespace TTable
 			table[i].key = 0;
 			table[i].depth = 0;
 			table[i].nodeType = 0;
+			table[i].age = 0;
 		}
 	}
 
@@ -286,5 +287,60 @@ namespace TTable
 			update ^= enPassant[aux::file(index)];
 		}
 		return update;
+	}
+
+	double TTable::capturePct(const board::QBB& b) const
+	{
+		std::size_t total = 0;
+		std::size_t count = 0;
+		for (std::size_t i = 0; i != sz; ++i)
+		{
+			if (table[i].age)
+			{
+				++total;
+				if (table[i].move && b.isCapture(table[i].move))
+				{
+					++count;
+				}
+			}
+		}
+		if (!total)
+		{
+			return 0;
+		}
+		return static_cast<double>(count * 100) / total;
+	}
+
+	double TTable::nodeTypePct(char nodetype) const
+	{
+		std::size_t total = 0;
+		std::size_t count = 0;
+		for (std::size_t i = 0; i != sz; ++i)
+		{
+			if (table[i].age)
+			{
+				++total;
+				if (table[i].nodeType == nodetype)
+				{
+					++count;
+				}
+			}
+		}
+		if (!total)
+		{
+			return 0;
+		}
+		return static_cast<double>(count * 100) / total;
+	}
+
+	double TTable::usedPct() const
+	{
+		std::size_t used = 0;
+		for (std::size_t i = 0; i != sz; ++i)
+		{
+			if (table[i].age)
+				++used;
+		}
+		return sz ? static_cast<double>(used * 100) / sz : 0;
 	}
 }
