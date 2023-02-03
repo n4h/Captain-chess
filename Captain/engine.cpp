@@ -201,6 +201,7 @@ namespace engine
 				}
 				if (score > worstCase)
 				{
+					MainPV.push_front(move);
 					worstCase = score;
 				}
 				bcopy = b;
@@ -223,7 +224,6 @@ namespace engine
 		engine_out << "info string CNode " << tt->nodeTypePct(TTable::CUT) << std::endl;
 		engine_out << "info string ANode " << tt->nodeTypePct(TTable::ALL) << std::endl;
 		*/
-		printPV(b);
 		engine_out << "bestmove " << move2uciFormat(b, rootMoves[0].m) << std::endl;
 		engine_out.emit();
 	}
