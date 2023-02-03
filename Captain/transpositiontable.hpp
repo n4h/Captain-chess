@@ -46,7 +46,7 @@ namespace TTable
 		std::size_t sz = 0;
 
 		void initRandom();
-		static bool isBetterEntry(const Entry& curr, std::int16_t depth, char nt, unsigned char age);
+		static bool isBetterEntry(const Entry& curr, std::int16_t depth, unsigned char age);
 	public:
 		std::array<std::array<std::uint64_t, 64>, 6> whitePSQT;
 		std::array<std::array<std::uint64_t, 64>, 6> blackPSQT;

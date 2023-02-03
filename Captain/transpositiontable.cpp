@@ -67,7 +67,7 @@ namespace TTable
 		}
 	}
 
-	bool TTable::isBetterEntry(const Entry& curr, std::int16_t depth, char nt, unsigned char age)
+	bool TTable::isBetterEntry(const Entry& curr, std::int16_t depth, unsigned char age)
 	{
 		if (curr.age < age)
 		{
@@ -80,7 +80,7 @@ namespace TTable
 	void TTable::tryStore(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age)
 	{
 		const auto& currEntry = (*this)[hash];
-		if (isBetterEntry(currEntry, depth, nodetype, age))
+		if (isBetterEntry(currEntry, depth, age))
 		{
 			store(hash, depth, eval, m, nodetype, age);
 		}
