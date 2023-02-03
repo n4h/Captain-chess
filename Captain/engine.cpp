@@ -183,6 +183,7 @@ namespace engine
 		{
 			currIDdepth = k;
 			worstCase = negInf;
+			PrincipalVariation pv;
 			for (auto& [move, score] : rootMoves)
 			{
 				if (!searchFlags::searching.test())
@@ -191,10 +192,9 @@ namespace engine
 				StoreInfo recordMove(prevMoves, move);
 				auto oldhash = hash;
 				hash ^= tt->incrementalUpdate(move, b, bcopy);
-				MainPV.clear();
 				try 
 				{
-					score = -alphaBetaSearch(bcopy, MainPV, negInf, -worstCase, k - 1, false);
+					score = -alphaBetaSearch(bcopy, pv, negInf, -worstCase, k - 1, false);
 				}
 				catch (const Timeout&)
 				{
@@ -202,6 +202,8 @@ namespace engine
 				}
 				if (score > worstCase)
 				{
+					MainPV.clear();
+					MainPV.splice_after(MainPV.before_begin(), pv);
 					MainPV.push_front(move);
 					worstCase = score;
 				}
