@@ -762,7 +762,7 @@ namespace movegen
 				[[fallthrough]];
 			case Stage::captureStageGen:
 				genMoves<QSearch>(b, ml);
-				for (auto [move, score] : ml)
+				for (auto& [move, score] : ml)
 				{
 					score = eval::mvvlva(b, move);
 				}
