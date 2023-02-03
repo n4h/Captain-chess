@@ -191,6 +191,7 @@ namespace engine
 				StoreInfo recordMove(prevMoves, move);
 				auto oldhash = hash;
 				hash ^= tt->incrementalUpdate(move, b, bcopy);
+				MainPV.clear();
 				try 
 				{
 					score = -alphaBetaSearch(bcopy, MainPV, negInf, -worstCase, k - 1, false);
