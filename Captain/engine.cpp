@@ -219,11 +219,13 @@ namespace engine
 		}
 	endsearch:
 		searchFlags::searching.clear();
+		/*
 		engine_out << "info string capturePct " << tt->capturePct(b) << std::endl;
 		engine_out << "info string usedPct " << tt->usedPct() << std::endl;
 		engine_out << "info string PVNode " << tt->nodeTypePct(TTable::PV) << std::endl;
 		engine_out << "info string CNode " << tt->nodeTypePct(TTable::CUT) << std::endl;
 		engine_out << "info string ANode " << tt->nodeTypePct(TTable::ALL) << std::endl;
+		*/
 		engine_out << "bestmove " << move2uciFormat(b, rootMoves[0].m) << std::endl;
 		engine_out.emit();
 	}
