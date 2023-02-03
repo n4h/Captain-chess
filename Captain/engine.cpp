@@ -429,9 +429,12 @@ namespace engine
 				nodeType = TTable::PV;
 				topMove = nextMove;
 				alpha = currEval;
-				pv.clear();
-				pv.splice_after(pv.before_begin(), pvChild);
-				pv.push_front(topMove);
+				if (currEval < beta)
+				{
+					pv.clear();
+					pv.splice_after(pv.before_begin(), pvChild);
+					pv.push_front(topMove);
+				}
 			}
 			if (alpha >= beta)
 			{
