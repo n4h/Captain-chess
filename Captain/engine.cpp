@@ -71,6 +71,17 @@ namespace engine
 		return PV.str();
 	}
 
+	void Engine::printPV(const board::QBB& b)
+	{
+		engine_out << "info depth " << currIDdepth << " "
+			<< "score cp " << eval << " "
+			<< "time " << elapsed().count() << " "
+			<< "nodes " << nodes << " "
+			<< "nps " << nodes / std::max(aux::castsec(elapsed()).count(), 1LL) << " "
+			<< "pv " << getPVuciformat(b, rootMoves[0].m) << std::endl;
+		engine_out.emit();
+	}
+
 	std::size_t Engine::ply() const
 	{
 		return prevPos.size() - initialPos;
@@ -209,13 +220,7 @@ namespace engine
 				return a > b;
 				});
 			eval = rootMoves[0].score;
-			engine_out << "info depth " << currIDdepth << " "
-				<< "score cp " << eval << " "
-				<< "time " << elapsed().count() << " "
-				<< "nodes " << nodes << " "
-				<< "nps " << nodes / std::max(aux::castsec(elapsed()).count(), 1LL) << " "
-				<< "pv " << getPVuciformat(b, rootMoves[0].m) << std::endl;
-			engine_out.emit();
+			printPV(b);
 		}
 	endsearch:
 		searchFlags::searching.clear();
@@ -226,6 +231,7 @@ namespace engine
 		engine_out << "info string CNode " << tt->nodeTypePct(TTable::CUT) << std::endl;
 		engine_out << "info string ANode " << tt->nodeTypePct(TTable::ALL) << std::endl;
 		*/
+		printPV(b);
 		engine_out << "bestmove " << move2uciFormat(b, rootMoves[0].m) << std::endl;
 		engine_out.emit();
 	}
