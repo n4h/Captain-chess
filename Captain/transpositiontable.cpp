@@ -67,19 +67,24 @@ namespace TTable
 		}
 	}
 
+	bool TTable::isBetterEntry(const Entry& curr, std::int16_t depth, char nt, unsigned char age)
+	{
+		if (curr.nodeType == PV && nt != PV)
+		{
+			return false;
+		}
+		if (nt == PV)
+		{
+			return true;
+		}
+
+		return curr.depth < depth;
+	}
+
 	void TTable::tryStore(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age)
 	{
 		const auto& currEntry = (*this)[hash];
-		if (currEntry.nodeType == PV && currEntry.age == age)
-		{
-			return;
-		}
-		if (currEntry.depth <= 0 || currEntry.age < age)
-		{
-			store(hash, depth, eval, m, nodetype, age);
-			return;
-		}
-		if (depth > currEntry.depth)
+		if (isBetterEntry(currEntry, depth, nodetype, age))
 		{
 			store(hash, depth, eval, m, nodetype, age);
 		}
