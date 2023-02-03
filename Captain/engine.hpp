@@ -24,6 +24,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstdint>
 #include <chrono>
 #include <syncstream>
+#include <forward_list>
 
 #include "board.hpp"
 #include "movegen.hpp"
@@ -43,6 +44,7 @@ namespace engine
 	using eval::Eval;
 	using MoveHistory = std::vector<board::Move>;
 	using PositionHistory = std::vector<std::uint64_t>;
+	using PrincipalVariation = std::forward_list<board::Move>;
 	// 12000 is arbitrary 
 	constexpr auto negInf = -12000;
 	constexpr auto posInf = 12000;
@@ -87,7 +89,7 @@ namespace engine
 		};
 		std::osyncstream engine_out;
 		std::string move2uciFormat(const board::QBB&, board::Move);
-		std::string getPVuciformat(board::QBB b, board::Move bestmove);
+		std::string getPVuciformat(board::QBB b);
 		void printPV(const board::QBB& b);
 		SearchSettings settings;
 		std::chrono::time_point<std::chrono::steady_clock> searchStart;
@@ -95,6 +97,7 @@ namespace engine
 		std::size_t nodes = 0;
 		std::uint64_t hash = 0;
 		std::size_t currIDdepth = 0;
+		PrincipalVariation MainPV;
 		std::vector<board::Move> prevMoves;
 		std::vector<std::uint64_t> prevPos;
 		std::size_t initialPos = 0;
@@ -110,7 +113,7 @@ namespace engine
 		bool threeFoldRep() const;
 		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
 
-		Eval alphaBetaSearch(const board::QBB& , Eval, Eval, int, bool);
+		Eval alphaBetaSearch(const board::QBB&, PrincipalVariation& pv, Eval, Eval, int, bool);
 		
 		Eval eval = 0;
 		// 218 = current max number of moves in chess position

@@ -48,27 +48,20 @@ namespace engine
 		tt = x;
 	}
 
-	std::string Engine::getPVuciformat(board::QBB b, board::Move bestmove)
+	std::string Engine::getPVuciformat(board::QBB b)
 	{
-		std::ostringstream PV;
-		PV << move2uciFormat(b, bestmove);
-		b.makeMove(bestmove);
-		std::uint64_t bhash = tt->initialHash(b);
-		unsigned i = 0;
-		while ((*tt)[bhash].key == bhash && (*tt)[bhash].nodeType == TTable::PV && i < 64)
+		std::ostringstream PVString;
+		for (auto& i : MainPV)
 		{
-			const auto bcopy = b;
-			auto m = (*tt)[bhash].move;
-			if (!movegen::isLegalMove(b, m))
-			{
-				break;
-			}
-			PV << " " << move2uciFormat(b, m);
-			b.makeMove(m);
-			bhash ^= tt->incrementalUpdate(m, bcopy, b);
-			++i;
+			PVString << move2uciFormat(b, i) << " ";
+			b.makeMove(i);
 		}
-		return PV.str();
+		std::string s = PVString.str();
+		if (s.back() == ' ')
+		{
+			s.pop_back();
+		}
+		return s;
 	}
 
 	void Engine::printPV(const board::QBB& b)
@@ -78,7 +71,7 @@ namespace engine
 			<< "time " << elapsed().count() << " "
 			<< "nodes " << nodes << " "
 			<< "nps " << nodes / std::max(aux::castsec(elapsed()).count(), 1LL) << " "
-			<< "pv " << getPVuciformat(b, rootMoves[0].m) << std::endl;
+			<< "pv " << getPVuciformat(b) << std::endl;
 		engine_out.emit();
 	}
 
@@ -178,7 +171,7 @@ namespace engine
 		rootMoves.clear();
 		movegen::genMoves(b, rootMoves);
 		
-		for (auto i : rootMoves)
+		for (auto& i : rootMoves)
 		{
 			i.score = negInf;
 		}
@@ -190,7 +183,6 @@ namespace engine
 		{
 			currIDdepth = k;
 			worstCase = negInf;
-
 			for (auto& [move, score] : rootMoves)
 			{
 				if (!searchFlags::searching.test())
@@ -201,7 +193,7 @@ namespace engine
 				hash ^= tt->incrementalUpdate(move, b, bcopy);
 				try 
 				{
-					score = -alphaBetaSearch(bcopy, negInf, -worstCase, k - 1, false);
+					score = -alphaBetaSearch(bcopy, MainPV, negInf, -worstCase, k - 1, false);
 				}
 				catch (const Timeout&)
 				{
@@ -360,7 +352,7 @@ namespace engine
 		return currEval;
 	}
 
-	Eval Engine::alphaBetaSearch(const board::QBB& b, Eval alpha, Eval beta, int depth, bool nullBranch)
+	Eval Engine::alphaBetaSearch(const board::QBB& b, PrincipalVariation& pv, Eval alpha, Eval beta, int depth, bool nullBranch)
 	{
 		if (depth <= 0)
 			return quiesceSearch(b, alpha, beta, depth);
@@ -394,6 +386,7 @@ namespace engine
 			}
 		}
 
+		PrincipalVariation pvChild;
 		if (!nullBranch && !movegen::isInCheck(b))
 		{
 			board::QBB bnull = b;
@@ -401,15 +394,14 @@ namespace engine
 			hash ^= tt->nullUpdate(bnull);
 			bnull.doNullMove();
 			StoreInfo recordMove(prevMoves, 0);
-			Eval nulleval = -alphaBetaSearch(bnull, -beta, -beta + 1, depth - 3, true);
+			Eval nulleval = -alphaBetaSearch(bnull, pvChild, -beta, -beta + 1, depth - 3, true);
 			hash = oldhash;
 			if (nulleval >= beta)
 				return nulleval;
-		}
-
+		} // TODO new search routine to avoid passing PV to null move search
+		pvChild.clear();
 
 		board::Move topMove = 0;
-
 		Eval currEval = negInf;
 		movegen::MoveOrder moves(tt, b, hash);
 		board::Move nextMove = 0;
@@ -425,7 +417,7 @@ namespace engine
 			StoreInfo recordMove(prevMoves, nextMove);
 			hash ^= tt->incrementalUpdate(nextMove, b, bcopy);
 			
-			currEval = -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch);
+			currEval = -alphaBetaSearch(bcopy, pvChild, -beta, -alpha, depth - 1, nullBranch);
 			besteval = std::max(besteval, currEval);
 			bcopy = b;
 			hash = oldhash;
@@ -434,6 +426,9 @@ namespace engine
 				nodeType = TTable::PV;
 				topMove = nextMove;
 				alpha = currEval;
+				pv.clear();
+				pv.splice_after(pv.before_begin(), pvChild);
+				pv.push_front(topMove);
 			}
 			if (alpha >= beta)
 			{
