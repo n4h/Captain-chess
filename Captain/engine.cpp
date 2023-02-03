@@ -403,6 +403,7 @@ namespace engine
 		board::Move nextMove = 0;
 		board::QBB bcopy = b;
 		std::size_t i = 0;
+		Eval besteval = negInf;
 		for (; moves.next(b, nextMove); ++i)
 		{
 			if (!searchFlags::searching.test())
@@ -412,7 +413,8 @@ namespace engine
 			StoreInfo recordMove(prevMoves, nextMove);
 			hash ^= tt->incrementalUpdate(nextMove, b, bcopy);
 			
-			currEval = std::max<Eval>(currEval, -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch));
+			currEval = -alphaBetaSearch(bcopy, -beta, -alpha, depth - 1, nullBranch);
+			besteval = std::max(besteval, currEval);
 			bcopy = b;
 			hash = oldhash;
 			if (currEval >= alpha)
@@ -425,7 +427,7 @@ namespace engine
 			{
 				nodeType = TTable::CUT;
 				if (tt)
-					tt->tryStore(hash, depth, currEval, topMove, nodeType, initialPos);
+					tt->tryStore(hash, depth, besteval, topMove, nodeType, initialPos);
 				return currEval;
 			}
 		}
@@ -437,13 +439,13 @@ namespace engine
 		{
 			if (nodeType == TTable::PV)
 			{
-				tt->store(hash, depth, currEval, topMove, nodeType, initialPos);
+				tt->store(hash, depth, besteval, topMove, nodeType, initialPos);
 			}
 			else
 			{
-				tt->tryStore(hash, depth, currEval, topMove, nodeType, initialPos);
+				tt->tryStore(hash, depth, besteval, topMove, nodeType, initialPos);
 			}
 		}
-		return currEval;
+		return besteval;
 	}
 }
