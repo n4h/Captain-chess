@@ -73,14 +73,6 @@ namespace TTable
 		{
 			return true;
 		}
-		if (curr.nodeType == PV && nt != PV)
-		{
-			return false;
-		}
-		if (nt == PV)
-		{
-			return true;
-		}
 
 		return curr.depth < depth;
 	}
