@@ -57,7 +57,7 @@ namespace engine
 			b.makeMove(i);
 		}
 		std::string s = PVString.str();
-		if (s.back() == ' ')
+		if (!s.empty() && s.back() == ' ')
 		{
 			s.pop_back();
 		}
