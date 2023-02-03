@@ -69,6 +69,10 @@ namespace TTable
 
 	bool TTable::isBetterEntry(const Entry& curr, std::int16_t depth, char nt, unsigned char age)
 	{
+		if (curr.age < age)
+		{
+			return true;
+		}
 		if (curr.nodeType == PV && nt != PV)
 		{
 			return false;
