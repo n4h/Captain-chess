@@ -75,6 +75,24 @@ namespace engine
 		engine_out.emit();
 	}
 
+	std::string Engine::line2string(board::QBB b, const std::vector<board::Move>& moves)
+	{
+		std::string s = move2uciFormat(b, moves[0]);
+		b.makeMove(moves[0]);
+		for (std::size_t i = 1; i != moves.size(); ++i)
+		{
+			s.append(" ").append(move2uciFormat(b, moves[i]));
+			b.makeMove(moves[i]);
+		}
+		return s;
+	}
+
+	std::string Engine::getCurrline(board::QBB b)
+	{
+		std::vector<board::Move> moves{ prevMoves.begin() + initialMove, prevMoves.end() };
+		return line2string(b, moves);
+	}
+
 	std::size_t Engine::ply() const
 	{
 		return prevPos.size() - initialPos;
@@ -145,9 +163,13 @@ namespace engine
 	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s,
 		const MoveHistory& moveHist, const PositionHistory& posHist)
 	{
+#ifdef CAPTAIN_TRACE_SEARCH
+		this->initialBoard = b;
+#endif
 		searchStart = s;
 		lastUpdate = s;
 		prevMoves = moveHist;
+		initialMove = prevMoves.size();
 		prevPos = posHist;
 		initialPos = prevPos.size();
 		engineW = b.isWhiteToPlay();
@@ -181,6 +203,9 @@ namespace engine
 		board::QBB bcopy = b;
 		for (unsigned int k = 1; k <= 128; ++k)
 		{
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "Beginning Iterative Deepening level " << k << "\n";
+#endif
 			currIDdepth = k;
 			worstCase = negInf;
 			PrincipalVariation pv;
@@ -188,16 +213,28 @@ namespace engine
 			{
 				if (!searchFlags::searching.test())
 					goto endsearch;
+#ifdef CAPTAIN_TRACE_SEARCH
+				search_trace << "Making move at root: " << move2uciFormat(bcopy, move) << "\n";
+#endif
 				bcopy.makeMove(move);
 				StoreInfo recordMove(prevMoves, move);
 				auto oldhash = hash;
 				hash ^= tt->incrementalUpdate(move, b, bcopy);
 				try 
 				{
+#ifdef CAPTAIN_TRACE_SEARCH
+					search_trace << "Root: searching variation " << getCurrline(initialBoard) << "\n";
+#endif
 					score = -alphaBetaSearch(bcopy, pv, negInf, -worstCase, k - 1, false);
+#ifdef CAPTAIN_TRACE_SEARCH
+					search_trace << "Root: Finished searching " << getCurrline(initialBoard) << " Score: " << score << "\n";
+#endif
 				}
 				catch (const Timeout&)
 				{
+#ifdef CAPTAIN_TRACE_SEARCH
+					search_trace << "Ending search\n";
+#endif
 					goto endsearch;
 				}
 				if (score > worstCase)
@@ -206,6 +243,9 @@ namespace engine
 					MainPV.splice_after(MainPV.before_begin(), pv);
 					MainPV.push_front(move);
 					worstCase = score;
+#ifdef CAPTAIN_TRACE_SEARCH
+					search_trace << "Root: New PV:  " << getPVuciformat(initialBoard) << "\n";
+#endif
 				}
 				bcopy = b;
 				hash = oldhash;

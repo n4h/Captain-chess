@@ -25,6 +25,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <chrono>
 #include <syncstream>
 #include <forward_list>
+#include <fstream>
 
 #include "board.hpp"
 #include "movegen.hpp"
@@ -90,7 +91,9 @@ namespace engine
 		std::osyncstream engine_out;
 		std::string move2uciFormat(const board::QBB&, board::Move);
 		std::string getPVuciformat(board::QBB b);
+		std::string getCurrline(board::QBB b);
 		void printPV(const board::QBB& b);
+		std::string line2string(board::QBB b, const std::vector<board::Move>& moves);
 		SearchSettings settings;
 		std::chrono::time_point<std::chrono::steady_clock> searchStart;
 		std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
@@ -99,6 +102,7 @@ namespace engine
 		std::size_t currIDdepth = 0;
 		PrincipalVariation MainPV;
 		std::vector<board::Move> prevMoves;
+		std::size_t initialMove = 0;
 		std::vector<std::uint64_t> prevPos;
 		std::size_t initialPos = 0;
 		movegen::Movelist<movegen::ScoredMove> rootMoves;
@@ -118,6 +122,10 @@ namespace engine
 		Eval eval = 0;
 		// 218 = current max number of moves in chess position
 		// 256 = leeway for pseudolegal move generation
+#ifdef CAPTAIN_TRACE_SEARCH
+		std::ofstream search_trace{"captain_searchtrace.txt"};
+		board::QBB initialBoard;
+#endif
 	};
 }
 #endif
