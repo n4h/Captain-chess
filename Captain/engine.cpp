@@ -100,6 +100,8 @@ namespace engine
 
 	std::string Engine::move2uciFormat(const board::QBB& b, board::Move m)
 	{
+		if (m == 0)
+			return "0000";
 		std::ostringstream oss;
 		auto from = board::getMoveInfo<constants::fromMask>(m);
 		auto to = board::getMoveInfo<constants::toMask>(m);
@@ -224,6 +226,7 @@ namespace engine
 				{
 #ifdef CAPTAIN_TRACE_SEARCH
 					search_trace << "Root: searching variation " << getCurrline(initialBoard) << "\n";
+					search_trace << "alpha " << negInf << " beta " << -worstCase << " depth " << k - 1 << " nullbranch " << false << "\n";
 #endif
 					score = -alphaBetaSearch(bcopy, pv, negInf, -worstCase, k - 1, false);
 #ifdef CAPTAIN_TRACE_SEARCH
@@ -398,47 +401,103 @@ namespace engine
 	Eval Engine::alphaBetaSearch(const board::QBB& b, PrincipalVariation& pv, Eval alpha, Eval beta, int depth, bool nullBranch)
 	{
 		if (depth <= 0)
+		{
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "Entering Q Search for variation: " << getCurrline(initialBoard) << "\n";
+#endif
 			return quiesceSearch(b, alpha, beta, depth);
+		}
 		auto nodeType = TTable::ALL;
 		
 		if (shouldStop())
+		{
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "shouldStop() true, cleared searching, currLine: " << getCurrline(initialBoard) << "\n";
+#endif
 			searchFlags::searching.clear();
+		}
 
 		uciUpdate();
 
 		if (b.get50() == 50)
+		{
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "50 move rule draw: " << getCurrline(initialBoard) << "\n";
+#endif
 			return 0;
+		}
 
 		StoreInfo recordNode(prevPos, hash);
 		if (threeFoldRep())
+		{
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "3-fold repetition: " << getCurrline(initialBoard) << "\n";
+#endif
 			return 0;
+		}
 		++nodes;
 		
 		if (tt)
 		{
 			if ((*tt)[hash].key == hash && (*tt)[hash].depth > depth)
 			{
+#ifdef CAPTAIN_TRACE_SEARCH
+				search_trace << "TT hit: " << getCurrline(initialBoard) << "\n";
+#endif
 				auto nodetype = (*tt)[hash].nodeType;
 				auto eval = (*tt)[hash].eval;
+#ifdef CAPTAIN_TRACE_SEARCH
+				search_trace << "TT hit: nodetype " << nodetype << "\n";
+				search_trace << "TT hit: eval " << eval << "\n";
+#endif
 				if (nodetype == TTable::ALL && eval < alpha)
+				{
+#ifdef CAPTAIN_TRACE_SEARCH
+					search_trace << "TT hit: failing low\n";
+#endif
 					return eval;
+				}
 				else if (nodetype == TTable::CUT && eval > beta)
+				{
+#ifdef CAPTAIN_TRACE_SEARCH
+					search_trace << "TT hit: failing high\n";
+#endif
 					return eval;
+				}
+#ifdef CAPTAIN_TRACE_SEARCH
+				search_trace << "TT hit: no cutoff\n";
+#endif
 			}
 		}
 
 		PrincipalVariation pvChild;
 		if (!nullBranch && !movegen::isInCheck(b))
 		{
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "Attempting null move: " << getCurrline(initialBoard) << "\n";
+#endif
 			board::QBB bnull = b;
 			auto oldhash = hash;
 			hash ^= tt->nullUpdate(bnull);
 			bnull.doNullMove();
 			StoreInfo recordMove(prevMoves, 0);
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "Attempting null move: " << getCurrline(initialBoard) << "\n";
+			search_trace << "Searching variation: " << getCurrline(initialBoard) << "\n";
+			search_trace << "alpha " << -beta << " beta " << -beta + 1 << " depth " << depth - 3 << " nullbranch " << true << "\n";
+#endif
 			Eval nulleval = -alphaBetaSearch(bnull, pvChild, -beta, -beta + 1, depth - 3, true);
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "Finished searching: " << getCurrline(initialBoard) << "\n";
+#endif
 			hash = oldhash;
 			if (nulleval >= beta)
+			{
+#ifdef CAPTAIN_TRACE_SEARCH
+				search_trace << "null move cutoff : " << getCurrline(initialBoard) << "\n";
+#endif
 				return nulleval;
+			}
 		} // TODO new search routine to avoid passing PV to null move search
 		pvChild.clear();
 
@@ -452,42 +511,67 @@ namespace engine
 		for (; moves.next(b, nextMove); ++i)
 		{
 			if (!searchFlags::searching.test())
+			{
+#ifdef CAPTAIN_TRACE_SEARCH
+				search_trace << "Timeout exception: " << getCurrline(initialBoard) << "\n";
+#endif
 				throw Timeout();
+			}
 			auto oldhash = hash;
 			bcopy.makeMove(nextMove);
 			StoreInfo recordMove(prevMoves, nextMove);
 			hash ^= tt->incrementalUpdate(nextMove, b, bcopy);
-			
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "Searching variation: " << getCurrline(initialBoard) << "\n";
+			search_trace << "alpha " << -beta << " beta " << -alpha << " depth " << depth - 1 << " nullbranch " << nullBranch << "\n";
+#endif
 			currEval = -alphaBetaSearch(bcopy, pvChild, -beta, -alpha, depth - 1, nullBranch);
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "Finished searching variation: " << getCurrline(initialBoard) << "\n";
+			search_trace << "Score " << currEval << "\n";
+#endif
 			besteval = std::max(besteval, currEval);
 			bcopy = b;
 			hash = oldhash;
+			if (besteval >= beta)
+			{
+#ifdef CAPTAIN_TRACE_SEARCH
+				search_trace << "Beta Cutoff Score " << currEval << " beta " << beta << " " << getCurrline(initialBoard) << "\n";
+#endif
+				nodeType = TTable::CUT;
+				if (tt)
+					tt->tryStore(hash, depth, besteval, nextMove, nodeType, initialPos);
+				return besteval;
+			}
 			if (currEval >= alpha)
 			{
+#ifdef CAPTAIN_TRACE_SEARCH
+				search_trace << "Raised alpha Score " << currEval << " oldalpha " << alpha << " " << getCurrline(initialBoard) << "\n";
+#endif
 				nodeType = TTable::PV;
 				topMove = nextMove;
 				alpha = currEval;
-				if (currEval < beta)
-				{
-					pv.clear();
-					pv.splice_after(pv.before_begin(), pvChild);
-					pv.push_front(topMove);
-				}
-			}
-			if (alpha >= beta)
-			{
-				nodeType = TTable::CUT;
-				if (tt)
-					tt->tryStore(hash, depth, besteval, topMove, nodeType, initialPos);
-				return besteval;
+				pv.clear();
+				pv.splice_after(pv.before_begin(), pvChild);
+				pv.push_front(topMove);
 			}
 		}
 		if (i == 0)
 		{
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "Detected checkmate/stalemate " << getCurrline(initialBoard) << "\n";
+#endif
 			return movegen::isInCheck(b) ? negInf : 0;
 		}
 		if (tt)
 		{
+#ifdef CAPTAIN_TRACE_SEARCH
+			search_trace << "Storing TT " <<  getCurrline(initialBoard) << " "
+				<< "depth " << depth << " "
+				<< "eval " << besteval << " "
+				<< "nodetype " << nodeType << " "
+				<< "age " << initialPos << "\n";
+#endif
 			if (nodeType == TTable::PV)
 			{
 				tt->store(hash, depth, besteval, topMove, nodeType, initialPos);
