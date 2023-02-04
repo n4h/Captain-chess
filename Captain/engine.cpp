@@ -380,9 +380,7 @@ namespace engine
 			{
 				auto nodetype = (*tt)[hash].nodeType;
 				auto eval = (*tt)[hash].eval;
-				if (nodetype == TTable::PV)
-					return eval;
-				else if (nodetype == TTable::ALL && eval < alpha)
+				if (nodetype == TTable::ALL && eval < alpha)
 					return eval;
 				else if (nodetype == TTable::CUT && eval > beta)
 					return eval;
