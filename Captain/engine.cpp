@@ -543,7 +543,7 @@ namespace engine
 					tt->tryStore(hash, depth, besteval, nextMove, nodeType, initialPos);
 				return besteval;
 			}
-			if (currEval >= alpha)
+			if (currEval > alpha)
 			{
 #ifdef CAPTAIN_TRACE_SEARCH
 				search_trace << "Raised alpha Score " << currEval << " oldalpha " << alpha << " " << getCurrline(initialBoard) << "\n";
