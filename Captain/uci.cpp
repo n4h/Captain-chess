@@ -199,7 +199,7 @@ namespace uci
 
 	void UCIProtocol::UCISetOptionCommand(const std::vector<std::string>& command)
 	{
-		for (std::size_t index = 0; auto i : command)
+		for (std::size_t index = 0; const auto& i : command)
 		{
 			if (i == "name")
 				if (command[index + 1] == "Hash" && command[index + 2] == "value")
