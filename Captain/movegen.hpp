@@ -41,6 +41,25 @@ namespace movegen
 	using AttackMap = board::Bitboard;
 	using board::Bitboard;
 
+	template<typename T>
+	concept BitboardOrSquare = std::is_same_v <T, Bitboard> || std::is_same_v<T, board::square>;
+
+	constexpr Bitboard getBB(BitboardOrSquare auto x)
+	{
+		if constexpr (std::is_same_v<decltype(x), Bitboard>)
+		{
+			return x;
+		}
+		else if constexpr (std::is_same_v(decltype(x), board::square))
+		{
+			return aux::setbit(x);
+		}
+		else
+		{
+			return 0ULL;
+		}
+	}
+
 	struct ScoredMove
 	{
 		ScoredMove(board::Move _m): m(_m), score(0) {}
@@ -117,6 +136,151 @@ namespace movegen
 	};
 
 	bool isLegalMove(const board::QBB& b, board::Move m);
+
+	// trying out "Kogge Stone" algorithms
+	// https://www.chessprogramming.org/Kogge-Stone_Algorithm
+	constexpr AttackMap KSNorth(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		Bitboard g = getBB(idx);
+		Bitboard p = ~occ;
+		g |= p & (g << 8);
+		p &= p << 8;
+		g |= p & (g << 16);
+		p &= p << 16;
+		g |= p & (g << 32);
+		return g << 8;
+	}
+
+	constexpr AttackMap KSSouth(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		Bitboard g = getBB(idx);
+		Bitboard p = ~occ;
+		g |= p & (g >> 8);
+		p &= p >> 8;
+		g |= p & (g >> 16);
+		p &= p >> 16;
+		g |= p & (g >> 32);
+		return g >> 8;
+	}
+
+	constexpr AttackMap KSWest(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		Bitboard g = getBB(idx);
+		Bitboard p = ~occ;
+		Bitboard H = board::fileMask(board::h1);
+		p &= ~H;
+		g |= p & (g >> 1);
+		p &= p >> 1;
+		g |= p & (g >> 2);
+		p &= p >> 2;
+		g |= p & (g >> 4);
+		return (g >> 1) & ~H;
+	}
+
+	constexpr AttackMap KSEast(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		Bitboard g = getBB(idx);
+		Bitboard p = ~occ;
+		Bitboard A = board::fileMask(board::a1);
+		p &= ~A;
+		g |= p & (g << 1);
+		p &= p << 1;
+		g |= p & (g << 2);
+		p &= p << 2;
+		g |= p & (g << 4);
+		return (g << 1) & ~A;
+	}
+
+	constexpr AttackMap KSNorthEast(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		Bitboard g = getBB(idx);
+		Bitboard p = ~occ;
+		Bitboard A = board::fileMask(board::a1);
+		p &= ~A;
+		g |= p & (g << 9);
+		p &= p << 9;
+		g |= p & (g << 18);
+		p &= p << 18;
+		g |= p & (g << 36);
+		return (g << 9) & ~A;
+	}
+
+	constexpr AttackMap KSSouthEast(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		Bitboard g = getBB(idx);
+		Bitboard p = ~occ;
+		Bitboard A = board::fileMask(board::a1);
+		p &= ~A;
+		g |= p & (g >> 7);
+		p &= p >> 7;
+		g |= p & (g >> 14);
+		p &= p >> 14;
+		g |= p & (g >> 28);
+		return (g >> 7) & ~A;
+	}
+
+	constexpr AttackMap KSNorthWest(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		Bitboard g = getBB(idx);
+		Bitboard p = ~occ;
+		Bitboard H = board::fileMask(board::h1);
+		p &= ~H;
+		g |= p & (g << 7);
+		p &= p << 7;
+		g |= p & (g << 14);
+		p &= p << 14;
+		g |= p & (g << 28);
+		return (g << 7) & ~H;
+	}
+
+	constexpr AttackMap KSSouthWest(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		Bitboard g = getBB(idx);
+		Bitboard p = ~occ;
+		Bitboard H = board::fileMask(board::h1);
+		p &= ~H;
+		g |= p & (g >> 9);
+		p &= p >> 9;
+		g |= p & (g >> 18);
+		p &= p >> 18;
+		g |= p & (g >> 36);
+		return (g >> 9) & ~H;
+	}
+
+	constexpr AttackMap KSRank(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		return KSEast(occ, idx) | KSWest(occ, idx);
+	}
+
+	constexpr AttackMap KSFile(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		return KSNorth(occ, idx) | KSSouth(occ, idx);
+	}
+
+	constexpr AttackMap KSDiag(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		return KSNorthWest(occ, idx) | KSSouthEast(occ, idx);
+	}
+
+	constexpr AttackMap KSAntiDiag(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		return KSNorthEast(occ, idx) | KSSouthWest(occ, idx);
+	}
+
+	constexpr AttackMap KSAllOrth(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		return KSRank(occ, idx) | KSFile(occ, idx);
+	}
+
+	constexpr AttackMap KSAllDiag(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		return KSDiag(occ, idx) | KSAntiDiag(occ, idx);
+	}
+
+	constexpr AttackMap KSAll(Bitboard occ, BitboardOrSquare auto idx)
+	{
+		return KSAllOrth(occ, idx) | KSAllDiag(occ, idx);
+	}
 
 	// move generation is based on "Hyperbola Quintessence" algorithm
 	// https://www.chessprogramming.org/Hyperbola_Quintessence
@@ -403,11 +567,6 @@ namespace movegen
 		}
 	}
 
-	// generate attacks given a bitboard (as opposed to a square)
-	AttackMap genDiagAttackSet(Bitboard occ, Bitboard diag);
-
-	AttackMap genOrthAttackSet(Bitboard occ, Bitboard orth);
-
 	Bitboard getVertPinnedPieces(Bitboard occ, Bitboard king, Bitboard orth);
 
 	Bitboard getHorPinnedPieces(Bitboard occ, Bitboard king, Bitboard orth);
@@ -566,16 +725,16 @@ namespace movegen
 				mine |= theirs;
 			}
 			addMoves(horPinned, ml, [occ, mine](board::square idx) {
-				return hypqRank(occ, idx) & ~mine; });
+				return KSRank(occ, idx) & ~mine; });
 
 			addMoves(vertPinned, ml, [occ, mine](board::square idx) {
-				return hypqFile(occ, idx) & ~mine; });
+				return KSFile(occ, idx) & ~mine; });
 
 			addMoves(diagPinned, ml, [occ, mine](board::square idx) {
-				return hypqDiag(occ, idx) & ~mine; });
+				return KSDiag(occ, idx) & ~mine; });
 
 			addMoves(antiDiagPinned, ml, [occ, mine](board::square idx) {
-				return hypqAntiDiag(occ, idx) & ~mine; });
+				return KSAntiDiag(occ, idx) & ~mine; });
 
 			if constexpr (!quietsOnly)
 			{
@@ -602,10 +761,10 @@ namespace movegen
 				return knightAttacks(idx) & ~mine; });
 
 			addMoves(orth, ml, [occ, mine](board::square idx) {
-				return hypqAllOrth(occ, idx) & ~mine; });
+				return KSAllOrth(occ, idx) & ~mine; });
 
 			addMoves(diag, ml, [occ, mine](board::square idx) {
-				return hypqAllDiag(occ, idx) & ~mine; });
+				return KSAllDiag(occ, idx) & ~mine; });
 
 			addMoves(myKing, ml, [mine, enemyAttacks](board::square idx) {
 				return kingAttacks(idx) & ~mine & ~enemyAttacks; });
@@ -688,10 +847,10 @@ namespace movegen
 				return knightAttacks(idx) & checkers & ~mine; });
 
 			addMoves(b.my(b.getDiagSliders()) & ~pinned, ml, [occ, checkers, mine](board::square idx) {
-				return hypqAllDiag(occ, idx) & checkers & ~mine; });
+				return KSAllDiag(occ, idx) & checkers & ~mine; });
 
 			addMoves(b.my(b.getOrthSliders()) & ~pinned, ml, [occ, checkers, mine](board::square idx) {
-				return hypqAllOrth(occ, idx) & checkers & ~mine; });
+				return KSAllOrth(occ, idx) & checkers & ~mine; });
 
 			if constexpr (!quietsOnly)
 			{
