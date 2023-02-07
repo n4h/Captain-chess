@@ -50,7 +50,7 @@ namespace movegen
 		{
 			return x;
 		}
-		else if constexpr (std::is_same_v(decltype(x), board::square))
+		else if constexpr (std::is_same_v<decltype(x), board::square>)
 		{
 			return aux::setbit(x);
 		}
@@ -725,16 +725,16 @@ namespace movegen
 				mine |= theirs;
 			}
 			addMoves(horPinned, ml, [occ, mine](board::square idx) {
-				return KSRank(occ, idx) & ~mine; });
+				return hypqRank(occ, idx) & ~mine; });
 
 			addMoves(vertPinned, ml, [occ, mine](board::square idx) {
-				return KSFile(occ, idx) & ~mine; });
+				return hypqFile(occ, idx) & ~mine; });
 
 			addMoves(diagPinned, ml, [occ, mine](board::square idx) {
-				return KSDiag(occ, idx) & ~mine; });
+				return hypqDiag(occ, idx) & ~mine; });
 
 			addMoves(antiDiagPinned, ml, [occ, mine](board::square idx) {
-				return KSAntiDiag(occ, idx) & ~mine; });
+				return hypqAntiDiag(occ, idx) & ~mine; });
 
 			if constexpr (!quietsOnly)
 			{
@@ -761,10 +761,10 @@ namespace movegen
 				return knightAttacks(idx) & ~mine; });
 
 			addMoves(orth, ml, [occ, mine](board::square idx) {
-				return KSAllOrth(occ, idx) & ~mine; });
+				return hypqAllOrth(occ, idx) & ~mine; });
 
 			addMoves(diag, ml, [occ, mine](board::square idx) {
-				return KSAllDiag(occ, idx) & ~mine; });
+				return hypqAllDiag(occ, idx) & ~mine; });
 
 			addMoves(myKing, ml, [mine, enemyAttacks](board::square idx) {
 				return kingAttacks(idx) & ~mine & ~enemyAttacks; });
@@ -847,10 +847,10 @@ namespace movegen
 				return knightAttacks(idx) & checkers & ~mine; });
 
 			addMoves(b.my(b.getDiagSliders()) & ~pinned, ml, [occ, checkers, mine](board::square idx) {
-				return KSAllDiag(occ, idx) & checkers & ~mine; });
+				return hypqAllDiag(occ, idx) & checkers & ~mine; });
 
 			addMoves(b.my(b.getOrthSliders()) & ~pinned, ml, [occ, checkers, mine](board::square idx) {
-				return KSAllOrth(occ, idx) & checkers & ~mine; });
+				return hypqAllOrth(occ, idx) & checkers & ~mine; });
 
 			if constexpr (!quietsOnly)
 			{
