@@ -253,8 +253,8 @@ namespace movegen
 		Bitboard myKing = b.my(b.getKings());
 		Bitboard occ = b.getOccupancy();
 
-		Bitboard checkers = b.their(b.getDiagSliders()) & KSAllDiag(occ, myKing);
-		checkers |= b.their(b.getOrthSliders()) & KSAllOrth(occ, myKing);
+		Bitboard checkers = b.their(b.getDiagSliders()) & hypqAllDiag(occ, myKing);
+		checkers |= b.their(b.getOrthSliders()) & hypqAllOrth(occ, myKing);
 		checkers |= b.their(b.getKnights()) & knightAttacks(myKing);
 		checkers |= b.their(b.getPawns()) & (pawnAttacksLeft(myKing) | pawnAttacksRight(myKing));
 
