@@ -205,6 +205,7 @@ namespace engine
 			currIDdepth = k;
 			worstCase = negInf;
 			PrincipalVariation pv;
+			std::size_t i = 0;
 			for (auto& [move, score] : rootMoves)
 			{
 				if (!searchFlags::searching.test())
@@ -215,7 +216,19 @@ namespace engine
 				hash ^= tt->incrementalUpdate(move, b, bcopy);
 				try 
 				{
-					score = -alphaBetaSearch(bcopy, pv, negInf, -worstCase, k - 1, false);
+					if (i == 0)
+					{
+						score = -alphaBetaSearch(bcopy, pv, negInf, -worstCase, k - 1, false);
+					}
+					else
+					{
+						auto tmp = -alphaBetaSearch(bcopy, pv, -worstCase - 1, -worstCase, k - 1, false);
+						if (tmp > worstCase)
+						{
+							tmp = -alphaBetaSearch(bcopy, pv, -worstCase - 1, -worstCase, k - 1, false);
+						}
+						score = tmp;
+					}
 				}
 				catch (const Timeout&)
 				{
@@ -230,7 +243,7 @@ namespace engine
 				}
 				bcopy = b;
 				hash = oldhash;
-
+				++i;
 			}
 
 			std::stable_sort(rootMoves.begin(), rootMoves.end(), [](const auto& a, const auto& b) {
