@@ -28,7 +28,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "board.hpp"
 
 
-namespace TTable
+namespace Tables
 {
 	void TTable::initRandom()
 	{

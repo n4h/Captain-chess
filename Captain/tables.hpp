@@ -25,7 +25,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "board.hpp"
 #include "eval.hpp"
 
-namespace TTable
+namespace Tables
 {
 	enum : char {NONE = 0, PV = 1, ALL = 2, CUT = 3};
 	using eval::Eval;

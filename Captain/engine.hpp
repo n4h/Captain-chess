@@ -72,7 +72,7 @@ namespace engine
 		double getEval();
 		Engine() :engine_out(std::cout) {}
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
-		void setTTable(TTable::TTable*);
+		void setTTable(Tables::TTable*);
 	private:
 		template<typename T, typename T2>
 		struct StoreInfo
@@ -108,7 +108,7 @@ namespace engine
 		movegen::Movelist<movegen::ScoredMove> rootMoves;
 		bool engineW = true;
 		std::chrono::milliseconds moveTime = 0ms;
-		TTable::TTable* tt = nullptr;
+		Tables::TTable* tt = nullptr;
 		std::size_t ply() const;
 		bool shouldStop() noexcept;
 		void uciUpdate();

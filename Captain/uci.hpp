@@ -54,7 +54,7 @@ namespace uci
 		engine::MoveHistory moves;
 		engine::PositionHistory pos;
 		engine::Engine e;
-		TTable::TTable tt;
+		Tables::TTable tt;
 		std::future<void> engineResult;
 		searchFlags sf;
 

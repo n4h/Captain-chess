@@ -43,7 +43,7 @@ namespace engine
 		return eval;
 	}
 
-	void Engine::setTTable(TTable::TTable* x)
+	void Engine::setTTable(Tables::TTable* x)
 	{
 		tt = x;
 	}
@@ -257,9 +257,9 @@ namespace engine
 		
 		engine_out << "info string capturePct " << tt->capturePct(b) << std::endl;
 		engine_out << "info string usedPct " << tt->usedPct() << std::endl;
-		engine_out << "info string PVNode " << tt->nodeTypePct(TTable::PV) << std::endl;
-		engine_out << "info string CNode " << tt->nodeTypePct(TTable::CUT) << std::endl;
-		engine_out << "info string ANode " << tt->nodeTypePct(TTable::ALL) << std::endl;
+		engine_out << "info string PVNode " << tt->nodeTypePct(Tables::PV) << std::endl;
+		engine_out << "info string CNode " << tt->nodeTypePct(Tables::CUT) << std::endl;
+		engine_out << "info string ANode " << tt->nodeTypePct(Tables::ALL) << std::endl;
 		engine_out << "info string Cut first move " << static_cast<double>(numFirstMoveCuts*100)/numCuts << std::endl;
 		engine_out << "info string CutQ first move " << static_cast<double>(numFirstMoveCutsQ * 100) / numCutsQ << std::endl;
 		engine_out << "info string CutAB first move " << static_cast<double>(numFirstMoveCutsAB * 100) / numCutsAB << std::endl;
@@ -285,11 +285,11 @@ namespace engine
 			{
 				auto nodetype = (*tt)[hash].nodeType;
 				auto eval = (*tt)[hash].eval;
-				if (nodetype == TTable::PV)
+				if (nodetype == Tables::PV)
 					return eval;
-				else if (nodetype == TTable::ALL && eval < alpha)
+				else if (nodetype == Tables::ALL && eval < alpha)
 					return eval;
-				else if (nodetype == TTable::CUT && eval > beta)
+				else if (nodetype == Tables::CUT && eval > beta)
 					return eval;
 			}
 		}
@@ -406,7 +406,7 @@ namespace engine
 		{
 			return quiesceSearch(b, alpha, beta, depth);
 		}
-		auto nodeType = TTable::ALL;
+		auto nodeType = Tables::ALL;
 		
 		if (shouldStop())
 		{
@@ -433,11 +433,11 @@ namespace engine
 			{
 				auto nodetype = (*tt)[hash].nodeType;
 				auto eval = (*tt)[hash].eval;
-				if (nodetype == TTable::ALL && eval < alpha)
+				if (nodetype == Tables::ALL && eval < alpha)
 				{
 					return eval;
 				}
-				else if (nodetype == TTable::CUT && eval > beta)
+				else if (nodetype == Tables::CUT && eval > beta)
 				{
 					return eval;
 				}
@@ -502,14 +502,14 @@ namespace engine
 					++numFirstMoveCuts;
 					++numFirstMoveCutsAB;
 				}
-				nodeType = TTable::CUT;
+				nodeType = Tables::CUT;
 				if (tt)
 					tt->tryStore(hash, depth, besteval, nextMove, nodeType, initialPos);
 				return besteval;
 			}
 			if (currEval > alpha)
 			{
-				nodeType = TTable::PV;
+				nodeType = Tables::PV;
 				topMove = nextMove;
 				alpha = currEval;
 				pv.clear();
@@ -523,7 +523,7 @@ namespace engine
 		}
 		if (tt)
 		{
-			if (nodeType == TTable::PV)
+			if (nodeType == Tables::PV)
 			{
 				tt->store(hash, depth, besteval, topMove, nodeType, initialPos);
 			}
