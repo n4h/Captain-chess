@@ -32,7 +32,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "eval.hpp"
 #include "auxiliary.hpp"
 #include "searchflags.hpp"
-#include "transpositiontable.hpp"
+#include "tables.hpp"
 
 namespace engine
 {
@@ -113,7 +113,7 @@ namespace engine
 		bool shouldStop() noexcept;
 		void uciUpdate();
 		std::chrono::milliseconds elapsed() const;
-		
+		std::array<std::array<board::Move, 2>, 16> killers;
 		bool threeFoldRep() const;
 		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
 
@@ -122,6 +122,12 @@ namespace engine
 		Eval eval = 0;
 		// 218 = current max number of moves in chess position
 		// 256 = leeway for pseudolegal move generation
+		std::size_t numCuts = 0;
+		std::size_t numCutsQ = 0;
+		std::size_t numCutsAB = 0;
+		std::size_t numFirstMoveCuts = 0;
+		std::size_t numFirstMoveCutsQ = 0;
+		std::size_t numFirstMoveCutsAB = 0;
 #ifdef CAPTAIN_TRACE_SEARCH
 		std::ofstream search_trace{"captain_searchtrace.txt"};
 		board::QBB initialBoard;

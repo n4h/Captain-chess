@@ -24,7 +24,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstddef>
 #include <cstdlib>
 
-#include "transpositiontable.hpp"
+#include "tables.hpp"
 #include "board.hpp"
 
 
