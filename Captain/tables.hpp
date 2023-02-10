@@ -80,5 +80,44 @@ namespace Tables
 		TTable& operator=(TTable&&) = delete;
 	};
 
+	class KillerTable
+	{
+		std::array<std::array<board::Move, 2>, 16> killers;
+	public:
+		KillerTable()
+		{
+			for (auto& i : killers)
+			{
+				i[0] = 0;
+				i[1] = 0;
+			}
+		}
+
+		template<std::integral i>
+		board::Move getKiller(int depth)
+		{
+			static_assert(i == 0 || i == 1);
+			depth -= 1;
+			if (depth >= 0 && depth <= 15)
+			{
+				return killers[depth][i];
+			}
+			return 0;
+		}
+
+		void storeKiller(board::Move m, int depth)
+		{
+			depth -= 1;
+			if (depth >= 0 && depth <= 15)
+			{
+				if (m != killers[depth][0])
+				{
+					killers[depth][1] = killers[depth][0];
+					killers[depth][0] = m;
+				}
+			}
+		}
+	};
+
 }
 #endif
