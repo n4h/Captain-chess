@@ -38,7 +38,7 @@ namespace uci
 		void UCIStartLoop();
 		UCIProtocol(): uci_out(std::cout)
 		{
-			tt.resize((1024*1024) / sizeof(TTable::Entry));
+			tt.resize((1024*1024) / sizeof(Tables::Entry));
 			e.setTTable(&tt);
 		};
 	private:

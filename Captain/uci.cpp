@@ -204,7 +204,7 @@ namespace uci
 			if (i == "name")
 				if (command[index + 1] == "Hash" && command[index + 2] == "value")
 				{
-					tt.resize( (1024*1024*std::stoi(command[index + 3])) / sizeof(TTable::Entry));
+					tt.resize( (1024*1024*std::stoi(command[index + 3])) / sizeof(Tables::Entry));
 					tt.clear();
 				}
 			++index;
