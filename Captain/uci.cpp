@@ -81,6 +81,7 @@ namespace uci
 				moves.clear();
 				pos.clear();
 				tt.clear();
+				e.newGame();
 			}
 			if (UCIMessage[0] == "position" && UCIMessage.size() >= 2)
 			{

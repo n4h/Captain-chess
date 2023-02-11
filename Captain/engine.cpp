@@ -162,6 +162,12 @@ namespace engine
 		return overtime || (nodes > settings.maxNodes) || (elapsed() > settings.maxTime);
 	}
 	
+	void Engine::newGame()
+	{
+		killers = Tables::KillerTable();
+		historyHeuristic = Tables::HistoryTable();
+	}
+
 	void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s,
 		const MoveHistory& moveHist, const PositionHistory& posHist)
 	{
@@ -454,7 +460,7 @@ namespace engine
 
 		board::Move topMove = 0;
 		Eval currEval = negInf;
-		movegen::MoveOrder moves(tt, &killers, b, hash, ply());
+		movegen::MoveOrder moves(tt, &killers, &historyHeuristic, b, hash, ply());
 		board::Move nextMove = 0;
 		board::QBB bcopy = b;
 		std::size_t i = 0;
@@ -492,6 +498,7 @@ namespace engine
 				if (!b.isCapture(nextMove))
 				{
 					killers.storeKiller(nextMove, ply());
+					historyHeuristic.updateHistory(b, nextMove, depth);
 				}
 				return besteval;
 			}

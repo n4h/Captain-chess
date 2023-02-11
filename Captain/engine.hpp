@@ -73,6 +73,7 @@ namespace engine
 		Engine() :engine_out(std::cout) {}
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
 		void setTTable(Tables::TTable*);
+		void newGame();
 	private:
 		template<typename T, typename T2>
 		struct StoreInfo
@@ -114,6 +115,7 @@ namespace engine
 		void uciUpdate();
 		std::chrono::milliseconds elapsed() const;
 		Tables::KillerTable killers;
+		Tables::HistoryTable historyHeuristic;
 		bool threeFoldRep() const;
 		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
 

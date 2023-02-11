@@ -21,6 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <cstdint>
 #include <array>
+#include <algorithm>
 
 #include "board.hpp"
 #include "eval.hpp"
@@ -114,6 +115,38 @@ namespace Tables
 					killers[depth][0] = m;
 				}
 			}
+		}
+	};
+
+	class HistoryTable
+	{
+		std::array<std::array<std::uint32_t, 64>, 6> history;
+	public:
+		HistoryTable()
+		{
+			for (auto& i : history)
+			{
+				for (auto& j : i)
+				{
+					j = 0;
+				}
+			}
+		}
+		std::int16_t getHistoryScore(const board::QBB& b, board::Move m)
+		{
+			auto fromSq = board::getMoveFromSq(m);
+			auto toSq = board::getMoveToSq(m);
+			auto piecetype = b.getPieceType(fromSq);
+			auto score = history[piecetype][toSq];
+			score = std::clamp(score, 0U, static_cast<unsigned>(std::numeric_limits<std::int16_t>::max()));
+			return static_cast<std::int16_t>(score);
+		}
+		void updateHistory(const board::QBB& b, board::Move m, int depth)
+		{
+			auto fromSq = board::getMoveFromSq(m);
+			auto toSq = board::getMoveToSq(m);
+			auto piecetype = b.getPieceType(fromSq);
+			history[piecetype][toSq] += depth * depth;
 		}
 	};
 

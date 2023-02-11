@@ -896,12 +896,12 @@ namespace movegen
 		}
 	}
 
-	template<typename Ttable, typename KillerTable>
+	template<typename Ttable, typename KillerTable, typename History>
 	class MoveOrder
 	{
 	public:
-		MoveOrder(Ttable* _tt, KillerTable* _kt, const board::QBB& _b, std::uint64_t h, std::size_t depth)
-			: tt(_tt), kt(_kt), b(_b), hash(h), d(depth){}
+		MoveOrder(Ttable* _tt, KillerTable* _kt, History* _ht, const board::QBB& _b, std::uint64_t h, std::size_t depth)
+			: tt(_tt), kt(_kt), ht(_ht), b(_b), hash(h), d(depth){}
 		bool next(const board::QBB& b, board::Move& m)
 		{
 			switch (stage)
@@ -980,6 +980,10 @@ namespace movegen
 				quietsCurrent = captureEnd;
 				genMoves<!QSearch, Quiets>(b, ml);
 				ml.remove_moves_if(quietsCurrent, ml.end(), [this](ScoredMove k) {return k.m == hashmove || k.m == k1move || k.m == k2move; });
+				for (auto i = quietsCurrent; i != ml.end(); ++i)
+				{
+					i->score = ht->getHistoryScore(b, i->m);
+				}
 				quietsEnd = ml.end();
 				stage = Stage::quiets;
 				[[fallthrough]];
@@ -990,6 +994,8 @@ namespace movegen
 				}
 				else
 				{
+					auto max = std::max_element(quietsCurrent, quietsEnd);
+					std::iter_swap(quietsCurrent, max);
 					m = quietsCurrent->m;
 					++quietsCurrent;
 					return true;
@@ -1020,6 +1026,7 @@ namespace movegen
 		decltype(ml.begin()) losingCapturesBegin = ml.begin();
 		Ttable* tt = nullptr;
 		KillerTable* kt = nullptr;
+		History* ht = nullptr;
 		const board::QBB& b;
 		std::uint64_t hash = 0;
 		std::size_t d = 0;
