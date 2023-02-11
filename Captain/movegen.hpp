@@ -30,7 +30,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstddef>
 #include <type_traits>
 #include <array>
-
+#include <cassert>
 #include "board.hpp"
 #include "auxiliary.hpp"
 #include "constants.hpp"
@@ -120,10 +120,10 @@ namespace movegen
 		{
 			i = 0;
 		}
-		void remove_moves_if(auto criteria)
+		void remove_moves_if(auto begin, auto end, auto criteria)
 		{
-			auto last = std::remove_if(begin(), end(), criteria);
-			i -= std::distance(last, end());
+			auto last = std::remove_if(begin, end, criteria);
+			i -= std::distance(last, end);
 		}
 		constexpr std::size_t size() const noexcept
 		{
@@ -896,20 +896,28 @@ namespace movegen
 		}
 	}
 
-	template<typename Ttable>
+	template<typename Ttable, typename KillerTable>
 	class MoveOrder
 	{
 	public:
-		MoveOrder(Ttable* _tt, const board::QBB& _b, std::uint64_t h)
-			: tt(_tt), b(_b), hash(h){}
+		MoveOrder(Ttable* _tt, KillerTable* _kt, const board::QBB& _b, std::uint64_t h, std::size_t depth)
+			: tt(_tt), kt(_kt), b(_b), hash(h), d(depth){}
 		bool next(const board::QBB& b, board::Move& m)
 		{
 			switch (stage)
 			{
 			case Stage::hash:
-				if (tt && (*tt)[hash].key == hash && (*tt)[hash].move)
+				if (tt)
 				{
-					board::Move hashmove = (*tt)[hash].move;
+					hashmove = (*tt)[hash].move;
+				}
+				if (kt)
+				{
+					k1move = kt->getKiller(d, 0);
+					k2move = kt->getKiller(d, 1);
+				}
+				if (tt && (*tt)[hash].key == hash && hashmove)
+				{
 					if (isLegalMove(b, hashmove))
 					{
 						m = hashmove;
@@ -921,25 +929,19 @@ namespace movegen
 				[[fallthrough]];
 			case Stage::captureStageGen:
 				genMoves<QSearch>(b, ml);
+				ml.remove_moves_if(ml.begin(), ml.end(), [this](auto sm) {return sm.m == hashmove; });
 				for (auto& [move, score] : ml)
 				{
 					score = eval::mvvlva(b, move);
 				}
 				captureBegin = ml.begin();
 				captureEnd = ml.end();
-				if (captureBegin == captureEnd)
-				{
-					stage = Stage::quietsGen;
-				}
-				else
-				{
-					stage = Stage::captureStage;
-				}
+				stage = ml.size() ? Stage::captureStage : Stage::killer1Stage;
 				[[fallthrough]];
 			case Stage::captureStage:
 				if (captureBegin == captureEnd)
 				{
-					stage = Stage::quietsGen;
+					stage = Stage::killer1Stage;
 				}
 				else
 				{
@@ -947,7 +949,7 @@ namespace movegen
 					if (bestCapture->score < 0)
 					{
 						losingCapturesBegin = captureBegin;
-						stage = Stage::quietsGen;
+						stage = Stage::killer1Stage;
 					}
 					else
 					{
@@ -958,18 +960,28 @@ namespace movegen
 					}
 				}
 				[[fallthrough]];
+			case Stage::killer1Stage:
+				stage = Stage::killer2Stage;
+				if (k1move != hashmove && isLegalMove(b, k1move))
+				{
+					m = k1move;
+					return true;
+				}
+				[[fallthrough]];
+			case Stage::killer2Stage:
+				stage = Stage::quietsGen;
+				if (k2move != hashmove && isLegalMove(b, k2move))
+				{
+					m = k2move;
+					return true;
+				}
+				[[fallthrough]];
 			case Stage::quietsGen:
 				quietsCurrent = captureEnd;
 				genMoves<!QSearch, Quiets>(b, ml);
+				ml.remove_moves_if(quietsCurrent, ml.end(), [this](ScoredMove k) {return k.m == hashmove || k.m == k1move || k.m == k2move; });
 				quietsEnd = ml.end();
-				if (quietsCurrent == quietsEnd)
-				{
-					stage = Stage::losingCaptures;
-				}
-				else
-				{
-					stage = Stage::quiets;
-				}
+				stage = Stage::quiets;
 				[[fallthrough]];
 			case Stage::quiets:
 				if (quietsCurrent == quietsEnd)
@@ -1007,10 +1019,15 @@ namespace movegen
 		decltype(ml.begin()) quietsEnd;
 		decltype(ml.begin()) losingCapturesBegin = ml.begin();
 		Ttable* tt = nullptr;
+		KillerTable* kt = nullptr;
 		const board::QBB& b;
 		std::uint64_t hash = 0;
-		enum class Stage : unsigned {hash, captureStageGen, captureStage, quietsGen, quiets, losingCaptures};
+		std::size_t d = 0;
+		enum class Stage : unsigned {hash, captureStageGen, captureStage, killer1Stage, killer2Stage, quietsGen, quiets, losingCaptures};
 		Stage stage = Stage::hash;
+		board::Move hashmove = 0;
+		board::Move k1move = 0;
+		board::Move k2move = 0;
 	};
 }
 

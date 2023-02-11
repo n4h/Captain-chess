@@ -113,7 +113,7 @@ namespace engine
 		bool shouldStop() noexcept;
 		void uciUpdate();
 		std::chrono::milliseconds elapsed() const;
-		std::array<std::array<board::Move, 2>, 16> killers;
+		Tables::KillerTable killers;
 		bool threeFoldRep() const;
 		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
 

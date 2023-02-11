@@ -93,22 +93,20 @@ namespace Tables
 			}
 		}
 
-		template<std::integral i>
-		board::Move getKiller(int depth)
+		board::Move getKiller(std::size_t depth, std::size_t killer)
 		{
-			static_assert(i == 0 || i == 1);
 			depth -= 1;
-			if (depth >= 0 && depth <= 15)
+			if (depth <= 15)
 			{
-				return killers[depth][i];
+				return killers[depth][killer];
 			}
 			return 0;
 		}
 
-		void storeKiller(board::Move m, int depth)
+		void storeKiller(board::Move m, std::size_t depth)
 		{
 			depth -= 1;
-			if (depth >= 0 && depth <= 15)
+			if (depth <= 15)
 			{
 				if (m != killers[depth][0])
 				{

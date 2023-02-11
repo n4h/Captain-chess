@@ -463,7 +463,7 @@ namespace engine
 
 		board::Move topMove = 0;
 		Eval currEval = negInf;
-		movegen::MoveOrder moves(tt, b, hash);
+		movegen::MoveOrder moves(tt, &killers, b, hash, ply());
 		board::Move nextMove = 0;
 		board::QBB bcopy = b;
 		std::size_t i = 0;
@@ -505,6 +505,10 @@ namespace engine
 				nodeType = Tables::CUT;
 				if (tt)
 					tt->tryStore(hash, depth, besteval, nextMove, nodeType, initialPos);
+				if (!b.isCapture(nextMove))
+				{
+					killers.storeKiller(nextMove, ply());
+				}
 				return besteval;
 			}
 			if (currEval > alpha)
