@@ -254,15 +254,13 @@ namespace engine
 		}
 	endsearch:
 		searchFlags::searching.clear();
-		
+		/*
 		engine_out << "info string capturePct " << tt->capturePct(b) << std::endl;
 		engine_out << "info string usedPct " << tt->usedPct() << std::endl;
 		engine_out << "info string PVNode " << tt->nodeTypePct(Tables::PV) << std::endl;
 		engine_out << "info string CNode " << tt->nodeTypePct(Tables::CUT) << std::endl;
 		engine_out << "info string ANode " << tt->nodeTypePct(Tables::ALL) << std::endl;
-		engine_out << "info string Cut first move " << static_cast<double>(numFirstMoveCuts*100)/numCuts << std::endl;
-		engine_out << "info string CutQ first move " << static_cast<double>(numFirstMoveCutsQ * 100) / numCutsQ << std::endl;
-		engine_out << "info string CutAB first move " << static_cast<double>(numFirstMoveCutsAB * 100) / numCutsAB << std::endl;
+		*/
 		engine_out << "bestmove " << move2uciFormat(b, rootMoves[0].m) << std::endl;
 		engine_out.emit();
 	}
@@ -383,13 +381,6 @@ namespace engine
 			alpha = std::max(currEval, alpha);
 			if (alpha >= beta)
 			{
-				++numCuts;
-				++numCutsQ;
-				if (i == 0)
-				{
-					++numFirstMoveCuts;
-					++numFirstMoveCutsQ;
-				}
 				return currEval;
 			}
 			if (check && i + 1 == captureIterations)
@@ -495,13 +486,6 @@ namespace engine
 			hash = oldhash;
 			if (besteval >= beta)
 			{
-				++numCuts;
-				++numCutsAB;
-				if (i == 0)
-				{
-					++numFirstMoveCuts;
-					++numFirstMoveCutsAB;
-				}
 				nodeType = Tables::CUT;
 				if (tt)
 					tt->tryStore(hash, depth, besteval, nextMove, nodeType, initialPos);

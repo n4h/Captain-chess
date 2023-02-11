@@ -120,14 +120,6 @@ namespace engine
 		Eval alphaBetaSearch(const board::QBB&, PrincipalVariation& pv, Eval, Eval, int, bool);
 		
 		Eval eval = 0;
-		// 218 = current max number of moves in chess position
-		// 256 = leeway for pseudolegal move generation
-		std::size_t numCuts = 0;
-		std::size_t numCutsQ = 0;
-		std::size_t numCutsAB = 0;
-		std::size_t numFirstMoveCuts = 0;
-		std::size_t numFirstMoveCutsQ = 0;
-		std::size_t numFirstMoveCutsAB = 0;
 #ifdef CAPTAIN_TRACE_SEARCH
 		std::ofstream search_trace{"captain_searchtrace.txt"};
 		board::QBB initialBoard;
