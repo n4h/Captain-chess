@@ -225,7 +225,7 @@ namespace engine
 						auto tmp = -alphaBetaSearch(bcopy, pv, -worstCase - 1, -worstCase, k - 1, false);
 						if (tmp > worstCase)
 						{
-							tmp = -alphaBetaSearch(bcopy, pv, -worstCase - 1, -worstCase, k - 1, false);
+							tmp = -alphaBetaSearch(bcopy, pv, negInf, -worstCase, k - 1, false);
 						}
 						score = tmp;
 					}
