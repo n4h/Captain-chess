@@ -99,6 +99,11 @@ namespace board
 		}
 	}
 
+	constexpr bool isPromo(Move m)
+	{
+		return getMoveInfo<moveTypeMask>(m) >= knightPromo;
+	}
+
 	constexpr unsigned int getPromoPiece(Move m)
 	{
 		switch (getMoveInfo<moveTypeMask>(m))

@@ -120,7 +120,9 @@ namespace engine
 		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
 
 		Eval alphaBetaSearch(const board::QBB&, PrincipalVariation& pv, Eval, Eval, int, bool);
-		
+		bool isPVNode(Eval alpha, Eval beta);
+		int LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV);
+
 		Eval eval = 0;
 #ifdef CAPTAIN_TRACE_SEARCH
 		std::ofstream search_trace{"captain_searchtrace.txt"};

@@ -138,6 +138,29 @@ namespace engine
 		return cnt >= 3;
 	}
 
+	bool Engine::isPVNode(Eval alpha, Eval beta)
+	{
+		return alpha + 1 != beta;
+	}
+
+	int Engine::LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV)
+	{
+		if (movegen::isInCheck(before)
+			|| movegen::isInCheck(after)
+			|| currDepth < 3
+			|| PV
+			|| before.isCapture(m)
+			|| board::isPromo(m)
+			|| i < 4)
+		{
+			return 0;
+		}
+		else
+		{
+			return 1; // TODO variable LMR depth
+		}
+	}
+
 	void Engine::uciUpdate()
 	{
 		if (aux::castsec(std::chrono::steady_clock::now() - lastUpdate).count() >= 2)
@@ -465,6 +488,7 @@ namespace engine
 		board::QBB bcopy = b;
 		std::size_t i = 0;
 		Eval besteval = negInf;
+		const bool PVNode = isPVNode(alpha, beta);
 		for (; moves.next(b, nextMove); ++i)
 		{
 			if (!searchFlags::searching.test())
@@ -481,7 +505,12 @@ namespace engine
 			}
 			else
 			{
-				currEval = -alphaBetaSearch(bcopy, pvChild, -alpha - 1, -alpha, depth - 1, nullBranch);
+				auto LMRReduction = LMR(i, b, nextMove, bcopy, depth, PVNode);
+				currEval = -alphaBetaSearch(bcopy, pvChild, -alpha - 1, -alpha, depth - 1 - LMRReduction, nullBranch);
+				if (LMRReduction && currEval > alpha)
+				{
+					currEval = -alphaBetaSearch(bcopy, pvChild, -alpha - 1, -alpha, depth - 1, nullBranch);
+				}
 				if (currEval > alpha && currEval < beta)
 				{
 					currEval = -alphaBetaSearch(bcopy, pvChild, -beta, -alpha, depth - 1, nullBranch);
