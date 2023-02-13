@@ -157,7 +157,7 @@ namespace engine
 		}
 		else
 		{
-			return 1; // TODO variable LMR depth
+			return ply() >= 6 ? 2 : 1; 
 		}
 	}
 
