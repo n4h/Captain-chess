@@ -216,7 +216,7 @@ namespace engine
 		}
 		else
 		{
-			moveTime = aux::castms( ((0.95*mytime) / settings.movestogo) + (myinc / 3));
+			moveTime = aux::castms((0.95*mytime) / settings.movestogo);
 		}
 		rootMoves.clear();
 		movegen::genMoves(b, rootMoves);
