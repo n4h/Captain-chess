@@ -208,7 +208,7 @@ namespace engine
 		else
 			hash = 0;
 		auto mytime = engineW ? settings.wmsec : settings.bmsec;
-		auto myinc = engineW ? settings.winc : settings.binc;
+		[[maybe_unused]] auto myinc = engineW ? settings.winc : settings.binc;
 		auto moveNumber = (prevPos.size() + 2) / 2;
 		if (settings.movestogo == std::numeric_limits<std::size_t>::max() || settings.movestogo == 0)
 		{
