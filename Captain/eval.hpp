@@ -25,6 +25,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "auxiliary.hpp"
 #include "board.hpp"
+#include "movegen.hpp"
 
 namespace eval
 {
@@ -100,10 +101,10 @@ namespace eval
 	constexpr std::array<Eval, 64> PSQTqueen = {
 		810, 810, 810, 810, 810, 810, 810, 810,
 		810, 810, 810, 900, 900, 810, 810, 810,
-		900, 900, 900, 900, 900, 900, 900, 900,
-		900, 900, 900, 900, 900, 900, 900, 900,
-		900, 900, 900, 900, 900, 900, 900, 900,
-		900, 900, 900, 900, 900, 900, 900, 900,
+		900, 900, 930, 930, 930, 930, 900, 900,
+		900, 900, 930, 930, 930, 930, 900, 900,
+		900, 900, 930, 930, 930, 930, 900, 900,
+		900, 900, 930, 930, 930, 930, 900, 900,
 		810, 810, 810, 900, 900, 810, 810, 810,
 		810, 810, 810, 810, 810, 810, 810, 810
 	};
@@ -126,6 +127,74 @@ namespace eval
 	Eval evalCapture(const board::QBB&, board::Move);
 
 	Eval computeMaterialValue(board::Bitboard, const std::array<Eval, 64>&);
+
+	// pawnCount = number of pawns on same color square as bishop
+	constexpr Eval pawnCountBishopPenalty(unsigned pawnCount)
+	{
+		return (pawnCount >= 6) * 50;
+	}
+
+	constexpr Eval bishopOpenDiagonalBonus(bool open)
+	{
+		return open ? 10 : 0;
+	}
+
+	constexpr Eval bishopPairBonus(bool pair)
+	{
+		return pair ? 25 : 0;
+	}
+
+	constexpr Eval knightAggressionBonus(board::square knightsq, board::square enemyKingSq)
+	{
+		int knRank = rank(knightsq);
+		int knFile = file(knightsq);
+		int kRank = rank(enemyKingSq);
+		int kFile = file(enemyKingSq);
+		return (l1dist(knRank, knFile, kRank, kFile) <= 4) * 5;
+	}
+
+	constexpr Eval queenAggressionBonus(board::square queensq, board::square enemyKingSq)
+	{
+		int qRank = rank(queensq);
+		int qFile = file(queensq);
+		int kRank = rank(enemyKingSq);
+		int kFile = file(enemyKingSq);
+		return (l1dist(qRank, qFile, kRank, kFile) <= 3) * 5;
+	}
+
+	enum class OutpostType{MyOutpost, OppOutpost};
+	template<OutpostType t>
+	constexpr Eval knightOutpostBonus(board::square knightsq, board::Bitboard myPawns, board::Bitboard enemyPawns)
+	{
+		if constexpr (t == OutpostType::MyOutpost)
+		{
+			board::Bitboard myKnight = setbit(knightsq);
+			if ((myKnight & constants::topHalf) && (movegen::pawnAttacks(myPawns) & myKnight))
+			{
+				myKnight |= movegen::KSNorth(0, myKnight);
+				myKnight = movegen::pawnAttacks(myKnight);
+				if (!(myKnight & enemyPawns))
+				{
+					return 10;
+				}
+			}
+			return 0;
+		}
+		else if constexpr (t == OutpostType::OppOutpost)
+		{
+			board::Bitboard myKnight = setbit(knightsq);
+			if ((myKnight & constants::botHalf) && (movegen::enemyPawnAttacks(enemyPawns) & myKnight))
+			{
+				myKnight |= movegen::KSSouth(0, myKnight);
+				myKnight = movegen::enemyPawnAttacks(myKnight);
+				if (!(myKnight & myPawns))
+				{
+					return 10;
+				}
+			}
+			return 0;
+		}
+	}
 
 	Eval evaluate(const board::QBB& b);
 

@@ -60,5 +60,10 @@ namespace constants
 	constexpr std::uint32_t rookCode = 0b100U;
 	constexpr std::uint32_t queenCode = 0b101U;
 	constexpr std::uint32_t kingCode = 0b110U;
+
+	constexpr std::uint64_t whiteSquares = 0xaa55aa55aa55aa55ULL;
+	constexpr std::uint64_t blackSquares = ~whiteSquares;
+	constexpr std::uint64_t topHalf = 0xffffffff00000000ULL;
+	constexpr std::uint64_t botHalf = ~topHalf;
 }
 #endif

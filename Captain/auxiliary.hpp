@@ -28,6 +28,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <string_view>
 #include <type_traits>
 #include <chrono>
+#include <cstdlib>
 
 // auxiliary functions that have broad applicability throughout
 // the codebase, such as functions for converting between array
@@ -218,6 +219,11 @@ namespace aux
 	std::chrono::seconds castsec(auto s)
 	{
 		return std::chrono::duration_cast<std::chrono::seconds>(s);
+	}
+
+	constexpr unsigned l1dist(int x1, int y1, int x2, int y2)
+	{
+		return std::abs(x1 - x2) + std::abs(y1 - y2);
 	}
 }
 #endif

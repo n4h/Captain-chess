@@ -162,6 +162,7 @@ namespace eval
 
 	Eval evaluate(const board::QBB& b)
 	{
+		//board::Bitboard occ = b.getOccupancy();
 		Eval totalW = 0;
 
 		totalW += computeMaterialValue(b.my(b.getPawns()), PSQTpawnw);
@@ -184,6 +185,73 @@ namespace eval
 			totalB += computeMaterialValue(b.their(b.getKings()), PSQTking);
 		}
 
+		auto myBishops = b.my(b.getBishops());
+		const auto myPawns = b.my(b.getPawns());
+		auto oppBishops = b.their(b.getBishops());
+		const auto oppPawns = b.their(b.getPawns());
+
+		totalW += bishopPairBonus((myBishops & whiteSquares) && (myBishops & blackSquares));
+		totalB += bishopPairBonus((oppBishops & whiteSquares) && (oppBishops & blackSquares));
+
+		totalW -= pawnCountBishopPenalty(_popcnt64(myPawns & whiteSquares) * static_cast<bool>(myBishops & whiteSquares));
+		totalW -= pawnCountBishopPenalty(_popcnt64(myPawns & blackSquares) * static_cast<bool>(myBishops & blackSquares));
+		totalB -= pawnCountBishopPenalty(_popcnt64(oppPawns & whiteSquares) * static_cast<bool>(oppBishops & whiteSquares));
+		totalB -= pawnCountBishopPenalty(_popcnt64(oppPawns & blackSquares) * static_cast<bool>(oppBishops & blackSquares));
+
+		auto lsb = 0ULL;
+		while ((lsb = _blsi_u64(myBishops)))
+		{
+			myBishops = _blsr_u64(myBishops);
+			totalW += bishopOpenDiagonalBonus((board::multiAntiDiagMask(lsb) & b.getPawns()) == 0);
+			totalW += bishopOpenDiagonalBonus((board::multiDiagMask(lsb) & b.getPawns()) == 0);
+		}
+		while ((lsb = _blsi_u64(oppBishops)))
+		{
+			oppBishops = _blsr_u64(oppBishops);
+			totalB += bishopOpenDiagonalBonus((board::multiAntiDiagMask(lsb) & b.getPawns()) == 0);
+			totalB += bishopOpenDiagonalBonus((board::multiDiagMask(lsb) & b.getPawns()) == 0);
+		}
+
+		auto myKnights = b.my(b.getKnights());
+		auto oppKnights = b.their(b.getKnights());
+		const auto myKing = b.my(b.getKings());
+		const auto oppKing = b.their(b.getKings());
+		unsigned long index = 0;
+		_BitScanForward64(&index, myKing);
+		const auto myKingSq = static_cast<board::square>(index);
+		_BitScanForward64(&index, oppKing);
+		const auto oppKingSq = static_cast<board::square>(index);
+
+		while (_BitScanForward64(&index, myKnights))
+		{
+			board::square knightsq = static_cast<board::square>(index);
+			myKnights = _blsr_u64(myKnights);
+			totalW += knightAggressionBonus(knightsq, oppKingSq);
+			totalW += knightOutpostBonus<OutpostType::MyOutpost>(knightsq, b.my(b.getPawns()), b.their(b.getPawns()));
+		}
+		while (_BitScanForward64(&index, oppKnights))
+		{
+			board::square knightsq = static_cast<board::square>(index);
+			oppKnights = _blsr_u64(oppKnights);
+			totalB += knightAggressionBonus(knightsq, myKingSq);
+			totalB += knightOutpostBonus<OutpostType::OppOutpost>(knightsq, b.my(b.getPawns()), b.their(b.getPawns()));
+		}
+
+		auto myQueens = b.my(b.getQueens());
+		auto oppQueens = b.their(b.getQueens());
+		
+		while (_BitScanForward64(&index, myQueens))
+		{
+			board::square queensq = static_cast<board::square>(index);
+			myQueens = _blsr_u64(myQueens);
+			totalW += queenAggressionBonus(queensq, oppKingSq);
+		}
+		while (_BitScanForward64(&index, oppQueens))
+		{
+			board::square queensq = static_cast<board::square>(index);
+			oppQueens = _blsr_u64(oppQueens);
+			totalB += queenAggressionBonus(queensq, myKingSq);
+		}
 		Eval eval = totalW - totalB;
 
 		return eval;
