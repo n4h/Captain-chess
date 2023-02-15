@@ -160,7 +160,7 @@ namespace eval
 		return pair ? 25 : 0;
 	}
 
-	constexpr Eval aggressionBonus(board::square psq, board::square enemyKingSq, int closeness, Eval bonus)
+	constexpr Eval aggressionBonus(board::square psq, board::square enemyKingSq, unsigned closeness, Eval bonus)
 	{
 		int pRank = rank(psq);
 		int pFile = file(psq);
