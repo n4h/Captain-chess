@@ -184,6 +184,11 @@ namespace eval
 			totalW += computeMaterialValue(b.my(b.getKings()), PSQTking);
 			totalB += computeMaterialValue(b.their(b.getKings()), PSQTking);
 		}
+		else
+		{
+			totalW += computeMaterialValue(b.my(b.getKings()), PSQTkingEnd);
+			totalB += computeMaterialValue(b.their(b.getKings()), PSQTkingEnd);
+		}
 
 		auto myBishops = b.my(b.getBishops());
 		const auto myPawns = b.my(b.getPawns());

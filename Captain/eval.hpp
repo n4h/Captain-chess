@@ -120,6 +120,17 @@ namespace eval
 		0, 0, 20, 0, 0, 0, 20, 0
 	};
 
+	constexpr std::array<Eval, 64> PSQTkingEnd = {
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 15, 15, 15, 15, 0, 0,
+	0, 0, 15, 20, 20, 15, 0, 0,
+	0, 0, 15, 20, 20, 15, 0, 0,
+	0, 0, 15, 15, 15, 15, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0
+	};
+
 	std::uint32_t getLVA(const board::QBB&, board::Bitboard, board::Bitboard&);
 	Eval getCaptureValue(const board::QBB&, board::Move);
 	Eval mvvlva(const board::QBB&, board::Move);
