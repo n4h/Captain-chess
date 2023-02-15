@@ -231,14 +231,14 @@ namespace eval
 		{
 			board::square knightsq = static_cast<board::square>(index);
 			myKnights = _blsr_u64(myKnights);
-			totalW += knightAggressionBonus(knightsq, oppKingSq);
+			totalW += aggressionBonus(knightsq, oppKingSq, 4, 5);
 			totalW += knightOutpostBonus<OutpostType::MyOutpost>(knightsq, b.my(b.getPawns()), b.their(b.getPawns()));
 		}
 		while (_BitScanForward64(&index, oppKnights))
 		{
 			board::square knightsq = static_cast<board::square>(index);
 			oppKnights = _blsr_u64(oppKnights);
-			totalB += knightAggressionBonus(knightsq, myKingSq);
+			totalB += aggressionBonus(knightsq, myKingSq, 4, 5);
 			totalB += knightOutpostBonus<OutpostType::OppOutpost>(knightsq, b.my(b.getPawns()), b.their(b.getPawns()));
 		}
 
@@ -249,13 +249,29 @@ namespace eval
 		{
 			board::square queensq = static_cast<board::square>(index);
 			myQueens = _blsr_u64(myQueens);
-			totalW += queenAggressionBonus(queensq, oppKingSq);
+			totalW += aggressionBonus(queensq, oppKingSq, 3, 5);
 		}
 		while (_BitScanForward64(&index, oppQueens))
 		{
 			board::square queensq = static_cast<board::square>(index);
 			oppQueens = _blsr_u64(oppQueens);
-			totalB += queenAggressionBonus(queensq, myKingSq);
+			totalB += aggressionBonus(queensq, myKingSq, 3, 5);
+		}
+
+		auto myRooks = b.my(b.getRooks());
+		auto oppRooks = b.their(b.getRooks());
+
+		while (_BitScanForward64(&index, myRooks))
+		{
+			auto rookbit = setbit(index);
+			totalW += aggressionBonus(board::square(index), oppKingSq, 7, 5);
+			totalW += rookOpenFileBonus((board::multiFileMask(rookbit) & b.getPawns()) == 0);
+		}
+		while (_BitScanForward64(&index, oppRooks))
+		{
+			auto rookbit = setbit(index);
+			totalB += aggressionBonus(board::square(index), myKingSq, 7, 5);
+			totalB += rookOpenFileBonus((board::multiFileMask(rookbit) & b.getPawns()) == 0);
 		}
 		Eval eval = totalW - totalB;
 

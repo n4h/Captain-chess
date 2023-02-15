@@ -150,27 +150,23 @@ namespace eval
 		return open ? 15 : 0;
 	}
 
+	constexpr Eval rookOpenFileBonus(bool open)
+	{
+		return open ? 25 : 0;
+	}
+
 	constexpr Eval bishopPairBonus(bool pair)
 	{
 		return pair ? 25 : 0;
 	}
 
-	constexpr Eval knightAggressionBonus(board::square knightsq, board::square enemyKingSq)
+	constexpr Eval aggressionBonus(board::square psq, board::square enemyKingSq, int closeness, Eval bonus)
 	{
-		int knRank = rank(knightsq);
-		int knFile = file(knightsq);
+		int pRank = rank(psq);
+		int pFile = file(psq);
 		int kRank = rank(enemyKingSq);
 		int kFile = file(enemyKingSq);
-		return (l1dist(knRank, knFile, kRank, kFile) <= 4) * 5;
-	}
-
-	constexpr Eval queenAggressionBonus(board::square queensq, board::square enemyKingSq)
-	{
-		int qRank = rank(queensq);
-		int qFile = file(queensq);
-		int kRank = rank(enemyKingSq);
-		int kFile = file(enemyKingSq);
-		return (l1dist(qRank, qFile, kRank, kFile) <= 3) * 5;
+		return (l1dist(pRank, pFile, kRank, kFile) <= closeness) * bonus;
 	}
 
 	enum class OutpostType{MyOutpost, OppOutpost};
