@@ -137,7 +137,7 @@ namespace Tables
 			auto fromSq = board::getMoveFromSq(m);
 			auto toSq = board::getMoveToSq(m);
 			auto piecetype = b.getPieceType(fromSq);
-			auto score = history[piecetype][toSq];
+			auto score = history[(piecetype >> 1) - 1][toSq];
 			score = std::clamp(score, 0U, static_cast<unsigned>(std::numeric_limits<std::int16_t>::max()));
 			return static_cast<std::int16_t>(score);
 		}
