@@ -113,7 +113,7 @@ namespace eval
 	{
 		const board::square target = board::getMoveToSq(m);
 		auto targettype = (b.getPieceType(target) >> 1) - 1;
-
+		const auto movetype = board::getMoveInfo<moveTypeMask>(m);
 		board::Bitboard attackers = movegen::getSqAttackers(b, target);
 		board::Bitboard attacker = aux::setbit(board::getMoveInfo<board::fromMask>(m));
 		auto attackertype = b.getPieceType(board::getMoveFromSq(m)) >> 1;
@@ -125,8 +125,7 @@ namespace eval
 
 		std::array<Eval, 6> pieceval = {100, 300, 300, 500, 900, 10000};
 		std::array<Eval, 32> scores;
-
-		scores[0] = pieceval[targettype];
+		scores[0] = movetype == enPCap ? pieceval[0] : pieceval[targettype];
 		targettype = attackertype - 1;
 		attackers ^= attacker;
 		occ ^= attacker;
