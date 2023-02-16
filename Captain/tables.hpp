@@ -146,7 +146,7 @@ namespace Tables
 			auto fromSq = board::getMoveFromSq(m);
 			auto toSq = board::getMoveToSq(m);
 			auto piecetype = b.getPieceType(fromSq);
-			history[piecetype][toSq] += depth * depth;
+			history[(piecetype >> 1) - 1][toSq] += depth * depth;
 		}
 	};
 
