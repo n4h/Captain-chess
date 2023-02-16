@@ -264,12 +264,14 @@ namespace eval
 		while (_BitScanForward64(&index, myRooks))
 		{
 			auto rookbit = setbit(index);
+			myRooks = _blsr_u64(myRooks);
 			totalW += aggressionBonus(board::square(index), oppKingSq, 7, 5);
 			totalW += rookOpenFileBonus((board::multiFileMask(rookbit) & b.getPawns()) == 0);
 		}
 		while (_BitScanForward64(&index, oppRooks))
 		{
 			auto rookbit = setbit(index);
+			oppRooks = _blsr_u64(oppRooks);
 			totalB += aggressionBonus(board::square(index), myKingSq, 7, 5);
 			totalB += rookOpenFileBonus((board::multiFileMask(rookbit) & b.getPawns()) == 0);
 		}
