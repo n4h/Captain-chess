@@ -932,7 +932,7 @@ namespace movegen
 				ml.remove_moves_if(ml.begin(), ml.end(), [this](auto sm) {return sm.m == hashmove; });
 				for (auto& [move, score] : ml)
 				{
-					score = eval::mvvlva(b, move);
+					score = eval::see(b, move);
 				}
 				captureBegin = ml.begin();
 				captureEnd = ml.end();
