@@ -465,7 +465,10 @@ namespace engine
 		}
 
 		PrincipalVariation pvChild;
-		if (!nullBranch && !movegen::isInCheck(b))
+
+		const bool inCheck = movegen::isInCheck(b);
+
+		if (!nullBranch && !inCheck)
 		{
 			board::QBB bnull = b;
 			auto oldhash = hash;
@@ -479,6 +482,12 @@ namespace engine
 				return nulleval;
 			}
 		} // TODO new search routine to avoid passing PV to null move search
+
+		if (inCheck)
+		{
+			++depth;
+		}
+
 		pvChild.clear();
 
 		board::Move topMove = 0;
