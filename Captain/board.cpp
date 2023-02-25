@@ -168,6 +168,16 @@ namespace board
 		return _pext_u32(qbbsigns, 0x80808080);
 	}
 
+	unsigned QBB::getPieceCode(square s) const noexcept
+	{
+		return getPieceType(s) >> 1;
+	}
+
+	unsigned QBB::getPieceCodeIdx(square s) const noexcept
+	{
+		return getPieceCode(s) - 1;
+	}
+
 	void QBB::flipQBB()
 	{
 		side = _byteswap_uint64(side);

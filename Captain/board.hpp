@@ -403,6 +403,8 @@ namespace board
 		void doNullMove();
 
 		unsigned getPieceType(square) const noexcept;
+		unsigned getPieceCode(square) const noexcept;
+		unsigned getPieceCodeIdx(square) const noexcept;
 
 		void flipQBB();
 
