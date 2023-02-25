@@ -583,6 +583,8 @@ namespace movegen
 
 	Bitboard isInCheck(const board::QBB& b);
 
+	bool moveGivesCheck(const board::QBB& b, board::Move);
+
 	Bitboard getSqAttackers(const board::QBB& b, board::square s);
 	Bitboard getSliderAttackers(Bitboard, board::square, Bitboard diag, Bitboard orth);
 

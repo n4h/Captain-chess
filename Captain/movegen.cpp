@@ -260,6 +260,26 @@ namespace movegen
 
 		return checkers;
 	}
+	bool moveGivesCheck(const board::QBB& b, board::Move m)
+	{
+		auto oppKing = b.their(b.getKings());
+		switch (b.getPieceCode(board::getMoveFromSq(m)))
+		{
+		case constants::pawnCode:
+			return pawnAttacks(board::getMoveToSq(m)) & oppKing;
+		case constants::knightCode:
+			return knightAttacks(board::getMoveToSq(m)) & oppKing;
+		case constants::bishopCode:
+			return hypqAllDiag(b.getOccupancy(), board::getMoveToSq(m)) & oppKing;
+		case constants::rookCode:
+			return hypqAllOrth(b.getOccupancy(), board::getMoveToSq(m)) & oppKing;
+		case constants::queenCode:
+			bool c = hypqAllDiag(b.getOccupancy(), board::getMoveToSq(m)) & oppKing;
+			return c || (hypqAllOrth(b.getOccupancy(), board::getMoveToSq(m)) & oppKing);
+		default:
+			return false;
+		}
+	}
 	Bitboard getSqAttackers(const board::QBB& b, board::square s)
 	{
 		AttackMap orth = KSAllOrth(b.getOccupancy(), s) & b.getOrthSliders();
