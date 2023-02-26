@@ -276,9 +276,8 @@ namespace movegen
 		case constants::queenCode:
 			bool c = hypqAllDiag(b.getOccupancy(), board::getMoveToSq(m)) & oppKing;
 			return c || (hypqAllOrth(b.getOccupancy(), board::getMoveToSq(m)) & oppKing);
-		default:
-			return false;
 		}
+		return false;
 	}
 	Bitboard getSqAttackers(const board::QBB& b, board::square s)
 	{
