@@ -178,6 +178,12 @@ namespace board
 		return getPieceCode(s) - 1;
 	}
 
+	bool QBB::isMyPiece(square s) const noexcept
+	{
+		auto piecetype = getPieceType(s);
+		return piecetype & 0b1U;
+	}
+
 	void QBB::flipQBB()
 	{
 		side = _byteswap_uint64(side);
