@@ -123,6 +123,11 @@ namespace engine
 		bool isPVNode(Eval alpha, Eval beta);
 		int LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV);
 
+		static bool futilityPruning(const board::QBB& before, board::Move m, int depth, bool PV)
+		{
+			return !PV && depth == 1 && !before.isCapture(m) && !movegen::isInCheck(before) && !movegen::moveGivesCheck(before, m);
+		}
+
 		Eval eval = 0;
 #ifdef CAPTAIN_TRACE_SEARCH
 		std::ofstream search_trace{"captain_searchtrace.txt"};
