@@ -498,14 +498,28 @@ namespace engine
 		std::size_t i = 0;
 		Eval besteval = negInf;
 		const bool PVNode = isPVNode(alpha, beta);
+		//auto staticEval = std::make_pair(0, false);
 		for (; moves.next(b, nextMove); ++i)
 		{
 			if (!searchFlags::searching.test())
 			{
 				throw Timeout();
 			}
+			/*
+			if (futilityPruning(b, nextMove, depth, PVNode))
+			{
+				if (!staticEval.second) staticEval = std::make_pair(eval::evaluate(b), true);
+
+				if (staticEval.first + 900 < alpha)
+				{
+					moves.disableQuiets();
+					continue;
+				}
+			}
+			*/
 			auto oldhash = hash;
 			bcopy.makeMove(nextMove);
+
 			StoreInfo recordMove(prevMoves, nextMove);
 			hash ^= tt->incrementalUpdate(nextMove, b, bcopy);
 			if (i == 0)
