@@ -904,6 +904,17 @@ namespace movegen
 	public:
 		MoveOrder(Ttable* _tt, KillerTable* _kt, History* _ht, const board::QBB& _b, std::uint64_t h, std::size_t depth)
 			: tt(_tt), kt(_kt), ht(_ht), b(_b), hash(h), d(depth){}
+		void disableQuiets()
+		{
+			if (stage == Stage::killer1Stage || 
+				stage == Stage::killer2Stage || 
+				stage == Stage::quiets || 
+				stage == Stage::quietsGen)
+			{
+				stage = Stage::losingCaptures;
+			}
+			quietsDisabled = true;
+		}
 		bool next(const board::QBB& b, board::Move& m)
 		{
 			switch (stage)
@@ -943,7 +954,7 @@ namespace movegen
 			case Stage::captureStage:
 				if (captureBegin == captureEnd)
 				{
-					stage = Stage::killer1Stage;
+					stage = quietsDisabled ? Stage::killer1Stage : Stage::losingCaptures;
 				}
 				else
 				{
@@ -951,7 +962,7 @@ namespace movegen
 					if (bestCapture->score < 0)
 					{
 						losingCapturesBegin = captureBegin;
-						stage = Stage::killer1Stage;
+						stage = quietsDisabled ? Stage::killer1Stage : Stage::losingCaptures;
 					}
 					else
 					{
@@ -1037,6 +1048,7 @@ namespace movegen
 		board::Move hashmove = 0;
 		board::Move k1move = 0;
 		board::Move k2move = 0;
+		bool quietsDisabled = false;
 	};
 }
 
