@@ -51,6 +51,9 @@
     <ClCompile Include="auxiliary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tune.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="divide.hpp">
@@ -84,6 +87,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="tables.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tune.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

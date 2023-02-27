@@ -273,6 +273,7 @@
     <ClCompile Include="auxiliary.cpp" />
     <ClCompile Include="searchflags.cpp" />
     <ClCompile Include="tables.cpp" />
+    <ClCompile Include="tune.cpp" />
     <ClCompile Include="uci.cpp" />
     <ClInclude Include="auxiliary.hpp">
       <FileType>Document</FileType>
@@ -307,6 +308,7 @@
     </ClInclude>
     <ClInclude Include="searchflags.hpp" />
     <ClInclude Include="tables.hpp" />
+    <ClInclude Include="tune.hpp" />
     <ClInclude Include="uci.hpp" />
   </ItemGroup>
   <ItemGroup>
