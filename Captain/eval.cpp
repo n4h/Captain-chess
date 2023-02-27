@@ -411,4 +411,44 @@ namespace eval
 
 		return evaluation;
 	}
+
+	void Evaluator::mutate()
+	{
+		std::random_device rd;
+		std::mt19937_64 urbg(rd());
+		std::bernoulli_distribution doMutate(1.0/2500.0);
+		std::uniform_int_distribution positionalBonus(-50, 50);
+		std::uniform_int_distribution gamePhase(-500, 500);
+		std::uniform_int_distribution PSQT(-300, 300);
+		std::uniform_int_distribution ZeroTo8(0, 8);
+
+		auto mutate = [&](auto& mutator, int p = 0) {
+			return doMutate(urbg) ? mutator(urbg) : p;
+		};
+
+		for (std::size_t i = 0; i != 12; ++i)
+		{
+			for (std::size_t j = 0; j != 64; ++j)
+			{
+				_openingPSQT[i][j] += mutate(PSQT);
+				_midPSQT[i][j] += mutate(PSQT);
+				_endPSQT[i][j] += mutate(PSQT);
+			}
+			_aggressionBonuses[i].first = mutate(ZeroTo8, _aggressionBonuses[i].first);
+			_aggressionBonuses[i].second += mutate(positionalBonus);
+		}
+
+		_openToMid += mutate(gamePhase);
+		_midToEnd += mutate(gamePhase);
+
+		_pawnBishopPenalty.first = mutate(ZeroTo8, _pawnBishopPenalty.first);
+		_pawnBishopPenalty.second += mutate(positionalBonus);
+
+		_bishopOpenDiagonalBonus += mutate(positionalBonus);
+		_rookOpenFileBonus += mutate(positionalBonus);
+		_bishopPairBonus += mutate(positionalBonus);
+
+		_knightOutpostBonus.first += mutate(positionalBonus);
+		_knightOutpostBonus.second += mutate(positionalBonus);
+	}
 }
