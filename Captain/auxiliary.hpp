@@ -231,7 +231,7 @@ namespace aux
 	{
 		std::uint64_t bits;
 		T next;
-		GetSquare(std::uint64_t b) :bits(b) {}
+		GetNextBit(std::uint64_t b) :bits(b) {}
 		bool operator()()
 		{
 			unsigned long index = 0;
