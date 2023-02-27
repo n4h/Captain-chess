@@ -365,7 +365,13 @@ namespace eval
 				}
 			}
 
+			for (std::size_t i = 0; i != 12; ++i)
+			{
+				e._aggressionBonuses[i].first = parent()._aggressionBonuses[i].first;
+				e._aggressionBonuses[i].second = parent()._aggressionBonuses[i].second;
+			}
 
+			return e;
 		}
 	};
 }
