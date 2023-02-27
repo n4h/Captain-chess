@@ -22,6 +22,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstdint>
 #include <cstddef>
 #include <array>
+#include <random>
 
 #include "auxiliary.hpp"
 #include "board.hpp"
@@ -299,7 +300,7 @@ namespace eval
 	public:
 		Eval operator()(const board::QBB&) const;
 
-		Evaluator()
+		constexpr Evaluator()
 			: _openToMid(7000), _midToEnd(3000), _pawnBishopPenalty(std::make_pair(6, 50)), 
 			_bishopOpenDiagonalBonus(15), _rookOpenFileBonus(25), _bishopPairBonus(25),
 			_knightOutpostBonus(std::make_pair(15, 15))
@@ -331,6 +332,40 @@ namespace eval
 			{
 				_aggressionBonuses[i] = _aggressionBonuses[i - 6];
 			}
+		}
+
+		void mutate();
+
+		static Evaluator crossover(const Evaluator& e1, const Evaluator& e2)
+		{
+			Evaluator e;
+			std::random_device rd;
+			std::mt19937_64 urbg(rd());
+			std::bernoulli_distribution whiche;
+			auto parent = [&e1, &e2, &whiche, &urbg]() -> const Evaluator& {
+				return whiche(urbg) ? e1 : e2;
+			};
+
+			e._openToMid = parent()._openToMid;
+			e._midToEnd = parent()._midToEnd;
+			e._bishopOpenDiagonalBonus = parent()._bishopOpenDiagonalBonus;
+			e._rookOpenFileBonus = parent()._rookOpenFileBonus;
+			e._bishopPairBonus = parent()._bishopPairBonus;
+			e._knightOutpostBonus.first = parent()._knightOutpostBonus.first;
+			e._knightOutpostBonus.second = parent()._knightOutpostBonus.second;
+			e._pawnBishopPenalty.first = parent()._pawnBishopPenalty.first;
+			e._pawnBishopPenalty.second = parent()._pawnBishopPenalty.second;
+			for (std::size_t i = 0; i != 12; ++i)
+			{
+				for (std::size_t j = 0; j != 64; ++j)
+				{
+					e._openingPSQT[i][j] = parent()._openingPSQT[i][j];
+					e._midPSQT[i][j] = parent()._midPSQT[i][j];
+					e._endPSQT[i][j] = parent()._endPSQT[i][j];
+				}
+			}
+
+
 		}
 	};
 }
