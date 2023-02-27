@@ -225,5 +225,24 @@ namespace aux
 	{
 		return std::abs(x1 - x2) + std::abs(y1 - y2);
 	}
+	// TODO rewrite loops to use GetNextBit
+	template<typename T>
+	struct GetNextBit
+	{
+		std::uint64_t bits;
+		T next;
+		GetSquare(std::uint64_t b) :bits(b) {}
+		bool operator()()
+		{
+			unsigned long index = 0;
+			bool gotbit = _BitScanForward64(&index, bits);
+			if (gotbit)
+			{
+				bits = _blsr_u64(bits);
+				next = T(index);
+			}
+			return gotbit;
+		}
+	};
 }
 #endif
