@@ -205,7 +205,7 @@ namespace eval
 
 	Eval evaluate(const board::QBB& b);
 
-	
+	// This class represents a single evaluation function (useful for tuning)
 	class Evaluator
 	{
 		using PSQT = std::array<Eval, 64>;
