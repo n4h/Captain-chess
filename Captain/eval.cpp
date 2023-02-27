@@ -278,4 +278,137 @@ namespace eval
 
 		return eval;
 	}
+
+	Eval Evaluator::applyAggressionBonus(std::size_t type, board::square enemyKingSq, board::Bitboard pieces) const
+	{
+		unsigned long index = 0;
+		Eval e = 0;
+		while (_BitScanForward64(&index, pieces))
+		{
+			pieces = _blsr_u64(pieces);
+			e += aggressionBonus(board::square(index), enemyKingSq, _aggressionBonuses[type]);
+		}
+		return e;
+	}
+
+	unsigned Evaluator::totalMaterialValue(const board::QBB& b) const
+	{
+		unsigned materialVal = 0;
+		unsigned piecevalues[6] = { 100, 300, 300, 500, 900, 0 };
+		GetNextBit<board::square> currSquare(b.getOccupancy());
+		while (currSquare())
+		{
+			auto sq = currSquare.next;
+			auto pieceType = b.getPieceCodeIdx(sq);
+			materialVal += piecevalues[pieceType];
+		}
+		return materialVal;
+	}
+
+	Eval Evaluator::bishopOpenDiagonalBonus(board::Bitboard occ, board::Bitboard bishops) const
+	{
+		unsigned long index = 0;
+		Eval e = 0;
+		while (_BitScanForward64(&index, bishops))
+		{
+			bishops = _blsr_u64(bishops);
+			auto square = board::square(index);
+			if (board::diagMask(square) == movegen::hypqDiag(occ, square))
+			{
+				e += _bishopOpenDiagonalBonus;
+			}
+			if (board::antiDiagMask(square) == movegen::hypqAntiDiag(occ, square))
+			{
+				e += _bishopOpenDiagonalBonus;
+			}
+		}
+		return e;
+	}
+
+	Eval Evaluator::rookOpenFileBonus(board::Bitboard pawns, board::Bitboard rooks) const
+	{
+		unsigned long index = 0;
+		Eval e = 0;
+		while (_BitScanForward64(&index, rooks))
+		{
+			rooks = _blsr_u64(rooks);
+			auto square = board::square(index);
+			e += ((board::fileMask(square) & pawns) == 0) * _rookOpenFileBonus;
+		}
+		return e;
+	}
+
+	Eval Evaluator::operator()(const board::QBB& b) const
+	{
+		Eval evaluation = 0;
+		unsigned materialVal = this->totalMaterialValue(b);
+
+		const std::array<board::Bitboard, 12> pieces = {
+			b.my(b.getPawns()),
+			b.my(b.getKnights()),
+			b.my(b.getBishops()),
+			b.my(b.getRooks()),
+			b.my(b.getQueens()),
+			b.my(b.getKings()),
+			b.their(b.getPawns()),
+			b.their(b.getKnights()),
+			b.their(b.getBishops()),
+			b.their(b.getRooks()),
+			b.their(b.getQueens()),
+			b.their(b.getKings()),
+		};
+
+		if (materialVal > this->_openToMid)
+		{
+			for (std::size_t i = 0; i != 12; ++i)
+			{
+				evaluation += (i < 6 ? 1 : -1) * computeMaterialValue(pieces[i], this->_openingPSQT[i]);
+			}
+		}
+		else if (materialVal > this->_midToEnd)
+		{
+			for (std::size_t i = 0; i != 12; ++i)
+			{
+				evaluation += (i < 6 ? 1 : -1) * computeMaterialValue(pieces[i], this->_midPSQT[i]);
+			}
+		}
+		else
+		{
+			for (std::size_t i = 0; i != 12; ++i)
+			{
+				evaluation += (i < 6 ? 1 : -1) * computeMaterialValue(pieces[i], this->_endPSQT[i]);
+			}
+		}
+
+		const auto myKingSq = board::square(_tzcnt_u64(pieces[5]));
+		const auto oppKingSq = board::square(_tzcnt_u64(pieces[11]));
+
+		for (std::size_t i = 0; i != 12; ++i)
+		{
+			evaluation += (i < 6 ? 1 : -1) * applyAggressionBonus(i, i < 6 ? oppKingSq : myKingSq, pieces[i]);
+		}
+
+		auto myPawnsWhite = whiteSquares & pieces[0];
+		auto myPawnsBlack = blackSquares & pieces[0];
+		auto oppPawnsWhite = whiteSquares & pieces[6];
+		auto oppPawnsBlack = blackSquares & pieces[6];
+		evaluation -= this->pawnCountBishopPenalty(_popcnt64(myPawnsWhite), pieces[2]);
+		evaluation -= this->pawnCountBishopPenalty(_popcnt64(myPawnsBlack), pieces[2]);
+		evaluation += this->pawnCountBishopPenalty(_popcnt64(oppPawnsWhite), pieces[8]);
+		evaluation += this->pawnCountBishopPenalty(_popcnt64(oppPawnsBlack), pieces[8]);
+
+		evaluation += this->bishopOpenDiagonalBonus(b.getOccupancy(), pieces[2]);
+		evaluation -= this->bishopOpenDiagonalBonus(b.getOccupancy(), pieces[8]);
+
+		evaluation += this->bishopPairBonus((pieces[2] & whiteSquares) && (pieces[2] & blackSquares));
+		evaluation -= this->bishopPairBonus((pieces[8] & whiteSquares) && (pieces[8] & blackSquares));
+
+		evaluation += this->rookOpenFileBonus(b.getPawns(), pieces[3]);
+		evaluation -= this->rookOpenFileBonus(b.getPawns(), pieces[9]);
+
+		evaluation += this->applyKnightOutPostBonus<OutpostType::MyOutpost>(pieces[1], pieces[0], pieces[6]);
+		evaluation -= this->applyKnightOutPostBonus<OutpostType::OppOutpost>(pieces[7], pieces[0], pieces[6]);
+
+		return evaluation;
+	}
 }
