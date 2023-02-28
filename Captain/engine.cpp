@@ -182,7 +182,7 @@ namespace engine
 
 		bool overtime = !settings.infiniteSearch && (elapsed() > moveTime || elapsed() > settings.maxTime);
 
-		return overtime || (nodes > settings.maxNodes) || (elapsed() > settings.maxTime);
+		return overtime || nodes > settings.maxNodes || elapsed() > settings.maxTime || currIDdepth > settings.maxDepth;
 	}
 	
 	void Engine::newGame()
