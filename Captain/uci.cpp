@@ -75,12 +75,11 @@ namespace uci
 				UCIStopCommand();
 				if (!initialized)
 				{
-					e.setTTable(&tt);
 					initialized = true;
 				}
 				moves.clear();
 				pos.clear();
-				tt.clear();
+				Tables::tt.clear();
 				e.newGame();
 			}
 			if (UCIMessage[0] == "position" && UCIMessage.size() >= 2)
@@ -102,16 +101,14 @@ namespace uci
 	{
 		if (!initialized)
 		{
-			e.setTTable(&tt);
 			initialized = true;
 		}
-		e.setTTable(&tt);
 		moves.clear();
 		pos.clear();
 		if (command[1] == "startpos")
 		{
 			b = board::QBB{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"};
-			pos.push_back(tt.initialHash(b));
+			pos.push_back(Tables::tt.initialHash(b));
 			if (command.size() >= 3 && command[2] == "moves")
 			{
 				for (std::size_t i = 3; i < command.size(); ++i)
@@ -119,7 +116,7 @@ namespace uci
 					auto [move, halfMove] = uciMove2boardMove(b, command[i], b.getColorToPlay());
 					b.makeMove(move);
 					moves.push_back(move);
-					pos.push_back(tt.initialHash(b));
+					pos.push_back(Tables::tt.initialHash(b));
 				}
 			}
 		}
@@ -128,7 +125,7 @@ namespace uci
 			// FEN string contains 6 space separated fields
 			b = board::QBB{command[2] + " " + command[3] + " " + command[4] + " " + command[5] + " "
 			 + command[6] + " " + command[7]};
-			pos.push_back(tt.initialHash(b));
+			pos.push_back(Tables::tt.initialHash(b));
 			if (command.size() >= 9 && command[8] == "moves")
 			{
 				for (std::size_t i = 9; i < command.size(); ++i)
@@ -136,7 +133,7 @@ namespace uci
 					auto [move, halfMove] = uciMove2boardMove(b, command[i], b.getColorToPlay());
 					b.makeMove(move);
 					moves.push_back(move);
-					pos.push_back(tt.initialHash(b));
+					pos.push_back(Tables::tt.initialHash(b));
 				}
 			}
 		}
@@ -205,8 +202,8 @@ namespace uci
 			if (i == "name")
 				if (command[index + 1] == "Hash" && command[index + 2] == "value")
 				{
-					tt.resize( (1024*1024*std::stoi(command[index + 3])) / sizeof(Tables::Entry));
-					tt.clear();
+					Tables::tt.resize( (1024*1024*std::stoi(command[index + 3])) / sizeof(Tables::Entry));
+					Tables::tt.clear();
 				}
 			++index;
 		}

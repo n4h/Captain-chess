@@ -30,6 +30,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace Tables
 {
+	TTable tt{(1024 * 1024) / sizeof(Entry)};
 	void TTable::initRandom()
 	{
 		std::random_device rd;

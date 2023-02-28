@@ -43,11 +43,6 @@ namespace engine
 		return eval;
 	}
 
-	void Engine::setTTable(Tables::TTable* x)
-	{
-		tt = x;
-	}
-
 	std::string Engine::getPVuciformat(board::QBB b)
 	{
 		std::ostringstream PVString;
@@ -203,10 +198,7 @@ namespace engine
 		engineW = b.isWhiteToPlay();
 		currIDdepth = 0;
 		nodes = 0;
-		if (tt != nullptr)
-			hash = prevPos.back();
-		else
-			hash = 0;
+		hash = prevPos.back();
 		auto mytime = engineW ? settings.wmsec : settings.bmsec;
 		[[maybe_unused]] auto myinc = engineW ? settings.winc : settings.binc;
 		auto moveNumber = (prevPos.size() + 2) / 2;
@@ -242,7 +234,7 @@ namespace engine
 				bcopy.makeMove(move);
 				StoreInfo recordMove(prevMoves, move);
 				auto oldhash = hash;
-				hash ^= tt->incrementalUpdate(move, b, bcopy);
+				hash ^= Tables::tt.incrementalUpdate(move, b, bcopy);
 				try 
 				{
 					if (i == 0)
@@ -306,19 +298,16 @@ namespace engine
 			searchFlags::searching.clear();
 		++nodes;
 
-		if (tt)
+		if (Tables::tt[hash].key == hash && Tables::tt[hash].depth >= depth)
 		{
-			if ((*tt)[hash].key == hash && (*tt)[hash].depth >= depth)
-			{
-				auto nodetype = (*tt)[hash].nodeType;
-				auto eval = (*tt)[hash].eval;
-				if (nodetype == Tables::PV)
-					return eval;
-				else if (nodetype == Tables::ALL && eval < alpha)
-					return eval;
-				else if (nodetype == Tables::CUT && eval > beta)
-					return eval;
-			}
+			auto nodetype = Tables::tt[hash].nodeType;
+			auto eval = Tables::tt[hash].eval;
+			if (nodetype == Tables::PV)
+				return eval;
+			else if (nodetype == Tables::ALL && eval < alpha)
+				return eval;
+			else if (nodetype == Tables::CUT && eval > beta)
+				return eval;
 		}
 
 
@@ -402,7 +391,7 @@ namespace engine
 			auto oldhash = hash;
 			bcopy.makeMove(ml[i].m);
 			StoreInfo recordMove(prevMoves, ml[i].m);
-			hash ^= tt->incrementalUpdate(ml[i].m, b, bcopy);
+			hash ^= Tables::tt.incrementalUpdate(ml[i].m, b, bcopy);
 			
 			currEval = std::max<Eval>(currEval, -quiesceSearch(bcopy, -beta, -alpha, depth - 1));
 			bcopy = b;
@@ -449,10 +438,10 @@ namespace engine
 		
 		if (tt)
 		{
-			if ((*tt)[hash].key == hash && (*tt)[hash].depth >= depth)
+			if (Tables::tt[hash].key == hash && Tables::tt[hash].depth >= depth)
 			{
-				auto nodetype = (*tt)[hash].nodeType;
-				auto eval = (*tt)[hash].eval;
+				auto nodetype = Tables::tt[hash].nodeType;
+				auto eval = Tables::tt[hash].eval;
 				if (nodetype == Tables::ALL && eval < alpha)
 				{
 					return eval;
@@ -472,7 +461,7 @@ namespace engine
 		{
 			board::QBB bnull = b;
 			auto oldhash = hash;
-			hash ^= tt->nullUpdate(bnull);
+			hash ^= Tables::tt.nullUpdate(bnull);
 			bnull.doNullMove();
 			StoreInfo recordMove(prevMoves, 0);
 			Eval nulleval = -alphaBetaSearch(bnull, pvChild, -beta, -beta + 1, depth - 3, true);
@@ -521,7 +510,7 @@ namespace engine
 			bcopy.makeMove(nextMove);
 
 			StoreInfo recordMove(prevMoves, nextMove);
-			hash ^= tt->incrementalUpdate(nextMove, b, bcopy);
+			hash ^= Tables::tt.incrementalUpdate(nextMove, b, bcopy);
 			if (i == 0)
 			{
 				currEval = -alphaBetaSearch(bcopy, pvChild, -beta, -alpha, depth - 1, nullBranch);
@@ -545,8 +534,7 @@ namespace engine
 			if (besteval >= beta)
 			{
 				nodeType = Tables::CUT;
-				if (tt)
-					tt->tryStore(hash, depth, besteval, nextMove, nodeType, initialPos);
+				Tables::tt.tryStore(hash, depth, besteval, nextMove, nodeType, initialPos);
 				if (!b.isCapture(nextMove))
 				{
 					killers.storeKiller(nextMove, ply());
@@ -572,11 +560,11 @@ namespace engine
 		{
 			if (nodeType == Tables::PV)
 			{
-				tt->store(hash, depth, besteval, topMove, nodeType, initialPos);
+				Tables::tt.store(hash, depth, besteval, topMove, nodeType, initialPos);
 			}
 			else
 			{
-				tt->tryStore(hash, depth, besteval, topMove, nodeType, initialPos);
+				Tables::tt.tryStore(hash, depth, besteval, topMove, nodeType, initialPos);
 			}
 		}
 		return besteval;

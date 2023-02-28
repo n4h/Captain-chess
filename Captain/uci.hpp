@@ -36,11 +36,7 @@ namespace uci
 	public:
 		void UCIStartup();
 		void UCIStartLoop();
-		UCIProtocol(): uci_out(std::cout)
-		{
-			tt.resize((1024*1024) / sizeof(Tables::Entry));
-			e.setTTable(&tt);
-		};
+		UCIProtocol(): uci_out(std::cout) {}
 	private:
 		void UCIPositionCommand(const std::vector<std::string>&);
 		void UCIGoCommand(const std::vector<std::string>&);
@@ -54,7 +50,6 @@ namespace uci
 		engine::MoveHistory moves;
 		engine::PositionHistory pos;
 		engine::Engine e;
-		Tables::TTable tt;
 		std::future<void> engineResult;
 		searchFlags sf;
 

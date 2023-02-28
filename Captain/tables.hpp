@@ -81,6 +81,8 @@ namespace Tables
 		TTable& operator=(TTable&&) = delete;
 	};
 
+	extern TTable tt;
+
 	class KillerTable
 	{
 		std::array<std::array<board::Move, 2>, 16> killers;

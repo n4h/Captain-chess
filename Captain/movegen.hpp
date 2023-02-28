@@ -898,12 +898,12 @@ namespace movegen
 		}
 	}
 
-	template<typename Ttable, typename KillerTable, typename History>
+	template<typename KillerTable, typename History>
 	class MoveOrder
 	{
 	public:
-		MoveOrder(Ttable* _tt, KillerTable* _kt, History* _ht, const board::QBB& _b, std::uint64_t h, std::size_t depth)
-			: tt(_tt), kt(_kt), ht(_ht), b(_b), hash(h), d(depth){}
+		MoveOrder(KillerTable* _kt, History* _ht, const board::QBB& _b, std::uint64_t h, std::size_t depth)
+			:kt(_kt), ht(_ht), b(_b), hash(h), d(depth){}
 		void disableQuiets()
 		{
 			if (stage == Stage::killer1Stage || 
@@ -920,16 +920,13 @@ namespace movegen
 			switch (stage)
 			{
 			case Stage::hash:
-				if (tt)
-				{
-					hashmove = (*tt)[hash].move;
-				}
+				hashmove = Tables::tt[hash].move;
 				if (kt)
 				{
 					k1move = kt->getKiller(d, 0);
 					k2move = kt->getKiller(d, 1);
 				}
-				if (tt && (*tt)[hash].key == hash && hashmove)
+				if (Tables::tt[hash].key == hash && hashmove)
 				{
 					if (isLegalMove(b, hashmove))
 					{
@@ -1037,7 +1034,6 @@ namespace movegen
 		decltype(ml.begin()) quietsCurrent;
 		decltype(ml.begin()) quietsEnd;
 		decltype(ml.begin()) losingCapturesBegin = ml.begin();
-		Ttable* tt = nullptr;
 		KillerTable* kt = nullptr;
 		History* ht = nullptr;
 		const board::QBB& b;
