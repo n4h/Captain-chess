@@ -29,12 +29,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <type_traits>
 #include <chrono>
 #include <cstdlib>
+#include <random>
 
 // auxiliary functions that have broad applicability throughout
 // the codebase, such as functions for converting between array
 // indices and rank and file numbers.
 namespace aux
 {
+    extern decltype(std::random_device{}()) seed;
+
     using std::integral;
 
     template<typename T>
