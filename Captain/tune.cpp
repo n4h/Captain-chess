@@ -21,6 +21,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <random>
 #include <cstddef>
 #include <chrono>
+#include <cmath>
+#include <fstream>
 
 #include "tune.hpp"
 #include "engine.hpp"
@@ -29,6 +31,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace Tuning
 {
+    void Tuner::loadTestPositions(std::string s)
+    {
+        std::ifstream fenData{ s };
+        std::string fen = "";
+        while (std::getline(fenData, fen))
+        {
+            if (!fen.empty())
+            {
+                testpositions.push_back(std::make_pair(board::QBB{fen}, 0));
+            }
+        }
+        evalTestPositions();
+    }
     Evaluator Tuner::tune()
     {
         std::pair<Evaluator, Fitness> peakFitness;
@@ -54,7 +69,7 @@ namespace Tuning
 
             Population pnew;
             auto k = pnew.begin();
-            for (auto j = p.begin() + 1; j != p.begin() + 4000; j += 2)
+            for (auto j = p.begin() + 1; j != p.begin() + 4001; j += 2)
             {
                 auto i = j - 1;
                 for (std::size_t n = 0; n != 5; ++n)
@@ -70,7 +85,15 @@ namespace Tuning
 
     Fitness Tuner::computeFitness(const Evaluator& ev)
     {
-        return Fitness{};
+        auto testposcount = testpositions.size();
+        auto Tests = testposcount / 10;
+        Fitness f = 0;
+        for (std::size_t i = 0; i != Tests; ++i)
+        {
+            auto error = std::pow(std::abs(testpositions[i].second - ev(testpositions[i].first)), 4);
+            f += error;
+        }
+        return f;
     }
     void Tuner::evalTestPositions()
     {
@@ -78,14 +101,12 @@ namespace Tuning
         ss.maxDepth = 2;
         ss.infiniteSearch = true;
         e->setSettings(ss);
-        auto now = std::chrono::steady_clock::now();
-
         for (auto& [position, eval] : testpositions)
         {
             e->newGame();
             std::vector<std::uint64_t> posHash = { Tables::tt.initialHash(position) };
             std::vector<board::Move> moves = {};
-            e->rootSearch(position, now,moves, posHash);
+            e->rootSearch(position, std::chrono::steady_clock::now(), moves, posHash);
             eval = e->eval;
         }
     }

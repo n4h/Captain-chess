@@ -44,10 +44,12 @@ namespace Tuning
         Fitness computeFitness(const Evaluator& ev);
         void evalTestPositions();
     public:
+        Tuner(Engine* engine, std::size_t maxgens) :e(engine), maxGenerations(maxgens) {}
         constexpr void setParameters(std::size_t maxGen)
         {
             maxGenerations = maxGen;
         }
+        void loadTestPositions(std::string s);
         Evaluator tune();
     };
 }
