@@ -25,6 +25,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "eval.hpp"
 #include "engine.hpp"
+#include "board.hpp"
 
 namespace Tuning
 {

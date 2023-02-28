@@ -20,6 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <execution>
 #include <random>
 #include <cstddef>
+#include <chrono>
+
 #include "tune.hpp"
 #include "engine.hpp"
 #include "tables.hpp"
@@ -76,9 +78,15 @@ namespace Tuning
         ss.maxDepth = 2;
         ss.infiniteSearch = true;
         e->setSettings(ss);
+        auto now = std::chrono::steady_clock::now();
+
         for (auto& [position, eval] : testpositions)
         {
             e->newGame();
+            std::vector<std::uint64_t> posHash = { Tables::tt.initialHash(position) };
+            std::vector<board::Move> moves = {};
+            e->rootSearch(position, now,moves, posHash);
+            eval = e->eval;
         }
     }
 }

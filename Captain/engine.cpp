@@ -282,6 +282,7 @@ namespace engine
         engine_out << "info string CNode " << tt->nodeTypePct(Tables::CUT) << std::endl;
         engine_out << "info string ANode " << tt->nodeTypePct(Tables::ALL) << std::endl;
         */
+        eval = rootMoves[0].score;
         engine_out << "bestmove " << move2uciFormat(b, rootMoves[0].m) << std::endl;
         engine_out.emit();
     }

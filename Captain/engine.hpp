@@ -74,6 +74,7 @@ namespace engine
         Engine() :engine_out(std::cout) {}
         void setSettings(SearchSettings ss) noexcept { settings = ss; }
         void newGame();
+        Eval eval = 0;
     private:
         template<typename T, typename T2>
         struct StoreInfo
@@ -125,7 +126,7 @@ namespace engine
         std::chrono::milliseconds moveTime = 0ms;
         Tables::KillerTable killers;
         Tables::HistoryTable historyHeuristic;
-        Eval eval = 0;
+
 #ifdef CAPTAIN_TRACE_SEARCH
         std::ofstream search_trace{"captain_searchtrace.txt"};
         board::QBB initialBoard;
