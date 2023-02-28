@@ -23,14 +23,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 int main()
 {
-	std::string init;
-	std::getline(std::cin, init);
-	if (init == "uci")
-	{
-		uci::UCIProtocol ucip;
-		ucip.UCIStartup();
-		ucip.UCIStartLoop();
-	}
-	
-	return 0;
+    std::string init;
+    std::getline(std::cin, init);
+    if (init == "uci")
+    {
+        uci::UCIProtocol ucip;
+        ucip.UCIStartup();
+        ucip.UCIStartLoop();
+    }
+    
+    return 0;
 }

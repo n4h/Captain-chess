@@ -23,47 +23,47 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace constants
 {
-	constexpr std::uint32_t fromMask = 077U;
-	constexpr std::uint32_t toMask = 07700U;
+    constexpr std::uint32_t fromMask = 077U;
+    constexpr std::uint32_t toMask = 07700U;
 
-	constexpr std::uint32_t fromMaskOffset = 0;
-	constexpr std::uint32_t toMaskOffset = 6U;
+    constexpr std::uint32_t fromMaskOffset = 0;
+    constexpr std::uint32_t toMaskOffset = 6U;
 
-	constexpr std::uint32_t moveTypeMask    = 0b1111U << 12;
-	constexpr std::uint32_t queenPromo      = 7U;
-	constexpr std::uint32_t rookPromo       = 6U;
-	constexpr std::uint32_t bishopPromo     = 5U;
-	constexpr std::uint32_t knightPromo     = 4U;
-	constexpr std::uint32_t enPCap          = 3U;
-	constexpr std::uint32_t KSCastle        = 2U;
-	constexpr std::uint32_t QSCastle        = 1U;
-	constexpr std::uint32_t QMove           = 0U;
+    constexpr std::uint32_t moveTypeMask    = 0b1111U << 12;
+    constexpr std::uint32_t queenPromo      = 7U;
+    constexpr std::uint32_t rookPromo       = 6U;
+    constexpr std::uint32_t bishopPromo     = 5U;
+    constexpr std::uint32_t knightPromo     = 4U;
+    constexpr std::uint32_t enPCap          = 3U;
+    constexpr std::uint32_t KSCastle        = 2U;
+    constexpr std::uint32_t QSCastle        = 1U;
+    constexpr std::uint32_t QMove           = 0U;
 
-	constexpr std::uint32_t moveTypeOffset = 12U;
+    constexpr std::uint32_t moveTypeOffset = 12U;
 
-	constexpr std::uint32_t emptySquare = 0U;
-	constexpr std::uint32_t oppPawn = 0b0010U;
-	constexpr std::uint32_t oppKnight = 0b0100U;
-	constexpr std::uint32_t oppBishop = 0b0110U;
-	constexpr std::uint32_t oppRook = 0b1000U;
-	constexpr std::uint32_t oppQueen = 0b1010U;
-	constexpr std::uint32_t oppKing = 0b1100U;
-	constexpr std::uint32_t myPawn = 0b0011U;
-	constexpr std::uint32_t myKnight = 0b0101U;
-	constexpr std::uint32_t myBishop = 0b0111U;
-	constexpr std::uint32_t myRook = 0b1001U;
-	constexpr std::uint32_t myQueen = 0b1011U;
-	constexpr std::uint32_t myKing = 0b1101U;
-	constexpr std::uint32_t pawnCode = 0b001U;
-	constexpr std::uint32_t knightCode = 0b010U;
-	constexpr std::uint32_t bishopCode = 0b011U;
-	constexpr std::uint32_t rookCode = 0b100U;
-	constexpr std::uint32_t queenCode = 0b101U;
-	constexpr std::uint32_t kingCode = 0b110U;
+    constexpr std::uint32_t emptySquare = 0U;
+    constexpr std::uint32_t oppPawn = 0b0010U;
+    constexpr std::uint32_t oppKnight = 0b0100U;
+    constexpr std::uint32_t oppBishop = 0b0110U;
+    constexpr std::uint32_t oppRook = 0b1000U;
+    constexpr std::uint32_t oppQueen = 0b1010U;
+    constexpr std::uint32_t oppKing = 0b1100U;
+    constexpr std::uint32_t myPawn = 0b0011U;
+    constexpr std::uint32_t myKnight = 0b0101U;
+    constexpr std::uint32_t myBishop = 0b0111U;
+    constexpr std::uint32_t myRook = 0b1001U;
+    constexpr std::uint32_t myQueen = 0b1011U;
+    constexpr std::uint32_t myKing = 0b1101U;
+    constexpr std::uint32_t pawnCode = 0b001U;
+    constexpr std::uint32_t knightCode = 0b010U;
+    constexpr std::uint32_t bishopCode = 0b011U;
+    constexpr std::uint32_t rookCode = 0b100U;
+    constexpr std::uint32_t queenCode = 0b101U;
+    constexpr std::uint32_t kingCode = 0b110U;
 
-	constexpr std::uint64_t whiteSquares = 0xaa55aa55aa55aa55ULL;
-	constexpr std::uint64_t blackSquares = ~whiteSquares;
-	constexpr std::uint64_t topHalf = 0xffffffff00000000ULL;
-	constexpr std::uint64_t botHalf = ~topHalf;
+    constexpr std::uint64_t whiteSquares = 0xaa55aa55aa55aa55ULL;
+    constexpr std::uint64_t blackSquares = ~whiteSquares;
+    constexpr std::uint64_t topHalf = 0xffffffff00000000ULL;
+    constexpr std::uint64_t botHalf = ~topHalf;
 }
 #endif

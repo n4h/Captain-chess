@@ -22,62 +22,63 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstddef>
 #include "tune.hpp"
 #include "engine.hpp"
+#include "tables.hpp"
 
 namespace Tuning
 {
-	Evaluator Tuner::tune()
-	{
-		std::pair<Evaluator, Fitness> peakFitness;
-		std::size_t generations = 0;
-		std::random_device rd;
-		std::mt19937_64 g(rd());
-		while (generations < maxGenerations)
-		{
-			std::shuffle(testpositions.begin(), testpositions.end(), g);
-			std::for_each(std::execution::par, p.begin(), p.end(), [this](auto& i) {
-				i.second = computeFitness(i.first);
-				});
+    Evaluator Tuner::tune()
+    {
+        std::pair<Evaluator, Fitness> peakFitness;
+        std::size_t generations = 0;
+        std::random_device rd;
+        std::mt19937_64 g(rd());
+        while (generations < maxGenerations)
+        {
+            std::shuffle(testpositions.begin(), testpositions.end(), g);
+            std::for_each(std::execution::par, p.begin(), p.end(), [this](auto& i) {
+                i.second = computeFitness(i.first);
+                });
 
-			std::sort(std::execution::par, p.begin(), p.end(), [](const auto& a, const auto& b) {
-				return a.second < b.second;
-				});
+            std::sort(std::execution::par, p.begin(), p.end(), [](const auto& a, const auto& b) {
+                return a.second < b.second;
+                });
 
-			if (p[0].second < peakFitness.second)
-			{
-				peakFitness = p[0];
-			}
+            if (p[0].second < peakFitness.second)
+            {
+                peakFitness = p[0];
+            }
 
-			std::shuffle(p.begin(), p.begin() + 4000, g);
+            std::shuffle(p.begin(), p.begin() + 4000, g);
 
-			Population pnew;
-			auto k = pnew.begin();
-			for (auto j = p.begin() + 1; j != p.begin() + 4000; j += 2)
-			{
-				auto i = j - 1;
-				for (std::size_t n = 0; n != 5; ++n)
-				{
-					*k++ = std::make_pair(Evaluator::crossover(i->first, j->first).mutate(false), 0);
-				}
-			}
-			p = pnew;
-			++generations;
-		}
-		return peakFitness.first;
-	}
+            Population pnew;
+            auto k = pnew.begin();
+            for (auto j = p.begin() + 1; j != p.begin() + 4000; j += 2)
+            {
+                auto i = j - 1;
+                for (std::size_t n = 0; n != 5; ++n)
+                {
+                    *k++ = std::make_pair(Evaluator::crossover(i->first, j->first).mutate(false), 0);
+                }
+            }
+            p = pnew;
+            ++generations;
+        }
+        return peakFitness.first;
+    }
 
-	Fitness Tuner::computeFitness(const Evaluator& ev)
-	{
-		return Fitness{};
-	}
-	void Tuner::evalTestPositions()
-	{
-		engine::SearchSettings ss;
-		ss.maxDepth = 2;
-		ss.infiniteSearch = true;
-		e->setSettings(ss);
-		for (auto& [position, eval] : testpositions)
-		{
-			e->newGame();
-		}
-	}
+    Fitness Tuner::computeFitness(const Evaluator& ev)
+    {
+        return Fitness{};
+    }
+    void Tuner::evalTestPositions()
+    {
+        engine::SearchSettings ss;
+        ss.maxDepth = 2;
+        ss.infiniteSearch = true;
+        e->setSettings(ss);
+        for (auto& [position, eval] : testpositions)
+        {
+            e->newGame();
+        }
+    }
 }

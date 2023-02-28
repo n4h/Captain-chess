@@ -31,32 +31,32 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace uci
 {
-	class UCIProtocol
-	{
-	public:
-		void UCIStartup();
-		void UCIStartLoop();
-		UCIProtocol(): uci_out(std::cout) {}
-	private:
-		void UCIPositionCommand(const std::vector<std::string>&);
-		void UCIGoCommand(const std::vector<std::string>&);
-		void UCIStopCommand();
-		void UCISetOptionCommand(const std::vector<std::string>&);
-		std::osyncstream uci_out;
-		std::string UCIName = "Captain v4.0";
-		std::string UCIAuthor = "Narbeh Mouradian";
-		bool initialized = false;
-		board::QBB b;
-		engine::MoveHistory moves;
-		engine::PositionHistory pos;
-		engine::Engine e;
-		std::future<void> engineResult;
-		searchFlags sf;
+    class UCIProtocol
+    {
+    public:
+        void UCIStartup();
+        void UCIStartLoop();
+        UCIProtocol(): uci_out(std::cout) {}
+    private:
+        void UCIPositionCommand(const std::vector<std::string>&);
+        void UCIGoCommand(const std::vector<std::string>&);
+        void UCIStopCommand();
+        void UCISetOptionCommand(const std::vector<std::string>&);
+        std::osyncstream uci_out;
+        std::string UCIName = "Captain v4.0";
+        std::string UCIAuthor = "Narbeh Mouradian";
+        bool initialized = false;
+        board::QBB b;
+        engine::MoveHistory moves;
+        engine::PositionHistory pos;
+        engine::Engine e;
+        std::future<void> engineResult;
+        searchFlags sf;
 
-		friend class engine::Engine;
-	};
+        friend class engine::Engine;
+    };
 
-	std::tuple<board::Move, bool> uciMove2boardMove(const board::QBB&, const std::string&, board::Color);
+    std::tuple<board::Move, bool> uciMove2boardMove(const board::QBB&, const std::string&, board::Color);
 }
 
 

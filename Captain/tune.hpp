@@ -28,27 +28,27 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace Tuning
 {
-	using eval::Evaluator;
+    using eval::Evaluator;
 
-	using Fitness = std::uint64_t;
-	using Population = std::array<std::pair<Evaluator, Fitness>, 10'000>;
-	using engine::Engine;
+    using Fitness = std::uint64_t;
+    using Population = std::array<std::pair<Evaluator, Fitness>, 10'000>;
+    using engine::Engine;
 
-	class Tuner
-	{
-		Engine* e;
-		std::vector<std::pair<board::QBB, eval::Eval>> testpositions;
-		Population p;
-		std::size_t maxGenerations = 300;
-		Fitness computeFitness(const Evaluator& ev);
-		void evalTestPositions();
-	public:
-		constexpr void setParameters(std::size_t maxGen)
-		{
-			maxGenerations = maxGen;
-		}
-		Evaluator tune();
-	};
+    class Tuner
+    {
+        Engine* e;
+        std::vector<std::pair<board::QBB, eval::Eval>> testpositions;
+        Population p;
+        std::size_t maxGenerations = 300;
+        Fitness computeFitness(const Evaluator& ev);
+        void evalTestPositions();
+    public:
+        constexpr void setParameters(std::size_t maxGen)
+        {
+            maxGenerations = maxGen;
+        }
+        Evaluator tune();
+    };
 }
 
 

@@ -32,62 +32,62 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace divide
 {
-	std::string printMove(board::Move m, board::Color stm)
-	{
-		bool wmove = stm == board::Color::White;
-		board::square from = static_cast<board::square>(board::getMoveInfo<constants::fromMask>(m));
-		board::square to = static_cast<board::square>(board::getMoveInfo<constants::toMask>(m));
-		std::ostringstream p;
+    std::string printMove(board::Move m, board::Color stm)
+    {
+        bool wmove = stm == board::Color::White;
+        board::square from = static_cast<board::square>(board::getMoveInfo<constants::fromMask>(m));
+        board::square to = static_cast<board::square>(board::getMoveInfo<constants::toMask>(m));
+        std::ostringstream p;
 
-		auto fromFile = aux::file(from);
-		auto toFile = aux::file(to);
-		auto fromRank = wmove ? aux::rank(from) : 7 - aux::rank(from);
-		auto toRank = wmove ? aux::rank(to) : 7 - aux::rank(to);
+        auto fromFile = aux::file(from);
+        auto toFile = aux::file(to);
+        auto fromRank = wmove ? aux::rank(from) : 7 - aux::rank(from);
+        auto toRank = wmove ? aux::rank(to) : 7 - aux::rank(to);
 
-		p << aux::file2char(fromFile);
-		p << fromRank + 1;
-		p << aux::file2char(toFile);
-		p << toRank + 1;
+        p << aux::file2char(fromFile);
+        p << fromRank + 1;
+        p << aux::file2char(toFile);
+        p << toRank + 1;
 
-		switch (board::getPromoPiece(m))
-		{
-		case board::queens:
-			p << 'Q';
-			return p.str();
-		case board::rooks:
-			p << 'R';
-			return p.str();
-		case board::bishops:
-			p << 'B';
-			return p.str();
-		case board::knights:
-			p << 'N';
-			return p.str();
-		default:
-			return p.str();
-		}
-	}
-	std::size_t perftDivide(const board::QBB& b, std::size_t t)
-	{
-		movegen::Movelist moves;
-		movegen::genMoves<movegen::QSearch>(b, moves);
-		movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, moves);
-		std::size_t total = 0;
-		std::osyncstream perftdivide_out(std::cout);
-		board::QBB bcopy = b;
-		for (std::size_t i = 0; i != moves.size(); ++i)
-		{
-			bcopy.makeMove(moves[i]);
-			perft::Perft p{ bcopy, t - 1 };
-			total += p.getResult();
-			board::Color stm = b.isWhiteToPlay() ? board::Color::White : board::Color::Black;
-			perftdivide_out << printMove(moves[i], stm) << ": " << p.getResult() << std::endl;
-			perftdivide_out.emit();
-			p.reset();
-			bcopy = b;
-		}
-		perftdivide_out << "total: " << total << std::endl;
-		perftdivide_out.emit();
-		return total;
-	}
+        switch (board::getPromoPiece(m))
+        {
+        case board::queens:
+            p << 'Q';
+            return p.str();
+        case board::rooks:
+            p << 'R';
+            return p.str();
+        case board::bishops:
+            p << 'B';
+            return p.str();
+        case board::knights:
+            p << 'N';
+            return p.str();
+        default:
+            return p.str();
+        }
+    }
+    std::size_t perftDivide(const board::QBB& b, std::size_t t)
+    {
+        movegen::Movelist moves;
+        movegen::genMoves<movegen::QSearch>(b, moves);
+        movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, moves);
+        std::size_t total = 0;
+        std::osyncstream perftdivide_out(std::cout);
+        board::QBB bcopy = b;
+        for (std::size_t i = 0; i != moves.size(); ++i)
+        {
+            bcopy.makeMove(moves[i]);
+            perft::Perft p{ bcopy, t - 1 };
+            total += p.getResult();
+            board::Color stm = b.isWhiteToPlay() ? board::Color::White : board::Color::Black;
+            perftdivide_out << printMove(moves[i], stm) << ": " << p.getResult() << std::endl;
+            perftdivide_out.emit();
+            p.reset();
+            bcopy = b;
+        }
+        perftdivide_out << "total: " << total << std::endl;
+        perftdivide_out.emit();
+        return total;
+    }
 }

@@ -23,9 +23,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 class searchFlags
 {
 public:
-	searchFlags() {}
-	static std::atomic_flag searching;
-	static std::atomic_flag ponder;
+    searchFlags() {}
+    static std::atomic_flag searching;
+    static std::atomic_flag ponder;
 };
 
 

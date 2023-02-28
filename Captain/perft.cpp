@@ -24,42 +24,42 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace perft
 {
-	Perft::Perft(){}
+    Perft::Perft(){}
 
-	Perft::Perft(board::QBB& b, std::size_t t)
-	{
-		perft(b, t);
-	}
+    Perft::Perft(board::QBB& b, std::size_t t)
+    {
+        perft(b, t);
+    }
 
-	void Perft::perft(const board::QBB& b, std::size_t t)
-	{
-		if (t-- == 0)
-		{
-			++perftResult;
-			return;
-		}
-		movegen::Movelist moveList;
-		movegen::genMoves<movegen::QSearch>(b, moveList);
-		movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, moveList);
+    void Perft::perft(const board::QBB& b, std::size_t t)
+    {
+        if (t-- == 0)
+        {
+            ++perftResult;
+            return;
+        }
+        movegen::Movelist moveList;
+        movegen::genMoves<movegen::QSearch>(b, moveList);
+        movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, moveList);
 
-		board::QBB bcopy = b;
+        board::QBB bcopy = b;
 
-		for (std::size_t k = 0; k != moveList.size(); ++k)
-		{
-			bcopy.makeMove(moveList[k]);
+        for (std::size_t k = 0; k != moveList.size(); ++k)
+        {
+            bcopy.makeMove(moveList[k]);
 
-			perft(bcopy, t);
-			bcopy = b;
-		}
-	}
+            perft(bcopy, t);
+            bcopy = b;
+        }
+    }
 
-	std::size_t Perft::getResult()
-	{
-		return perftResult;
-	}
+    std::size_t Perft::getResult()
+    {
+        return perftResult;
+    }
 
-	void Perft::reset()
-	{
-		perftResult = 0;
-	}
+    void Perft::reset()
+    {
+        perftResult = 0;
+    }
 }

@@ -37,99 +37,99 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace engine
 {
-	struct Timeout
-	{
-		Timeout() {}
-	};
+    struct Timeout
+    {
+        Timeout() {}
+    };
 
-	using namespace std::literals::chrono_literals;
-	using eval::Eval;
-	using MoveHistory = std::vector<board::Move>;
-	using PositionHistory = std::vector<std::uint64_t>;
-	using PrincipalVariation = std::forward_list<board::Move>;
-	// 12000 is arbitrary 
-	constexpr auto negInf = -12000;
-	constexpr auto posInf = 12000;
+    using namespace std::literals::chrono_literals;
+    using eval::Eval;
+    using MoveHistory = std::vector<board::Move>;
+    using PositionHistory = std::vector<std::uint64_t>;
+    using PrincipalVariation = std::forward_list<board::Move>;
+    // 12000 is arbitrary 
+    constexpr auto negInf = -12000;
+    constexpr auto posInf = 12000;
 
-	struct SearchSettings
-	{
-		std::size_t maxDepth = std::numeric_limits<std::size_t>::max();
-		std::size_t maxNodes = std::numeric_limits<std::size_t>::max();
-		std::size_t movestogo = std::numeric_limits<std::size_t>::max();
-		bool infiniteSearch = false;
-		bool ponder = false;
-		std::chrono::milliseconds maxTime = std::chrono::milliseconds::max();
-		std::chrono::milliseconds wmsec = 0ms;
-		std::chrono::milliseconds bmsec = 0ms;
-		std::chrono::milliseconds winc = 0ms;
-		std::chrono::milliseconds binc = 0ms;
-	};
+    struct SearchSettings
+    {
+        std::size_t maxDepth = std::numeric_limits<std::size_t>::max();
+        std::size_t maxNodes = std::numeric_limits<std::size_t>::max();
+        std::size_t movestogo = std::numeric_limits<std::size_t>::max();
+        bool infiniteSearch = false;
+        bool ponder = false;
+        std::chrono::milliseconds maxTime = std::chrono::milliseconds::max();
+        std::chrono::milliseconds wmsec = 0ms;
+        std::chrono::milliseconds bmsec = 0ms;
+        std::chrono::milliseconds winc = 0ms;
+        std::chrono::milliseconds binc = 0ms;
+    };
 
-	class Engine
-	{
-	public:
-		void rootSearch(const board::QBB&, std::chrono::time_point<std::chrono::steady_clock>,
-			const MoveHistory&, const PositionHistory&);
-		double getEval();
-		Engine() :engine_out(std::cout) {}
-		void setSettings(SearchSettings ss) noexcept { settings = ss; }
-		void newGame();
-	private:
-		template<typename T, typename T2>
-		struct StoreInfo
-		{
-			StoreInfo(T& x, T2 item) : h(x)
-			{
-				h.push_back(item);
-			}
-			~StoreInfo()
-			{
-				h.pop_back();
-			}
-		private:
-			T& h;
-		};
-		std::string move2uciFormat(const board::QBB&, board::Move);
-		std::string getPVuciformat(board::QBB b);
-		std::string getCurrline(board::QBB b);
-		std::size_t ply() const;
-		bool shouldStop() noexcept;
-		void uciUpdate();
-		bool threeFoldRep() const;
-		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
-		Eval alphaBetaSearch(const board::QBB&, PrincipalVariation& pv, Eval, Eval, int, bool);
-		bool isPVNode(Eval alpha, Eval beta);
-		int LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV);
-		void printPV(const board::QBB& b);
-		std::string line2string(board::QBB b, const std::vector<board::Move>& moves);
-		std::chrono::milliseconds elapsed() const;
-		static bool futilityPruning(const board::QBB& before, board::Move m, int depth, bool PV)
-		{
-			return !PV && depth == 1 && !before.isCapture(m) && !movegen::isInCheck(before) && !movegen::moveGivesCheck(before, m);
-		}
+    class Engine
+    {
+    public:
+        void rootSearch(const board::QBB&, std::chrono::time_point<std::chrono::steady_clock>,
+            const MoveHistory&, const PositionHistory&);
+        double getEval();
+        Engine() :engine_out(std::cout) {}
+        void setSettings(SearchSettings ss) noexcept { settings = ss; }
+        void newGame();
+    private:
+        template<typename T, typename T2>
+        struct StoreInfo
+        {
+            StoreInfo(T& x, T2 item) : h(x)
+            {
+                h.push_back(item);
+            }
+            ~StoreInfo()
+            {
+                h.pop_back();
+            }
+        private:
+            T& h;
+        };
+        std::string move2uciFormat(const board::QBB&, board::Move);
+        std::string getPVuciformat(board::QBB b);
+        std::string getCurrline(board::QBB b);
+        std::size_t ply() const;
+        bool shouldStop() noexcept;
+        void uciUpdate();
+        bool threeFoldRep() const;
+        Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
+        Eval alphaBetaSearch(const board::QBB&, PrincipalVariation& pv, Eval, Eval, int, bool);
+        bool isPVNode(Eval alpha, Eval beta);
+        int LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV);
+        void printPV(const board::QBB& b);
+        std::string line2string(board::QBB b, const std::vector<board::Move>& moves);
+        std::chrono::milliseconds elapsed() const;
+        static bool futilityPruning(const board::QBB& before, board::Move m, int depth, bool PV)
+        {
+            return !PV && depth == 1 && !before.isCapture(m) && !movegen::isInCheck(before) && !movegen::moveGivesCheck(before, m);
+        }
 
-		std::osyncstream engine_out;
-		SearchSettings settings;
-		std::chrono::time_point<std::chrono::steady_clock> searchStart;
-		std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
-		std::size_t nodes = 0;
-		std::uint64_t hash = 0;
-		std::size_t currIDdepth = 0;
-		PrincipalVariation MainPV;
-		std::vector<board::Move> prevMoves;
-		std::size_t initialMove = 0;
-		std::vector<std::uint64_t> prevPos;
-		std::size_t initialPos = 0;
-		movegen::Movelist<movegen::ScoredMove> rootMoves;
-		bool engineW = true;
-		std::chrono::milliseconds moveTime = 0ms;
-		Tables::KillerTable killers;
-		Tables::HistoryTable historyHeuristic;
-		Eval eval = 0;
+        std::osyncstream engine_out;
+        SearchSettings settings;
+        std::chrono::time_point<std::chrono::steady_clock> searchStart;
+        std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
+        std::size_t nodes = 0;
+        std::uint64_t hash = 0;
+        std::size_t currIDdepth = 0;
+        PrincipalVariation MainPV;
+        std::vector<board::Move> prevMoves;
+        std::size_t initialMove = 0;
+        std::vector<std::uint64_t> prevPos;
+        std::size_t initialPos = 0;
+        movegen::Movelist<movegen::ScoredMove> rootMoves;
+        bool engineW = true;
+        std::chrono::milliseconds moveTime = 0ms;
+        Tables::KillerTable killers;
+        Tables::HistoryTable historyHeuristic;
+        Eval eval = 0;
 #ifdef CAPTAIN_TRACE_SEARCH
-		std::ofstream search_trace{"captain_searchtrace.txt"};
-		board::QBB initialBoard;
+        std::ofstream search_trace{"captain_searchtrace.txt"};
+        board::QBB initialBoard;
 #endif
-	};
+    };
 }
 #endif
