@@ -26,6 +26,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <syncstream>
 #include <forward_list>
 #include <fstream>
+#include <iostream>
 
 #include "board.hpp"
 #include "movegen.hpp"
@@ -72,7 +73,6 @@ namespace engine
 		double getEval();
 		Engine() :engine_out(std::cout) {}
 		void setSettings(SearchSettings ss) noexcept { settings = ss; }
-		void setTTable(Tables::TTable*);
 		void newGame();
 	private:
 		template<typename T, typename T2>
@@ -123,7 +123,6 @@ namespace engine
 		movegen::Movelist<movegen::ScoredMove> rootMoves;
 		bool engineW = true;
 		std::chrono::milliseconds moveTime = 0ms;
-		Tables::TTable* tt = nullptr;
 		Tables::KillerTable killers;
 		Tables::HistoryTable historyHeuristic;
 		Eval eval = 0;
