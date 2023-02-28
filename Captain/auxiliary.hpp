@@ -40,13 +40,6 @@ namespace aux
     template<typename T>
     concept uintOrSquare = std::unsigned_integral<T> || std::unsigned_integral<std::underlying_type_t<T>>;
 
-    constexpr unsigned int wk_start = 4U;
-    constexpr unsigned int wkr_start = 7U;
-    constexpr unsigned int wqr_start = 0U;
-    constexpr unsigned int bk_start = 60U;
-    constexpr unsigned int bkr_start = 63U;
-    constexpr unsigned int bqr_start = 56U;
-
     // rank = rows, file = columns. Both rank and column
     // go from 0 to 7 inclusive. This translates (rank, file)
     // to the right index on a bitboard
