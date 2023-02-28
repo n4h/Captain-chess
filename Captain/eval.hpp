@@ -339,8 +339,7 @@ namespace eval
         static Evaluator crossover(const Evaluator& e1, const Evaluator& e2)
         {
             Evaluator e;
-            std::random_device rd;
-            std::mt19937_64 urbg(rd());
+            std::mt19937_64 urbg(aux::seed);
             std::bernoulli_distribution whiche;
             auto parent = [&e1, &e2, &whiche, &urbg]() -> const Evaluator& {
                 return whiche(urbg) ? e1 : e2;

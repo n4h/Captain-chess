@@ -26,6 +26,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "tables.hpp"
 #include "board.hpp"
+#include "auxiliary.hpp"
 
 
 namespace Tables
@@ -33,9 +34,7 @@ namespace Tables
     TTable tt{(1024 * 1024) / sizeof(Entry)};
     void TTable::initRandom()
     {
-        std::random_device rd;
-
-        std::mt19937_64 rnum{rd()};
+        std::mt19937_64 rnum{aux::seed};
 
         for (std::size_t i = 0; i != 6; ++i)
         {

@@ -23,6 +23,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "tune.hpp"
 #include "engine.hpp"
 #include "tables.hpp"
+#include "auxiliary.hpp"
 
 namespace Tuning
 {
@@ -30,8 +31,7 @@ namespace Tuning
     {
         std::pair<Evaluator, Fitness> peakFitness;
         std::size_t generations = 0;
-        std::random_device rd;
-        std::mt19937_64 g(rd());
+        std::mt19937_64 g(aux::seed);
         while (generations < maxGenerations)
         {
             std::shuffle(testpositions.begin(), testpositions.end(), g);

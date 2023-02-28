@@ -414,8 +414,7 @@ namespace eval
 
     const Evaluator& Evaluator::mutate(bool randomize)
     {
-        std::random_device rd;
-        std::mt19937_64 urbg(rd());
+        std::mt19937_64 urbg(aux::seed);
         std::bernoulli_distribution doMutate(randomize ? 0.85 : 1.0/2500.0);
         std::uniform_int_distribution positionalBonus(-50, 50);
         std::uniform_int_distribution gamePhase(-500, 500);
