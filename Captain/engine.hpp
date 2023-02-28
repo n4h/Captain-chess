@@ -89,12 +89,26 @@ namespace engine
 		private:
 			T& h;
 		};
-		std::osyncstream engine_out;
 		std::string move2uciFormat(const board::QBB&, board::Move);
 		std::string getPVuciformat(board::QBB b);
 		std::string getCurrline(board::QBB b);
+		std::size_t ply() const;
+		bool shouldStop() noexcept;
+		void uciUpdate();
+		bool threeFoldRep() const;
+		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
+		Eval alphaBetaSearch(const board::QBB&, PrincipalVariation& pv, Eval, Eval, int, bool);
+		bool isPVNode(Eval alpha, Eval beta);
+		int LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV);
 		void printPV(const board::QBB& b);
 		std::string line2string(board::QBB b, const std::vector<board::Move>& moves);
+		std::chrono::milliseconds elapsed() const;
+		static bool futilityPruning(const board::QBB& before, board::Move m, int depth, bool PV)
+		{
+			return !PV && depth == 1 && !before.isCapture(m) && !movegen::isInCheck(before) && !movegen::moveGivesCheck(before, m);
+		}
+
+		std::osyncstream engine_out;
 		SearchSettings settings;
 		std::chrono::time_point<std::chrono::steady_clock> searchStart;
 		std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
@@ -110,24 +124,8 @@ namespace engine
 		bool engineW = true;
 		std::chrono::milliseconds moveTime = 0ms;
 		Tables::TTable* tt = nullptr;
-		std::size_t ply() const;
-		bool shouldStop() noexcept;
-		void uciUpdate();
-		std::chrono::milliseconds elapsed() const;
 		Tables::KillerTable killers;
 		Tables::HistoryTable historyHeuristic;
-		bool threeFoldRep() const;
-		Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
-
-		Eval alphaBetaSearch(const board::QBB&, PrincipalVariation& pv, Eval, Eval, int, bool);
-		bool isPVNode(Eval alpha, Eval beta);
-		int LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV);
-
-		static bool futilityPruning(const board::QBB& before, board::Move m, int depth, bool PV)
-		{
-			return !PV && depth == 1 && !before.isCapture(m) && !movegen::isInCheck(before) && !movegen::moveGivesCheck(before, m);
-		}
-
 		Eval eval = 0;
 #ifdef CAPTAIN_TRACE_SEARCH
 		std::ofstream search_trace{"captain_searchtrace.txt"};
