@@ -31,19 +31,22 @@ namespace Tuning
 	using eval::Evaluator;
 
 	using Fitness = std::uint64_t;
-	using Population = std::vector<std::pair<Evaluator, Fitness>>;
+	using Population = std::array<std::pair<Evaluator, Fitness>, 10'000>;
 	using engine::Engine;
 
 	class Tuner
 	{
 		Engine* e;
-		std::vector<board::QBB> testpositions;
+		std::vector<std::pair<board::QBB, eval::Eval>> testpositions;
 		Population p;
-		std::size_t generations = 0;
-		std::size_t maxGenerations = 0;
+		std::size_t maxGenerations = 300;
 		Fitness computeFitness(const Evaluator& ev);
+		void evalTestPositions();
 	public:
-		void setParameters(std::size_t maxGenerations);
+		constexpr void setParameters(std::size_t maxGen)
+		{
+			maxGenerations = maxGen;
+		}
 		Evaluator tune();
 	};
 }

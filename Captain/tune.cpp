@@ -21,14 +21,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <random>
 #include <cstddef>
 #include "tune.hpp"
+#include "engine.hpp"
 
 namespace Tuning
 {
 	Evaluator Tuner::tune()
 	{
 		std::pair<Evaluator, Fitness> peakFitness;
+		std::size_t generations = 0;
+		std::random_device rd;
+		std::mt19937_64 g(rd());
 		while (generations < maxGenerations)
 		{
+			std::shuffle(testpositions.begin(), testpositions.end(), g);
 			std::for_each(std::execution::par, p.begin(), p.end(), [this](auto& i) {
 				i.second = computeFitness(i.first);
 				});
@@ -42,25 +47,37 @@ namespace Tuning
 				peakFitness = p[0];
 			}
 
-			p.resize(4000);
-
-			std::random_device rd;
-			std::mt19937_64 g(rd());
-
-			std::shuffle(p.begin(), p.end(), g);
+			std::shuffle(p.begin(), p.begin() + 4000, g);
 
 			Population pnew;
-			for (auto j = p.begin() + 1; j != p.end(); j += 2)
+			auto k = pnew.begin();
+			for (auto j = p.begin() + 1; j != p.begin() + 4000; j += 2)
 			{
 				auto i = j - 1;
 				for (std::size_t n = 0; n != 5; ++n)
 				{
-					pnew.push_back(std::make_pair(Evaluator::crossover(i->first, j->first).mutate(false), 0));
+					*k++ = std::make_pair(Evaluator::crossover(i->first, j->first).mutate(false), 0);
 				}
 			}
-			p = std::move(pnew);
+			p = pnew;
 			++generations;
 		}
 		return peakFitness.first;
+	}
+
+	Fitness Tuner::computeFitness(const Evaluator& ev)
+	{
+		return Fitness{};
+	}
+	void Tuner::evalTestPositions()
+	{
+		engine::SearchSettings ss;
+		ss.maxDepth = 2;
+		ss.infiniteSearch = true;
+		e->setSettings(ss);
+		for (auto& [position, eval] : testpositions)
+		{
+			e->newGame();
+		}
 	}
 }
