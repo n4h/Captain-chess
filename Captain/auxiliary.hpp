@@ -31,9 +31,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstdlib>
 #include <random>
 
-// auxiliary functions that have broad applicability throughout
-// the codebase, such as functions for converting between array
-// indices and rank and file numbers.
 namespace aux
 {
     extern decltype(std::random_device{}()) seed;
@@ -41,7 +38,7 @@ namespace aux
     using std::integral;
 
     template<typename T>
-    concept uintOrSquare = std::unsigned_integral<T> || std::unsigned_integral<std::underlying_type_t<T>>;
+    concept UintOrSquare = std::unsigned_integral<T> || std::unsigned_integral<std::underlying_type_t<T>>;
 
     // rank = rows, file = columns. Both rank and column
     // go from 0 to 7 inclusive. This translates (rank, file)
@@ -53,12 +50,12 @@ namespace aux
 
     // converts square to new square after vertically flipping board
     // (file stays same, but rank is flipped)
-    constexpr std::unsigned_integral auto flip(uintOrSquare auto x)
+    constexpr std::unsigned_integral auto flip(UintOrSquare auto x)
     {
         return x ^ 56;
     }
 
-    constexpr std::uint64_t setbit(uintOrSquare auto pos)
+    constexpr std::uint64_t setbit(UintOrSquare auto pos)
     {
         return 0b1ULL << pos;
     }
@@ -68,7 +65,7 @@ namespace aux
         return setbit(index(rank, file));
     }
 
-    constexpr std::unsigned_integral auto rank(uintOrSquare auto x)
+    constexpr std::unsigned_integral auto rank(UintOrSquare auto x)
     {
         return x / 8;
     }
@@ -76,18 +73,18 @@ namespace aux
     // file and rank satisfy index(rank(x),file(x)) = x;
     // so we can convert between the index of a 64 elem
     // array and the rank/file associated with that index
-    constexpr std::unsigned_integral auto file(uintOrSquare auto x)
+    constexpr std::unsigned_integral auto file(UintOrSquare auto x)
     {
         return x - 8 * rank(x);
     }
 
     // getDiag and getAntiDiag index into diagMask and antidiagMask
-    constexpr std::unsigned_integral auto getDiag(uintOrSquare auto x)
+    constexpr std::unsigned_integral auto getDiag(UintOrSquare auto x)
     {
         return rank(x) + file(x);
     }
 
-    constexpr std::unsigned_integral auto getAntiDiag(uintOrSquare auto x)
+    constexpr std::unsigned_integral auto getAntiDiag(UintOrSquare auto x)
     {
         return 7U + rank(x) - file(x);
     }
@@ -95,12 +92,12 @@ namespace aux
     // takes and index, and returns a new index
     // after offsetting the old index by r ranks
     // and f files
-    constexpr std::unsigned_integral auto index2index(uintOrSquare auto index, integral auto r, integral auto f)
+    constexpr std::unsigned_integral auto index2index(UintOrSquare auto index, integral auto r, integral auto f)
     {
         return aux::index( rank(index) + r, file(index) + f);
     }
     // offset i by rank r and file f and check if it is still on the board
-    constexpr bool isIndex(uintOrSquare auto i, integral auto r, integral auto f)
+    constexpr bool isIndex(UintOrSquare auto i, integral auto r, integral auto f)
     {
         return !(rank(i) + r > 8 || rank(i) + r < 1 || file(i) + f > 8 || file(i) + f < 1);
     }
