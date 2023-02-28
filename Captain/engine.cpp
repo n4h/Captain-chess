@@ -437,20 +437,17 @@ namespace engine
         }
         ++nodes;
         
-        if (tt)
+        if (Tables::tt[hash].key == hash && Tables::tt[hash].depth >= depth)
         {
-            if (Tables::tt[hash].key == hash && Tables::tt[hash].depth >= depth)
+            auto nodetype = Tables::tt[hash].nodeType;
+            auto eval = Tables::tt[hash].eval;
+            if (nodetype == Tables::ALL && eval < alpha)
             {
-                auto nodetype = Tables::tt[hash].nodeType;
-                auto eval = Tables::tt[hash].eval;
-                if (nodetype == Tables::ALL && eval < alpha)
-                {
-                    return eval;
-                }
-                else if (nodetype == Tables::CUT && eval > beta)
-                {
-                    return eval;
-                }
+                return eval;
+            }
+            else if (nodetype == Tables::CUT && eval > beta)
+            {
+                return eval;
             }
         }
 
@@ -482,7 +479,7 @@ namespace engine
 
         board::Move topMove = 0;
         Eval currEval = negInf;
-        movegen::MoveOrder moves(tt, &killers, &historyHeuristic, b, hash, ply());
+        movegen::MoveOrder moves(&killers, &historyHeuristic, b, hash, ply());
         board::Move nextMove = 0;
         board::QBB bcopy = b;
         std::size_t i = 0;
@@ -557,16 +554,14 @@ namespace engine
         {
             return movegen::isInCheck(b) ? negInf : 0;
         }
-        if (tt)
+
+        if (nodeType == Tables::PV)
         {
-            if (nodeType == Tables::PV)
-            {
-                Tables::tt.store(hash, depth, besteval, topMove, nodeType, initialPos);
-            }
-            else
-            {
-                Tables::tt.tryStore(hash, depth, besteval, topMove, nodeType, initialPos);
-            }
+            Tables::tt.store(hash, depth, besteval, topMove, nodeType, initialPos);
+        }
+        else
+        {
+            Tables::tt.tryStore(hash, depth, besteval, topMove, nodeType, initialPos);
         }
         return besteval;
     }
