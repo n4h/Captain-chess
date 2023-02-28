@@ -334,7 +334,7 @@ namespace eval
 			}
 		}
 
-		void mutate();
+		const Evaluator& mutate(bool randomize);
 
 		static Evaluator crossover(const Evaluator& e1, const Evaluator& e2)
 		{
