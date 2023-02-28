@@ -33,7 +33,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace aux
 {
-    extern decltype(std::random_device{}()) seed;
+    extern const decltype(std::random_device{}()) seed;
 
     using std::integral;
 
