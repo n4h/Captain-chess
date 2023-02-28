@@ -55,7 +55,7 @@ namespace Tuning
 				auto i = j - 1;
 				for (std::size_t n = 0; n != 5; ++n)
 				{
-					pnew.push_back(this->crossover(*i, *j));
+					pnew.push_back(std::make_pair(Evaluator::crossover(i->first, j->first).mutate(false), 0));
 				}
 			}
 			p = std::move(pnew);
