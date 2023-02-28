@@ -15,3 +15,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 */
+
+#include <random>
+#include "auxiliary.hpp"
+
+namespace aux
+{
+    const auto seed = std::random_device{}();
+}
