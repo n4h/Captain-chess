@@ -18,6 +18,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <intrin.h>
 #include <algorithm>
+#include <chrono>
 
 #pragma intrinsic(_BitScanForward64)
 
@@ -483,9 +484,9 @@ namespace eval
             }
         };
 
-        std::time_t nowtime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         oss << '\n';
-        oss << "Date: " << std::ctime(&nowtime);
+        auto now = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
+        oss << "Tuning completed date/time: " << now << '\n';
 
         oss << "OPENING PSQTs" << '\n';
         printPSQTSet(_openingPSQT);
