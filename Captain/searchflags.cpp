@@ -20,5 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "searchflags.hpp"
 
-std::atomic_flag searchFlags::searching = ATOMIC_FLAG_INIT;
-std::atomic_flag searchFlags::ponder = ATOMIC_FLAG_INIT;
+namespace SearchFlags
+{
+	std::atomic_flag searching = ATOMIC_FLAG_INIT;
+	std::atomic_flag ponder = ATOMIC_FLAG_INIT;
+}

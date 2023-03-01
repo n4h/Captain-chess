@@ -20,13 +20,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #define SEARCHFLAGS_H
 #include <atomic>
 
-class searchFlags
+namespace SearchFlags
 {
-public:
-    searchFlags() {}
-    static std::atomic_flag searching;
-    static std::atomic_flag ponder;
-};
+    extern std::atomic_flag searching;
+    extern std::atomic_flag ponder;
+}
 
 
 #endif
