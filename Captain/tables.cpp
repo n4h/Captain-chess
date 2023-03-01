@@ -34,7 +34,8 @@ namespace Tables
     TTable tt{(1024 * 1024) / sizeof(Entry)};
     void TTable::initRandom()
     {
-        std::mt19937_64 rnum{aux::seed};
+        std::random_device rd{};
+        std::mt19937_64 rnum{rd()};
 
         for (std::size_t i = 0; i != 6; ++i)
         {
