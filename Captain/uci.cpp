@@ -34,6 +34,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "auxiliary.hpp"
 #include "constants.hpp"
 #include "divide.hpp"
+#include "tune.hpp"
 
 namespace uci
 {
@@ -94,6 +95,8 @@ namespace uci
             }
             if (UCIMessage[0] == "stop")
                 UCIStopCommand();
+            if (UCIMessage[0] == "tune")
+                Tune(UCIMessage[1]);
         }
     }
 
@@ -207,6 +210,15 @@ namespace uci
                 }
             ++index;
         }
+    }
+
+    void UCIProtocol::Tune(std::string file)
+    {
+        Tuning::Tuner t{ &(this->e), 10 };
+        t.loadTestPositions(file);
+        const auto& e = t.tune();
+        std::ofstream output{ std::string("finalevaluator.txt") };
+        output << e.asString();
     }
 
     // we're assuming that the GUI isn't sending us invalid moves
