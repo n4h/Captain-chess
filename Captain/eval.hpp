@@ -212,8 +212,8 @@ namespace eval
         using PSQT = std::array<Eval, 64>;
         std::array<PSQT, 12> _openingPSQT;
         unsigned _openToMid;
-        unsigned _midToEnd;
         std::array<PSQT, 12> _midPSQT;
+        unsigned _midToEnd;
         std::array<PSQT, 12> _endPSQT;
         std::array<std::pair<unsigned, Eval>, 12> _aggressionBonuses;
         std::pair<unsigned, Eval> _pawnBishopPenalty;
@@ -372,6 +372,7 @@ namespace eval
 
             return e;
         }
+        std::string asString() const;
     };
 }
 #endif

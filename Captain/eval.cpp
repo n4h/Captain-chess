@@ -452,4 +452,60 @@ namespace eval
 
         return *this;
     }
+    std::string Evaluator::asString() const
+    {
+        std::ostringstream oss;
+        for (const auto& i : _openingPSQT)
+        {
+            for (auto j : i)
+            {
+                oss << j << ",";
+            }
+            oss << ";";
+        }
+        oss << "....";
+        oss << _openToMid;
+        oss << "....";
+        for (const auto& i : _midPSQT)
+        {
+            for (auto j : i)
+            {
+                oss << j << ",";
+            }
+            oss << ";";
+        }
+        oss << "....";
+        oss << _midToEnd;
+        oss << "....";
+        for (const auto& i : _endPSQT)
+        {
+            for (auto j : i)
+            {
+                oss << j << ",";
+            }
+            oss << ";";
+        }
+        oss << "....";
+        oss << "aggression";
+        oss << "....";
+        for (const auto& [dist, bonus] : _aggressionBonuses)
+        {
+            oss << "<" << dist << "," << bonus << ">";
+        }
+        oss << "....";
+        oss << "pawnbishoppenalty";
+        oss << "....";
+        oss << "<" << _pawnBishopPenalty.first << "," << _pawnBishopPenalty.second << ">";
+        oss << "....";
+        oss << "opendiagonal,openfile,pair";
+        oss << "....";
+        oss << "<" << _bishopOpenDiagonalBonus << "," << _rookOpenFileBonus << "," << _bishopPairBonus << ">";
+        oss << "....";
+        oss << "knightoutpost";
+        oss << "....";
+        oss << "<" << _knightOutpostBonus.first << "," << _knightOutpostBonus.second << ">";
+        oss << "....";
+        return oss.str();
+
+    }
 }
