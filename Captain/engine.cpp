@@ -229,7 +229,7 @@ namespace engine
             std::size_t i = 0;
             for (auto& [move, score] : rootMoves)
             {
-                if (!searchFlags::searching.test())
+                if (!SearchFlags::searching.test())
                     goto endsearch;
                 bcopy.makeMove(move);
                 StoreInfo recordMove(prevMoves, move);
@@ -274,7 +274,7 @@ namespace engine
             printPV(b);
         }
     endsearch:
-        searchFlags::searching.clear();
+        SearchFlags::searching.clear();
         /*
         engine_out << "info string capturePct " << tt->capturePct(b) << std::endl;
         engine_out << "info string usedPct " << tt->usedPct() << std::endl;
@@ -296,7 +296,7 @@ namespace engine
         if (b.get50() == 50)
             return 0;
         if (shouldStop())
-            searchFlags::searching.clear();
+            SearchFlags::searching.clear();
         ++nodes;
 
         if (Tables::tt[hash].key == hash && Tables::tt[hash].depth >= depth)
@@ -387,7 +387,7 @@ namespace engine
                     }
                 }
             }
-            if (!searchFlags::searching.test())
+            if (!SearchFlags::searching.test())
                 throw Timeout();
             auto oldhash = hash;
             bcopy.makeMove(ml[i].m);
@@ -420,7 +420,7 @@ namespace engine
         
         if (shouldStop())
         {
-            searchFlags::searching.clear();
+            SearchFlags::searching.clear();
         }
 
         uciUpdate();
@@ -488,7 +488,7 @@ namespace engine
         //auto staticEval = std::make_pair(0, false);
         for (; moves.next(b, nextMove); ++i)
         {
-            if (!searchFlags::searching.test())
+            if (!SearchFlags::searching.test())
             {
                 throw Timeout();
             }

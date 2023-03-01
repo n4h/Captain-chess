@@ -52,7 +52,6 @@ namespace uci
         engine::PositionHistory pos;
         engine::Engine e;
         std::future<void> engineResult;
-        searchFlags sf;
 
         friend class engine::Engine;
     };

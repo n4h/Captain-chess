@@ -186,14 +186,14 @@ namespace uci
         }
         e.setSettings(ss);
 
-        sf.searching.test_and_set();
+        SearchFlags::searching.test_and_set();
         auto tmp = std::async(&engine::Engine::rootSearch, &e, std::cref(b), startTime, std::cref(moves), std::cref(pos));
         engineResult = std::move(tmp);
     }
 
     void UCIProtocol::UCIStopCommand()
     {
-        sf.searching.clear();
+        SearchFlags::searching.clear();
         if (engineResult.valid())
             engineResult.get();
     }
