@@ -23,6 +23,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <chrono>
 #include <cmath>
 #include <fstream>
+#include <limits>
 
 #include "tune.hpp"
 #include "engine.hpp"
@@ -47,7 +48,7 @@ namespace Tuning
     }
     Evaluator Tuner::tune()
     {
-        std::pair<Evaluator, Fitness> peakFitness;
+        std::pair<Evaluator, Fitness> peakFitness = std::make_pair(Evaluator(), std::numeric_limits<Fitness>::max());
         std::size_t generations = 0;
         std::mt19937_64 g(aux::seed);
         while (generations < maxGenerations)
