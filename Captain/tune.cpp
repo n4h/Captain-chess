@@ -101,7 +101,7 @@ namespace Tuning
     void Tuner::evalTestPositions()
     {
         engine::SearchSettings ss;
-        ss.maxNodes = 20000;
+        ss.maxDepth = 2;
         ss.infiniteSearch = true;
         e->setSettings(ss);
         for (auto& [position, eval] : testpositions)
