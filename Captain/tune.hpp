@@ -47,6 +47,10 @@ namespace Tuning
         Tuner(Engine* engine, std::size_t maxgens) :e(engine), maxGenerations(maxgens)
         {
             pop = std::make_unique<Population>();
+            for (auto i = pop->begin(); i != pop->end(); ++i)
+            {
+                i->first.mutate(true);
+            }
         }
         constexpr void setParameters(std::size_t maxGen)
         {
