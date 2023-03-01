@@ -28,6 +28,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "engine.hpp"
 #include "tables.hpp"
 #include "auxiliary.hpp"
+#include "searchflags.hpp"
 
 namespace Tuning
 {
@@ -98,7 +99,7 @@ namespace Tuning
     void Tuner::evalTestPositions()
     {
         engine::SearchSettings ss;
-        ss.maxDepth = 2;
+        ss.maxNodes = 20000;
         ss.infiniteSearch = true;
         e->setSettings(ss);
         for (auto& [position, eval] : testpositions)
@@ -106,6 +107,7 @@ namespace Tuning
             e->newGame();
             std::vector<std::uint64_t> posHash = { Tables::tt.initialHash(position) };
             std::vector<board::Move> moves = {};
+            SearchFlags::searching.test_and_set();
             e->rootSearch(position, std::chrono::steady_clock::now(), moves, posHash);
             eval = e->eval;
         }
