@@ -483,6 +483,10 @@ namespace eval
             }
         };
 
+        std::time_t nowtime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        oss << '\n';
+        oss << "Date: " << std::ctime(&nowtime);
+
         oss << "OPENING PSQTs" << '\n';
         printPSQTSet(_openingPSQT);
 
