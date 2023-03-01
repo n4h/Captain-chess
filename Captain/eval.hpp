@@ -328,7 +328,7 @@ namespace eval
             _aggressionBonuses[3] = std::make_pair(7, 5);
             _aggressionBonuses[4] = std::make_pair(3, 5);
             _aggressionBonuses[5] = std::make_pair(0, 0);
-            for (std::size_t i = 0; i != 12; ++i)
+            for (std::size_t i = 6; i != 12; ++i)
             {
                 _aggressionBonuses[i] = _aggressionBonuses[i - 6];
             }
