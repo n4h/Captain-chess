@@ -52,24 +52,24 @@ namespace Tuning
         while (generations < maxGenerations)
         {
             std::shuffle(testpositions.begin(), testpositions.end(), g);
-            std::for_each(std::execution::par, p.begin(), p.end(), [this](auto& i) {
+            std::for_each(std::execution::par, pop->begin(), pop->end(), [this](auto& i) {
                 i.second = computeFitness(i.first);
                 });
 
-            std::sort(std::execution::par, p.begin(), p.end(), [](const auto& a, const auto& b) {
+            std::sort(std::execution::par, pop->begin(), pop->end(), [](const auto& a, const auto& b) {
                 return a.second < b.second;
                 });
 
-            if (p[0].second < peakFitness.second)
+            if ((*pop)[0].second < peakFitness.second)
             {
-                peakFitness = p[0];
+                peakFitness = (*pop)[0];
             }
 
-            std::shuffle(p.begin(), p.begin() + 4000, g);
+            std::shuffle(pop->begin(), pop->begin() + 4000, g);
 
-            Population pnew;
-            auto k = pnew.begin();
-            for (auto j = p.begin() + 1; j != p.begin() + 4001; j += 2)
+            std::unique_ptr<Population> newpop = std::make_unique<Population>();
+            auto k = newpop->begin();
+            for (auto j = pop->begin() + 1; j != pop->begin() + 4001; j += 2)
             {
                 auto i = j - 1;
                 for (std::size_t n = 0; n != 5; ++n)
@@ -77,7 +77,7 @@ namespace Tuning
                     *k++ = std::make_pair(Evaluator::crossover(i->first, j->first).mutate(false), 0);
                 }
             }
-            p = pnew;
+            pop = std::move(newpop);
             ++generations;
         }
         return peakFitness.first;

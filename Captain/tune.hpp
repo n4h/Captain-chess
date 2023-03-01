@@ -39,12 +39,15 @@ namespace Tuning
     {
         Engine* e;
         std::vector<std::pair<board::QBB, eval::Eval>> testpositions;
-        Population p;
+        std::unique_ptr<Population> pop;
         std::size_t maxGenerations = 300;
         Fitness computeFitness(const Evaluator& ev);
         void evalTestPositions();
     public:
-        Tuner(Engine* engine, std::size_t maxgens) :e(engine), maxGenerations(maxgens) {}
+        Tuner(Engine* engine, std::size_t maxgens) :e(engine), maxGenerations(maxgens)
+        {
+            pop = std::make_unique<Population>();
+        }
         constexpr void setParameters(std::size_t maxGen)
         {
             maxGenerations = maxGen;
