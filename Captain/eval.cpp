@@ -455,56 +455,79 @@ namespace eval
     std::string Evaluator::asString() const
     {
         std::ostringstream oss;
-        for (const auto& i : _openingPSQT)
-        {
-            for (auto j : i)
+
+        std::array<std::string, 12> PSQTNames= {"wpawns", "wknights", "wbishops", "wrooks", "wqueens", "wking",
+        "bpawns", "bknights", "bbishops", "brooks", "bqueens", "bking" };
+
+        auto printPSQTName = [&](std::size_t i) {oss << PSQTNames[i] << "="; };
+
+        auto printArrayVal = [&](std::size_t sq, Eval e) {
+            if (sq % 8 == 0)
+                oss << '\n';
+            oss << e << ",";
+        };
+
+
+        auto printPSQTSet = [&](const auto& set) {
+            for (std::size_t n = 0; n != 12; ++n)
             {
-                oss << j << ",";
+                oss << '\n';
+                printPSQTName(n);
+                oss << "{";
+                for (std::size_t m = 0; m != 64; ++m)
+                {
+                    printArrayVal(m, set[n][m]);
+                }
+                oss << "}";
+                oss << '\n';
             }
-            oss << ";";
-        }
-        oss << "....";
-        oss << _openToMid;
-        oss << "....";
-        for (const auto& i : _midPSQT)
-        {
-            for (auto j : i)
-            {
-                oss << j << ",";
-            }
-            oss << ";";
-        }
-        oss << "....";
-        oss << _midToEnd;
-        oss << "....";
-        for (const auto& i : _endPSQT)
-        {
-            for (auto j : i)
-            {
-                oss << j << ",";
-            }
-            oss << ";";
-        }
-        oss << "....";
+        };
+
+        oss << "OPENING PSQTs" << '\n';
+        printPSQTSet(_openingPSQT);
+
+        oss << '\n';
+        oss << "Transition point: " << _openToMid;
+        oss << '\n';
+
+        oss << "MIDGAME PSQTs" << '\n';
+        printPSQTSet(_midPSQT);
+
+        oss << '\n';
+        oss << "Transition point: " << _midToEnd;
+        oss << '\n';
+
+        oss << "ENDGAME PSQTs" << '\n';
+        printPSQTSet(_endPSQT);
+
+        oss << '\n';
         oss << "aggression";
-        oss << "....";
+        oss << '\n';
+
         for (const auto& [dist, bonus] : _aggressionBonuses)
         {
             oss << "<" << dist << "," << bonus << ">";
         }
-        oss << "....";
+
+        oss << '\n';
         oss << "pawnbishoppenalty";
-        oss << "....";
+        oss << '\n';
+
         oss << "<" << _pawnBishopPenalty.first << "," << _pawnBishopPenalty.second << ">";
-        oss << "....";
+
+        oss << '\n';
         oss << "opendiagonal,openfile,pair";
-        oss << "....";
+        oss << '\n';
+
         oss << "<" << _bishopOpenDiagonalBonus << "," << _rookOpenFileBonus << "," << _bishopPairBonus << ">";
-        oss << "....";
+
+        oss << '\n';
         oss << "knightoutpost";
-        oss << "....";
+        oss << '\n';
+
         oss << "<" << _knightOutpostBonus.first << "," << _knightOutpostBonus.second << ">";
-        oss << "....";
+
+        oss << '\n';
         return oss.str();
 
     }
