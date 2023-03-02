@@ -54,7 +54,7 @@ namespace Tuning
         std::mt19937_64 g(aux::seed);
         while (generations < maxGenerations)
         {
-            std::shuffle(testpositions.begin(), testpositions.end(), g);
+            //std::shuffle(testpositions.begin(), testpositions.end(), g);
             std::for_each(std::execution::par, pop->begin(), pop->end(), [this](auto& i) {
                 i.second = computeFitness(i.first);
                 });
@@ -75,10 +75,12 @@ namespace Tuning
             for (auto j = pop->begin() + 1; j != pop->begin() + 4001; j += 2)
             {
                 auto i = j - 1;
-                for (std::size_t n = 0; n != 5; ++n)
+                for (std::size_t n = 0; n != 3; ++n)
                 {
                     *k++ = std::make_pair(Evaluator::crossover(i->first, j->first).mutate(false), 0);
                 }
+                *k++ = std::make_pair(i->first.mutate(false), 0);
+                *k++ = std::make_pair(j->first.mutate(false), 0);
             }
             pop = std::move(newpop);
             ++generations;
