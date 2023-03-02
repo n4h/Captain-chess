@@ -303,21 +303,27 @@ namespace eval
             _bishopOpenDiagonalBonus(15), _rookOpenFileBonus(25), _bishopPairBonus(25),
             _knightOutpostBonus(std::make_pair(15, 15))
         {
-            _midPSQT[0].fill(100);
-            _midPSQT[1].fill(300);
-            _midPSQT[2].fill(300);
-            _midPSQT[3].fill(500);
-            _midPSQT[4].fill(900);
-            _midPSQT[5].fill(0);
-            for (std::size_t i = 0; i != 6; ++i)
+            _midPSQT[0] = PSQTpawnw;
+            _midPSQT[1] = PSQTknight;
+            _midPSQT[2] = PSQTbishop;
+            _midPSQT[3] = PSQTrookw;
+            _midPSQT[4] = PSQTqueen;
+            _midPSQT[5] = PSQTking;
+
+            _midPSQT[6] = PSQTpawnb;
+            _midPSQT[7] = PSQTknight;
+            _midPSQT[8] = PSQTbishop;
+            _midPSQT[9] = PSQTrookb;
+            _midPSQT[10] = PSQTqueen;
+            _midPSQT[11] = PSQTking;
+
+            for (std::size_t i = 0; i != 12; ++i)
             {
                 _endPSQT[i] = _midPSQT[i];
             }
-            for (std::size_t i = 6; i != 12; ++i)
-            {
-                _midPSQT[i] = _midPSQT[i - 6];
-                _endPSQT[i] = _endPSQT[i - 6];
-            }
+            _endPSQT[5] = PSQTkingEnd;
+            _endPSQT[11] = PSQTkingEnd;
+
             _aggressionBonuses[0] = std::make_pair(0, 0);
             _aggressionBonuses[1] = std::make_pair(4, 5);
             _aggressionBonuses[2] = std::make_pair(0, 0);
