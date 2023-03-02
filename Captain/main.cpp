@@ -20,9 +20,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <string>
 
 #include "uci.hpp"
+#include "auxiliary.hpp"
 
 int main()
 {
+    std::random_device rd{};
+    aux::seed = std::mt19937_64{ rd() };
     std::string init;
     std::getline(std::cin, init);
     if (init == "uci")
