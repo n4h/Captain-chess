@@ -95,10 +95,10 @@ namespace Tuning
         Fitness f = 0;
         for (std::size_t i = 0; i != Tests; ++i)
         {
-            auto error = std::pow(std::abs(testpositions[i].second - ev(testpositions[i].first)), 4);
+            auto error = std::abs(testpositions[i].second - ev(testpositions[i].first));
             f += error;
         }
-        return f;
+        return f / Tests;
     }
     void Tuner::evalTestPositions()
     {
