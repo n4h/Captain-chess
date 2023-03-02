@@ -50,6 +50,7 @@ namespace Tuning
     {
         std::pair<Evaluator, Fitness> peakFitness = std::make_pair(Evaluator(), std::numeric_limits<Fitness>::max());
         peakFitness.second = computeFitness(peakFitness.first);
+        (*pop)[0] = peakFitness;
         std::size_t generations = 0;
         std::mt19937_64 g(aux::seed);
         while (generations < maxGenerations || peakFitness.second < 10)
