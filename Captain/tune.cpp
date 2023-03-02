@@ -100,20 +100,30 @@ namespace Tuning
         }
         return f / Tests;
     }
-    void Tuner::evalTestPositions()
+
+    std::pair<bool, eval::Eval> Tuner::searchPosition(const board::QBB& b)
     {
         engine::SearchSettings ss;
         ss.maxDepth = 2;
         ss.infiniteSearch = true;
         e->setSettings(ss);
+        e->newGame();
+        std::vector<std::uint64_t> posHash = { Tables::tt.initialHash(b) };
+        std::vector<board::Move> moves = {};
+        SearchFlags::searching.test_and_set();
+        e->rootSearch(b, std::chrono::steady_clock::now(), moves, posHash);
+        if (std::abs(e->eval - eval::evaluate(b)) > 150)
+            return std::make_pair(false, 0);
+        else
+            return std::make_pair(true, e->eval);
+    }
+
+    void Tuner::evalTestPositions()
+    {
         for (auto& [position, eval] : testpositions)
         {
-            e->newGame();
-            std::vector<std::uint64_t> posHash = { Tables::tt.initialHash(position) };
-            std::vector<board::Move> moves = {};
-            SearchFlags::searching.test_and_set();
-            e->rootSearch(position, std::chrono::steady_clock::now(), moves, posHash);
-            eval = e->eval;
+            eval = searchPosition(position).second;
         }
+        std::erase_if(testpositions, [this](const auto& p) { return !(searchPosition(p.first).first); });
     }
 }

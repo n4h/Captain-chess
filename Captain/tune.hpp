@@ -57,6 +57,7 @@ namespace Tuning
             maxGenerations = maxGen;
         }
         void loadTestPositions(std::string s);
+        std::pair<bool, eval::Eval> searchPosition(const board::QBB&);
         std::pair<Evaluator, Fitness> tune();
     };
 }

@@ -214,7 +214,7 @@ namespace uci
 
     void UCIProtocol::Tune(std::string file)
     {
-        Tuning::Tuner t{ &(this->e), 500 };
+        Tuning::Tuner t{ &(this->e), 300 };
         t.loadTestPositions(file);
         const auto& [evaluator, fitness] = t.tune();
         std::ofstream output{ std::string("finalevaluator.txt") };
