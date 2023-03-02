@@ -319,7 +319,7 @@ namespace engine
         Eval standpat = negInf;
         if (!check)
         {
-            standpat = eval::evaluate(b);
+            standpat = evaluate(b);
             if (standpat >= beta)
             {
                 return standpat;
@@ -495,7 +495,7 @@ namespace engine
             /*
             if (futilityPruning(b, nextMove, depth, PVNode))
             {
-                if (!staticEval.second) staticEval = std::make_pair(eval::evaluate(b), true);
+                if (!staticEval.second) staticEval = std::make_pair(evaluate(b), true);
 
                 if (staticEval.first + 900 < alpha)
                 {

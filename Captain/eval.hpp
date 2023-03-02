@@ -140,71 +140,6 @@ namespace eval
 
     Eval computeMaterialValue(board::Bitboard, const std::array<Eval, 64>&);
 
-    // pawnCount = number of pawns on same color square as bishop
-    constexpr Eval pawnCountBishopPenalty(unsigned pawnCount)
-    {
-        return (pawnCount >= 6) * 50;
-    }
-
-    constexpr Eval bishopOpenDiagonalBonus(bool open)
-    {
-        return open ? 15 : 0;
-    }
-
-    constexpr Eval rookOpenFileBonus(bool open)
-    {
-        return open ? 25 : 0;
-    }
-
-    constexpr Eval bishopPairBonus(bool pair)
-    {
-        return pair ? 25 : 0;
-    }
-
-    constexpr Eval aggressionBonus(board::square psq, board::square enemyKingSq, unsigned closeness, Eval bonus)
-    {
-        int pRank = rank(psq);
-        int pFile = file(psq);
-        int kRank = rank(enemyKingSq);
-        int kFile = file(enemyKingSq);
-        return (l1dist(pRank, pFile, kRank, kFile) <= closeness) * bonus;
-    }
-
-    enum class OutpostType{MyOutpost, OppOutpost};
-    template<OutpostType t>
-    constexpr Eval knightOutpostBonus(board::square knightsq, board::Bitboard myPawns, board::Bitboard enemyPawns)
-    {
-        if constexpr (t == OutpostType::MyOutpost)
-        {
-            board::Bitboard myKnight = setbit(knightsq);
-            if ((myKnight & constants::topHalf) && (movegen::pawnAttacks(myPawns) & myKnight))
-            {
-                myKnight |= movegen::KSNorth(0, myKnight);
-                myKnight = movegen::pawnAttacks(myKnight);
-                if (!(myKnight & enemyPawns))
-                {
-                    return 15;
-                }
-            }
-            return 0;
-        }
-        else if constexpr (t == OutpostType::OppOutpost)
-        {
-            board::Bitboard myKnight = setbit(knightsq);
-            if ((myKnight & constants::botHalf) && (movegen::enemyPawnAttacks(enemyPawns) & myKnight))
-            {
-                myKnight |= movegen::KSSouth(0, myKnight);
-                myKnight = movegen::enemyPawnAttacks(myKnight);
-                if (!(myKnight & myPawns))
-                {
-                    return 15;
-                }
-            }
-            return 0;
-        }
-    }
-
-    Eval evaluate(const board::QBB& b);
 
     // This class represents a single evaluation function (useful for tuning)
     class Evaluator
@@ -219,6 +154,8 @@ namespace eval
         Eval _rookOpenFileBonus;
         Eval _bishopPairBonus;
         std::pair<Eval, Eval> _knightOutpostBonus;
+
+        enum OutpostType {MyOutpost, OppOutpost};
 
         unsigned totalMaterialValue(const board::QBB& b) const;
 
@@ -299,7 +236,7 @@ namespace eval
         Eval operator()(const board::QBB&) const;
 
         constexpr Evaluator()
-            : _midToEnd(3000), _pawnBishopPenalty(std::make_pair(6, 50)), 
+            : _midToEnd(3000), _pawnBishopPenalty(std::make_pair(6, 50)),
             _bishopOpenDiagonalBonus(15), _rookOpenFileBonus(25), _bishopPairBonus(25),
             _knightOutpostBonus(std::make_pair(15, 15))
         {
@@ -317,11 +254,18 @@ namespace eval
             _midPSQT[10] = PSQTqueen;
             _midPSQT[11] = PSQTking;
 
-            for (std::size_t i = 0; i != 12; ++i)
-            {
-                _endPSQT[i] = _midPSQT[i];
-            }
+            _endPSQT[0] = PSQTpawnw;
+            _endPSQT[1] = PSQTknight;
+            _endPSQT[2] = PSQTbishop;
+            _endPSQT[3] = PSQTrookw;
+            _endPSQT[4] = PSQTqueen;
             _endPSQT[5] = PSQTkingEnd;
+
+            _endPSQT[6] = PSQTpawnb;
+            _endPSQT[7] = PSQTknight;
+            _endPSQT[8] = PSQTbishop;
+            _endPSQT[9] = PSQTrookb;
+            _endPSQT[10] = PSQTqueen;
             _endPSQT[11] = PSQTkingEnd;
 
             _aggressionBonuses[0] = std::make_pair(0, 0);
@@ -330,10 +274,13 @@ namespace eval
             _aggressionBonuses[3] = std::make_pair(7, 5);
             _aggressionBonuses[4] = std::make_pair(3, 5);
             _aggressionBonuses[5] = std::make_pair(0, 0);
-            for (std::size_t i = 6; i != 12; ++i)
-            {
-                _aggressionBonuses[i] = _aggressionBonuses[i - 6];
-            }
+
+            _aggressionBonuses[6] = std::make_pair(0, 0);
+            _aggressionBonuses[7] = std::make_pair(4, 5);
+            _aggressionBonuses[8] = std::make_pair(0, 0);
+            _aggressionBonuses[9] = std::make_pair(7, 5);
+            _aggressionBonuses[10] = std::make_pair(3, 5);
+            _aggressionBonuses[11] = std::make_pair(0, 0);
         }
 
         const Evaluator& mutate(bool randomize);

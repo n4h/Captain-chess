@@ -113,7 +113,7 @@ namespace Tuning
         std::vector<board::Move> moves = {};
         SearchFlags::searching.test_and_set();
         e->rootSearch(b, std::chrono::steady_clock::now(), moves, posHash);
-        if (std::abs(e->eval - eval::evaluate(b)) > 150)
+        if (std::abs(e->eval - eval::Evaluator{}(b)) > 150)
             return std::make_pair(false, 0);
         else
             return std::make_pair(true, e->eval);
