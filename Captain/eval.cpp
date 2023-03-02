@@ -408,15 +408,14 @@ namespace eval
 
     const Evaluator& Evaluator::mutate(bool randomize)
     {
-        std::mt19937_64 urbg(aux::seed);
         std::bernoulli_distribution doMutate(randomize ? 0.85 : 1.0/2000.0);
         std::uniform_int_distribution positionalBonus(-50, 50);
         std::uniform_int_distribution gamePhase(-500, 500);
-        std::uniform_int_distribution PSQT(-300, 300);
+        std::uniform_int_distribution PSQT(-100, 100);
         std::uniform_int_distribution ZeroTo8(0, 8);
 
         auto mutate = [&](auto& mutator, int p = 0) {
-            return doMutate(urbg) ? mutator(urbg) : p;
+            return doMutate(aux::seed) ? mutator(aux::seed) : p;
         };
 
         for (std::size_t i = 0; i != 12; ++i)
