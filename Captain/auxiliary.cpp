@@ -21,5 +21,5 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace aux
 {
-    const auto seed = std::random_device{}();
+    std::mt19937_64 seed;
 }
