@@ -359,14 +359,7 @@ namespace eval
             b.their(b.getKings()),
         };
 
-        if (materialVal > this->_openToMid)
-        {
-            for (std::size_t i = 0; i != 12; ++i)
-            {
-                evaluation += (i < 6 ? 1 : -1) * computeMaterialValue(pieces[i], this->_openingPSQT[i]);
-            }
-        }
-        else if (materialVal > this->_midToEnd)
+        if (materialVal > this->_midToEnd)
         {
             for (std::size_t i = 0; i != 12; ++i)
             {
@@ -430,7 +423,6 @@ namespace eval
         {
             for (std::size_t j = 0; j != 64; ++j)
             {
-                _openingPSQT[i][j] += mutate(PSQT);
                 _midPSQT[i][j] += mutate(PSQT);
                 _endPSQT[i][j] += mutate(PSQT);
             }
@@ -438,7 +430,6 @@ namespace eval
             _aggressionBonuses[i].second += mutate(positionalBonus);
         }
 
-        _openToMid += mutate(gamePhase);
         _midToEnd += mutate(gamePhase);
 
         _pawnBishopPenalty.first = mutate(ZeroTo8, _pawnBishopPenalty.first);
@@ -487,13 +478,6 @@ namespace eval
         oss << '\n';
         auto now = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
         oss << "Tuning completed date/time: " << now << '\n';
-
-        oss << "OPENING PSQTs" << '\n';
-        printPSQTSet(_openingPSQT);
-
-        oss << '\n';
-        oss << "Transition point: " << _openToMid;
-        oss << '\n';
 
         oss << "MIDGAME PSQTs" << '\n';
         printPSQTSet(_midPSQT);

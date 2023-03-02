@@ -210,8 +210,6 @@ namespace eval
     class Evaluator
     {
         using PSQT = std::array<Eval, 64>;
-        std::array<PSQT, 12> _openingPSQT;
-        unsigned _openToMid;
         std::array<PSQT, 12> _midPSQT;
         unsigned _midToEnd;
         std::array<PSQT, 12> _endPSQT;
@@ -301,24 +299,22 @@ namespace eval
         Eval operator()(const board::QBB&) const;
 
         constexpr Evaluator()
-            : _openToMid(7000), _midToEnd(3000), _pawnBishopPenalty(std::make_pair(6, 50)), 
+            : _midToEnd(3000), _pawnBishopPenalty(std::make_pair(6, 50)), 
             _bishopOpenDiagonalBonus(15), _rookOpenFileBonus(25), _bishopPairBonus(25),
             _knightOutpostBonus(std::make_pair(15, 15))
         {
-            _openingPSQT[0].fill(100);
-            _openingPSQT[1].fill(300);
-            _openingPSQT[2].fill(300);
-            _openingPSQT[3].fill(500);
-            _openingPSQT[4].fill(900);
-            _openingPSQT[5].fill(0);
+            _midPSQT[0].fill(100);
+            _midPSQT[1].fill(300);
+            _midPSQT[2].fill(300);
+            _midPSQT[3].fill(500);
+            _midPSQT[4].fill(900);
+            _midPSQT[5].fill(0);
             for (std::size_t i = 0; i != 6; ++i)
             {
-                _midPSQT[i] = _openingPSQT[i];
-                _endPSQT[i] = _openingPSQT[i];
+                _endPSQT[i] = _midPSQT[i];
             }
             for (std::size_t i = 6; i != 12; ++i)
             {
-                _openingPSQT[i] = _openingPSQT[i - 6];
                 _midPSQT[i] = _midPSQT[i - 6];
                 _endPSQT[i] = _endPSQT[i - 6];
             }
@@ -345,7 +341,6 @@ namespace eval
                 return whiche(urbg) ? e1 : e2;
             };
 
-            e._openToMid = parent()._openToMid;
             e._midToEnd = parent()._midToEnd;
             e._bishopOpenDiagonalBonus = parent()._bishopOpenDiagonalBonus;
             e._rookOpenFileBonus = parent()._rookOpenFileBonus;
@@ -358,7 +353,6 @@ namespace eval
             {
                 for (std::size_t j = 0; j != 64; ++j)
                 {
-                    e._openingPSQT[i][j] = parent()._openingPSQT[i][j];
                     e._midPSQT[i][j] = parent()._midPSQT[i][j];
                     e._endPSQT[i][j] = parent()._endPSQT[i][j];
                 }
