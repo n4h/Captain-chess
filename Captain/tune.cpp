@@ -52,7 +52,7 @@ namespace Tuning
         peakFitness.second = computeFitness(peakFitness.first);
         std::size_t generations = 0;
         std::mt19937_64 g(aux::seed);
-        while (generations < maxGenerations)
+        while (generations < maxGenerations || peakFitness.second < 10)
         {
             //std::shuffle(testpositions.begin(), testpositions.end(), g);
             std::for_each(std::execution::par, pop->begin(), pop->end(), [this](auto& i) {
