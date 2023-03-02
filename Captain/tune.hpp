@@ -57,7 +57,7 @@ namespace Tuning
             maxGenerations = maxGen;
         }
         void loadTestPositions(std::string s);
-        Evaluator tune();
+        std::pair<Evaluator, Fitness> tune();
     };
 }
 

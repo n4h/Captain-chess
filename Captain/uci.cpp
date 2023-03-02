@@ -214,11 +214,13 @@ namespace uci
 
     void UCIProtocol::Tune(std::string file)
     {
-        Tuning::Tuner t{ &(this->e), 300 };
+        Tuning::Tuner t{ &(this->e), 500 };
         t.loadTestPositions(file);
-        const auto& e = t.tune();
+        const auto& [evaluator, fitness] = t.tune();
         std::ofstream output{ std::string("finalevaluator.txt") };
-        output << e.asString();
+        output << evaluator.asString();
+        uci_out << "avg. centipawn error " << fitness << std::endl;
+        uci_out.emit();
     }
 
     // we're assuming that the GUI isn't sending us invalid moves

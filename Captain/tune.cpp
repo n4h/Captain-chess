@@ -46,7 +46,7 @@ namespace Tuning
         }
         evalTestPositions();
     }
-    Evaluator Tuner::tune()
+    std::pair<Evaluator, Fitness> Tuner::tune()
     {
         std::pair<Evaluator, Fitness> peakFitness = std::make_pair(Evaluator(), std::numeric_limits<Fitness>::max());
         peakFitness.second = computeFitness(peakFitness.first);
@@ -85,7 +85,7 @@ namespace Tuning
             pop = std::move(newpop);
             ++generations;
         }
-        return peakFitness.first;
+        return peakFitness;
     }
 
     Fitness Tuner::computeFitness(const Evaluator& ev)
