@@ -121,10 +121,13 @@ namespace Tuning
 
     void Tuner::evalTestPositions()
     {
+        decltype(testpositions) quietPositions;
         for (auto& [position, eval] : testpositions)
         {
-            eval = searchPosition(position).second;
+            auto result = searchPosition(position);
+            if (result.first)
+                quietPositions.emplace_back(position, result.second);
         }
-        std::erase_if(testpositions, [this](const auto& p) { return !(searchPosition(p.first).first); });
+        testpositions = quietPositions;
     }
 }
