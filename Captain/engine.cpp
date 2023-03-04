@@ -354,7 +354,7 @@ namespace engine
         Eval currEval = standpat;
 
         board::QBB bcopy = b;
-
+        // TODO replace usage of mvvlva with SEE
         for (std::size_t i = 0; auto& [move, score] : ml)
         {
             if (i < captureIterations)
@@ -468,7 +468,7 @@ namespace engine
             {
                 return nulleval;
             }
-        } // TODO new search routine to avoid passing PV to null move search
+        }
 
         if (inCheck)
         {
