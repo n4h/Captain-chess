@@ -33,105 +33,6 @@ namespace eval
     using namespace aux;
     using Eval = std::int16_t;
 
-    constexpr std::array<Eval, 64> PSQTknight = {
-        200, 250, 210, 210, 210, 210, 250, 200,
-        250, 210, 300, 300, 300, 300, 210, 250,
-        250, 300, 360, 360, 360, 360, 300, 250,
-        250, 300, 360, 360, 360, 360, 300, 250,
-        250, 300, 360, 360, 360, 360, 300, 250,
-        250, 300, 360, 360, 360, 360, 300, 250,
-        250, 210, 300, 300, 300, 300, 210, 250,
-        200, 250, 210, 210, 210, 210, 250, 200
-    };
-
-    constexpr std::array<Eval, 64> PSQTbishop = {
-        270, 270, 270, 270, 270, 270, 270, 270,
-        270, 310, 300, 300, 300, 300, 310, 270,
-        270, 300, 330, 330, 330, 330, 300, 270,
-        270, 300, 300, 330, 330, 300, 300, 270,
-        270, 300, 300, 330, 330, 300, 300, 270,
-        270, 300, 330, 330, 330, 330, 300, 270,
-        270, 310, 300, 300, 300, 300, 310, 270,
-        270, 270, 270, 270, 270, 270, 270, 270
-    };
-
-    constexpr std::array<Eval, 64> PSQTrookw = {
-        500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500,
-        525, 525, 525, 525, 525, 525, 525, 525,
-        500, 500, 500, 500, 500, 500, 500, 500
-    };
-
-    constexpr std::array<Eval, 64> PSQTrookb = {
-        500, 500, 500, 500, 500, 500, 500, 500,
-        525, 525, 525, 525, 525, 525, 525, 525,
-        500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500
-    };
-
-    constexpr std::array<Eval, 64> PSQTpawnw = {
-        0, 0, 0, 0, 0, 0, 0, 0,
-        100, 100, 100, 80, 80, 100, 100, 100,
-        100, 100, 100, 100, 100, 100, 100, 100,
-        100, 100, 100, 110, 110, 100, 100, 100,
-        130, 130, 130, 130, 130, 130, 130, 130,
-        150, 150, 150, 150, 150, 150, 150, 150,
-        200, 200, 200, 200, 200, 200, 200, 200,
-        0, 0, 0, 0, 0, 0, 0, 0
-    };
-
-    constexpr std::array<Eval, 64> PSQTpawnb = {
-        0, 0, 0, 0, 0, 0, 0, 0,
-        200, 200, 200, 200, 200, 200, 200, 200,
-        150, 150, 150, 150, 150, 150, 150, 150,
-        130, 130, 130, 130, 130, 130, 130, 130,
-        100, 100, 100, 110, 110, 100, 100, 100,
-        100, 100, 100, 100, 100, 100, 100, 100,
-        100, 100, 100, 80, 80, 100, 100, 100,
-        0, 0, 0, 0, 0, 0, 0, 0
-    };
-
-    constexpr std::array<Eval, 64> PSQTqueen = {
-        810, 810, 810, 810, 810, 810, 810, 810,
-        810, 810, 810, 900, 900, 810, 810, 810,
-        900, 900, 930, 930, 930, 930, 900, 900,
-        900, 900, 930, 930, 930, 930, 900, 900,
-        900, 900, 930, 930, 930, 930, 900, 900,
-        900, 900, 930, 930, 930, 930, 900, 900,
-        810, 810, 810, 900, 900, 810, 810, 810,
-        810, 810, 810, 810, 810, 810, 810, 810
-    };
-
-    constexpr std::array<Eval, 64> PSQTking = {
-        0, 0, 20, 0, 0, 0, 20, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 20, 0, 0, 0, 20, 0
-    };
-
-    constexpr std::array<Eval, 64> PSQTkingEnd = {
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 15, 15, 15, 15, 0, 0,
-    0, 0, 15, 20, 20, 15, 0, 0,
-    0, 0, 15, 20, 20, 15, 0, 0,
-    0, 0, 15, 15, 15, 15, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0
-    };
-
     std::uint32_t getLVA(const board::QBB&, board::Bitboard, board::Bitboard&);
     Eval getCaptureValue(const board::QBB&, board::Move);
     Eval mvvlva(const board::QBB&, board::Move);
@@ -145,9 +46,11 @@ namespace eval
     class Evaluator
     {
         using PSQT = std::array<Eval, 64>;
-        std::array<PSQT, 12> _midPSQT;
-        unsigned _midToEnd;
-        std::array<PSQT, 12> _endPSQT;
+        std::array<Eval, 5> piecevals = {100, 300, 300, 500, 900};
+        std::array<Eval, 9> knightmobility = {0, 0, 5, 10, 15, 15, 15, 15, 20};
+        std::array<Eval, 14> bishopmobility = { 0, 0, 0, 5, 5, 10, 10, 15, 15, 15, 20, 20, 25, 25 };
+        std::array<Eval, 8> rookvertmobility = {0, 0, 0, 5, 5, 10, 10, 15};
+        std::array<Eval, 8> rookhormobility = { -5, 0, 0, 0, 10, 10, 10, 15 };
         std::array<std::pair<unsigned, Eval>, 12> _aggressionBonuses;
         std::pair<unsigned, Eval> _pawnBishopPenalty;
         Eval _bishopOpenDiagonalBonus;
@@ -232,42 +135,15 @@ namespace eval
         }
 
         Eval applyAggressionBonus(std::size_t type, board::square enemyKingSq, board::Bitboard pieces) const;
+
     public:
         Eval operator()(const board::QBB&) const;
 
         constexpr Evaluator()
-            : _midToEnd(3000), _pawnBishopPenalty(std::make_pair(6, 50)),
+            : _pawnBishopPenalty(std::make_pair(6, 50)),
             _bishopOpenDiagonalBonus(15), _rookOpenFileBonus(25), _bishopPairBonus(25),
             _knightOutpostBonus(std::make_pair(15, 15))
         {
-            _midPSQT[0] = PSQTpawnw;
-            _midPSQT[1] = PSQTknight;
-            _midPSQT[2] = PSQTbishop;
-            _midPSQT[3] = PSQTrookw;
-            _midPSQT[4] = PSQTqueen;
-            _midPSQT[5] = PSQTking;
-
-            _midPSQT[6] = PSQTpawnb;
-            _midPSQT[7] = PSQTknight;
-            _midPSQT[8] = PSQTbishop;
-            _midPSQT[9] = PSQTrookb;
-            _midPSQT[10] = PSQTqueen;
-            _midPSQT[11] = PSQTking;
-
-            _endPSQT[0] = PSQTpawnw;
-            _endPSQT[1] = PSQTknight;
-            _endPSQT[2] = PSQTbishop;
-            _endPSQT[3] = PSQTrookw;
-            _endPSQT[4] = PSQTqueen;
-            _endPSQT[5] = PSQTkingEnd;
-
-            _endPSQT[6] = PSQTpawnb;
-            _endPSQT[7] = PSQTknight;
-            _endPSQT[8] = PSQTbishop;
-            _endPSQT[9] = PSQTrookb;
-            _endPSQT[10] = PSQTqueen;
-            _endPSQT[11] = PSQTkingEnd;
-
             _aggressionBonuses[0] = std::make_pair(0, 0);
             _aggressionBonuses[1] = std::make_pair(4, 5);
             _aggressionBonuses[2] = std::make_pair(0, 0);
@@ -293,7 +169,6 @@ namespace eval
                 return whiche(aux::seed) ? e1 : e2;
             };
 
-            e._midToEnd = parent()._midToEnd;
             e._bishopOpenDiagonalBonus = parent()._bishopOpenDiagonalBonus;
             e._rookOpenFileBonus = parent()._rookOpenFileBonus;
             e._bishopPairBonus = parent()._bishopPairBonus;
@@ -301,14 +176,6 @@ namespace eval
             e._knightOutpostBonus.second = parent()._knightOutpostBonus.second;
             e._pawnBishopPenalty.first = parent()._pawnBishopPenalty.first;
             e._pawnBishopPenalty.second = parent()._pawnBishopPenalty.second;
-            for (std::size_t i = 0; i != 12; ++i)
-            {
-                for (std::size_t j = 0; j != 64; ++j)
-                {
-                    e._midPSQT[i][j] = parent()._midPSQT[i][j];
-                    e._endPSQT[i][j] = parent()._endPSQT[i][j];
-                }
-            }
 
             for (std::size_t i = 0; i != 12; ++i)
             {

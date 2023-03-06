@@ -31,7 +31,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 namespace eval
 {
     using namespace aux;
-    using namespace constants;
 
     Eval computeMaterialValue(board::Bitboard bb, const std::array<Eval, 64>& PSQT)
     {
@@ -114,7 +113,7 @@ namespace eval
     {
         const board::square target = board::getMoveToSq(m);
         auto targettype = (b.getPieceType(target) >> 1) - 1;
-        const auto movetype = board::getMoveInfo<moveTypeMask>(m);
+        const auto movetype = board::getMoveInfo<constants::moveTypeMask>(m);
         board::Bitboard attackers = movegen::getSqAttackers(b, target);
         board::Bitboard attacker = aux::setbit(board::getMoveInfo<board::fromMask>(m));
         auto attackertype = b.getPieceType(board::getMoveFromSq(m)) >> 1;
@@ -126,7 +125,7 @@ namespace eval
 
         std::array<Eval, 6> pieceval = {100, 300, 300, 500, 900, 10000};
         std::array<Eval, 32> scores;
-        scores[0] = movetype == enPCap ? pieceval[0] : pieceval[targettype];
+        scores[0] = movetype == constants::enPCap ? pieceval[0] : pieceval[targettype];
         targettype = attackertype - 1;
         attackers ^= attacker;
         occ ^= attacker;
@@ -222,7 +221,6 @@ namespace eval
     Eval Evaluator::operator()(const board::QBB& b) const
     {
         Eval evaluation = 0;
-        unsigned materialVal = this->totalMaterialValue(b);
 
         const std::array<board::Bitboard, 12> pieces = {
             b.my(b.getPawns()),
@@ -239,46 +237,73 @@ namespace eval
             b.their(b.getKings()),
         };
 
-        if (materialVal > this->_midToEnd)
+        enum {myPawns, myKnights, myBishops, myRooks, myQueens, myKing,
+            theirPawns, theirKnights, theirBishops, theirRooks, theirQueens, theirKing,};
+
+        for (std::size_t i = 0; i != 5; ++i)
         {
-            for (std::size_t i = 0; i != 12; ++i)
-            {
-                evaluation += (i < 6 ? 1 : -1) * computeMaterialValue(pieces[i], this->_midPSQT[i]);
-            }
-        }
-        else
-        {
-            for (std::size_t i = 0; i != 12; ++i)
-            {
-                evaluation += (i < 6 ? 1 : -1) * computeMaterialValue(pieces[i], this->_endPSQT[i]);
-            }
+            evaluation += piecevals[i] * (_popcnt64(pieces[i]) - _popcnt64(pieces[i + 6]));
         }
 
-        const auto myKingSq = board::square(_tzcnt_u64(pieces[5]));
-        const auto oppKingSq = board::square(_tzcnt_u64(pieces[11]));
+        const auto myKingSq = board::square(_tzcnt_u64(pieces[myKing]));
+        const auto oppKingSq = board::square(_tzcnt_u64(pieces[theirKing]));
 
         for (std::size_t i = 0; i != 12; ++i)
         {
             evaluation += (i < 6 ? 1 : -1) * applyAggressionBonus(i, i < 6 ? oppKingSq : myKingSq, pieces[i]);
         }
 
-        auto myPawnsWhite = whiteSquares & pieces[0];
-        auto myPawnsBlack = blackSquares & pieces[0];
-        auto oppPawnsWhite = whiteSquares & pieces[6];
-        auto oppPawnsBlack = blackSquares & pieces[6];
-        evaluation -= this->pawnCountBishopPenalty(_popcnt64(myPawnsWhite), pieces[2]);
-        evaluation -= this->pawnCountBishopPenalty(_popcnt64(myPawnsBlack), pieces[2]);
-        evaluation += this->pawnCountBishopPenalty(_popcnt64(oppPawnsWhite), pieces[8]);
-        evaluation += this->pawnCountBishopPenalty(_popcnt64(oppPawnsBlack), pieces[8]);
+        aux::GetNextBit<board::Bitboard> mobility(pieces[myKnights]);
+        while (mobility())
+        {
+            movegen::AttackMap moves = movegen::knightAttacks(mobility.next);
+            moves &= ~(movegen::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
+            evaluation += knightmobility[_popcnt64(moves)];
+        }
+        mobility = GetNextBit<board::Bitboard>{ pieces[theirKnights] };
+        while (mobility())
+        {
+            movegen::AttackMap moves = movegen::knightAttacks(mobility.next);
+            moves &= ~(movegen::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
+            evaluation -= knightmobility[_popcnt64(moves)];
+        }
+        mobility = GetNextBit<board::Bitboard>{ pieces[myBishops] };
+        while (mobility())
+        {
+            movegen::AttackMap moves = movegen::hypqAllDiag(pieces[myPawns] | pieces[theirPawns], mobility.next);
+            moves &= ~movegen::enemyPawnAttacks(pieces[theirPawns]);
+            evaluation += bishopmobility[_popcnt64(moves)];
+        }
+        mobility = GetNextBit<board::Bitboard>{ pieces[theirBishops] };
+        while (mobility())
+        {
+            movegen::AttackMap moves = movegen::hypqAllDiag(pieces[myPawns] | pieces[theirPawns], mobility.next);
+            moves &= ~movegen::pawnAttacks(pieces[myPawns]);
+            evaluation -= bishopmobility[_popcnt64(moves)];
+        }
+        mobility = GetNextBit<board::Bitboard>{ pieces[myRooks] };
+        while (mobility())
+        {
+            movegen::AttackMap moves = movegen::hypqRank(pieces[myPawns] | pieces[theirPawns], mobility.next);
+            moves &= ~movegen::enemyPawnAttacks(pieces[theirPawns]);
+            evaluation += rookhormobility[_popcnt64(moves)];
+            moves = movegen::hypqFile(pieces[myPawns] | pieces[theirPawns], mobility.next);
+            moves &= ~movegen::enemyPawnAttacks(pieces[theirPawns]);
+            evaluation += rookvertmobility[_popcnt64(moves)];
+        }
+        mobility = GetNextBit<board::Bitboard>{ pieces[theirRooks] };
+        while (mobility())
+        {
+            movegen::AttackMap moves = movegen::hypqRank(pieces[myPawns] | pieces[theirPawns], mobility.next);
+            moves &= ~movegen::pawnAttacks(pieces[myPawns]);
+            evaluation -= rookhormobility[_popcnt64(moves)];
+            moves = movegen::hypqFile(pieces[myPawns] | pieces[theirPawns], mobility.next);
+            moves &= ~movegen::pawnAttacks(pieces[myPawns]);
+            evaluation -= rookvertmobility[_popcnt64(moves)];
+        }
 
-        evaluation += this->bishopOpenDiagonalBonus(b.getOccupancy(), pieces[2]);
-        evaluation -= this->bishopOpenDiagonalBonus(b.getOccupancy(), pieces[8]);
-
-        evaluation += this->bishopPairBonus((pieces[2] & whiteSquares) && (pieces[2] & blackSquares));
-        evaluation -= this->bishopPairBonus((pieces[8] & whiteSquares) && (pieces[8] & blackSquares));
-
-        evaluation += this->rookOpenFileBonus(b.getPawns(), pieces[3]);
-        evaluation -= this->rookOpenFileBonus(b.getPawns(), pieces[9]);
+        evaluation += this->bishopPairBonus((pieces[2] & constants::whiteSquares) && (pieces[2] & constants::blackSquares));
+        evaluation -= this->bishopPairBonus((pieces[8] & constants::whiteSquares) && (pieces[8] & constants::blackSquares));
 
         evaluation += this->applyKnightOutPostBonus<OutpostType::MyOutpost>(pieces[1], pieces[0], pieces[6]);
         evaluation -= this->applyKnightOutPostBonus<OutpostType::OppOutpost>(pieces[7], pieces[0], pieces[6]);
@@ -300,16 +325,9 @@ namespace eval
 
         for (std::size_t i = 0; i != 12; ++i)
         {
-            for (std::size_t j = 0; j != 64; ++j)
-            {
-                _midPSQT[i][j] += mutate(PSQT);
-                _endPSQT[i][j] += mutate(PSQT);
-            }
             _aggressionBonuses[i].first = mutate(ZeroTo8, _aggressionBonuses[i].first);
             _aggressionBonuses[i].second += mutate(positionalBonus);
         }
-
-        _midToEnd += mutate(gamePhase);
 
         _pawnBishopPenalty.first = mutate(ZeroTo8, _pawnBishopPenalty.first);
         _pawnBishopPenalty.second += mutate(positionalBonus);
@@ -323,22 +341,23 @@ namespace eval
 
         return *this;
     }
+
     std::string Evaluator::asString() const
     {
         std::ostringstream oss;
-
+        /*
         std::array<std::string, 12> PSQTNames= {"wpawns", "wknights", "wbishops", "wrooks", "wqueens", "wking",
         "bpawns", "bknights", "bbishops", "brooks", "bqueens", "bking" };
 
         auto printPSQTName = [&](std::size_t i) {oss << PSQTNames[i] << "="; };
-
+        
         auto printArrayVal = [&](std::size_t sq, Eval e) {
             if (sq % 8 == 0)
                 oss << '\n';
             oss << e << ",";
         };
 
-
+        
         auto printPSQTSet = [&](const auto& set) {
             for (std::size_t n = 0; n != 12; ++n)
             {
@@ -353,20 +372,10 @@ namespace eval
                 oss << '\n';
             }
         };
-
+        */
         oss << '\n';
         auto now = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
         oss << "Tuning completed date/time: " << now << '\n';
-
-        oss << "MIDGAME PSQTs" << '\n';
-        printPSQTSet(_midPSQT);
-
-        oss << '\n';
-        oss << "Transition point: " << _midToEnd;
-        oss << '\n';
-
-        oss << "ENDGAME PSQTs" << '\n';
-        printPSQTSet(_endPSQT);
 
         oss << '\n';
         oss << "aggression";

@@ -227,14 +227,23 @@ namespace aux
         GetNextBit(std::uint64_t b) :bits(b) {}
         bool operator()()
         {
-            unsigned long index = 0;
-            bool gotbit = _BitScanForward64(&index, bits);
-            if (gotbit)
+            if constexpr (!std::is_same_v<T, std::uint64_t>)
             {
-                bits = _blsr_u64(bits);
-                next = T(index);
+                unsigned long index = 0;
+                bool gotbit = _BitScanForward64(&index, bits);
+                if (gotbit)
+                {
+                    bits = _blsr_u64(bits);
+                    next = T(index);
+                }
+                return gotbit;
             }
-            return gotbit;
+            else
+            {
+                next = _blsi_u64(bits);
+                bits = _blsr_u64(bits);
+                return next;
+            }
         }
     };
 }
