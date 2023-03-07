@@ -83,6 +83,34 @@ namespace Tables
 
     extern TTable tt;
 
+    struct PawnEntry
+    {
+        board::Bitboard myPawns = 0;
+        board::Bitboard theirPawns = 0;
+        Eval eval = 0;
+        constexpr bool valid(board::Bitboard mine, board::Bitboard theirs) const noexcept
+        {
+            return myPawns == mine && theirPawns == theirs;
+        }
+    };
+
+    class PawnHashTable
+    {
+        std::array<PawnEntry, (1024 * 1024) / sizeof(PawnEntry)> entries;
+        std::array<std::uint64_t, 64> pawnpositions;
+    public:
+        constexpr PawnEntry& operator[](std::uint64_t hash) noexcept
+        {
+            return entries[hash % entries.size()];
+        }
+        std::uint64_t initialHash(board::Bitboard pawns) const noexcept;
+        std::uint64_t incrementalUpdate(board::Bitboard pawnsOld, board::Bitboard pawnsNew) const noexcept;
+        constexpr void clear()
+        {
+            entries.fill(PawnEntry{.myPawns = 0, .theirPawns = 0, .eval = 0});
+        }
+    };
+
     class KillerTable
     {
         std::array<std::array<board::Move, 2>, 16> killers;

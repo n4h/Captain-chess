@@ -345,4 +345,19 @@ namespace Tables
         }
         return sz ? static_cast<double>(used * 100) / sz : 0;
     }
+    std::uint64_t PawnHashTable::initialHash(board::Bitboard pawns) const noexcept
+    {
+        std::uint64_t hash = 0;
+        aux::GetNextBit<board::square> nextpawn(pawns);
+        while (nextpawn())
+        {
+            hash ^= pawnpositions[nextpawn.next];
+        }
+        return hash;
+    }
+    std::uint64_t PawnHashTable::incrementalUpdate(board::Bitboard pawnsOld, board::Bitboard pawnsNew) const noexcept
+    {
+        auto change = pawnsOld ^ pawnsNew;
+        return initialHash(change);
+    }
 }
