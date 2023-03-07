@@ -342,6 +342,8 @@ namespace eval
             evaluation -= rookvertmobility[_popcnt64(moves)];
         }
 
+        evaluation += evalPawns(pieces[myPawns], pieces[theirPawns]); // TODO store this in pawn hash
+
         evaluation += this->bishopPairBonus((pieces[2] & constants::whiteSquares) && (pieces[2] & constants::blackSquares));
         evaluation -= this->bishopPairBonus((pieces[8] & constants::whiteSquares) && (pieces[8] & constants::blackSquares));
 
