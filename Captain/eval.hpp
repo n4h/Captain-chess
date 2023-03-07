@@ -51,6 +51,9 @@ namespace eval
         std::array<Eval, 14> bishopmobility = { 0, 0, 0, 5, 5, 10, 10, 15, 15, 15, 20, 20, 25, 25 };
         std::array<Eval, 8> rookvertmobility = {0, 0, 0, 5, 5, 10, 10, 15};
         std::array<Eval, 8> rookhormobility = { -5, 0, 0, 0, 10, 10, 10, 15 };
+        Eval doubledpawnpenalty = 50;
+        Eval tripledpawnpenalty = 100;
+        Eval isolatedpawnpenalty = 25;
         std::array<std::pair<unsigned, Eval>, 12> _aggressionBonuses;
         std::pair<unsigned, Eval> _pawnBishopPenalty;
         Eval _bishopOpenDiagonalBonus;
@@ -82,6 +85,7 @@ namespace eval
 
         Eval rookOpenFileBonus(board::Bitboard pawns, board::Bitboard rooks) const;
 
+        Eval evalPawns(board::Bitboard myPawns, board::Bitboard theirPawns) const noexcept;
 
         constexpr Eval bishopPairBonus(bool pair) const
         {

@@ -218,6 +218,46 @@ namespace eval
         return e;
     }
 
+    Eval Evaluator::evalPawns(board::Bitboard myPawns, board::Bitboard theirPawns) const noexcept
+    {
+        std::array<board::Bitboard, 8> files = {board::fileMask(board::a1), board::fileMask(board::b1), 
+        board::fileMask(board::c1), board::fileMask(board::d1), board::fileMask(board::e1),
+        board::fileMask(board::f1), board::fileMask(board::g1), board::fileMask(board::h1)};
+
+        std::array<board::Bitboard, 8> neighboringFiles = {files[1], files[0] | files[2], 
+        files[1] | files[3], files[2] | files[4], files[3] | files[5], files[4] | files[6], 
+        files[5] | files[7], files[6]};
+
+        Eval evaluation = 0;
+        for (auto file : files)
+        {
+            evaluation -= doubledpawnpenalty * (_popcnt64(myPawns & file) == 2);
+            evaluation -= tripledpawnpenalty * (_popcnt64(myPawns & file) > 2);
+            evaluation += doubledpawnpenalty * (_popcnt64(theirPawns & file) == 2);
+            evaluation += tripledpawnpenalty * (_popcnt64(theirPawns & file) > 2);
+        }
+
+        for (std::size_t i = 0; i != files.size(); ++i)
+        {
+            if (myPawns & files[i])
+            {
+                if (!(myPawns & neighboringFiles[i]))
+                {
+                    evaluation -= isolatedpawnpenalty;
+                }
+            }
+            if (theirPawns & files[i])
+            {
+                if (!(theirPawns & neighboringFiles[i]))
+                {
+                    evaluation += isolatedpawnpenalty;
+                }
+            }
+        }
+
+        return evaluation;
+    }
+
     Eval Evaluator::operator()(const board::QBB& b) const
     {
         Eval evaluation = 0;
