@@ -102,6 +102,16 @@ namespace aux
         return !(rank(i) + r > 8 || rank(i) + r < 1 || file(i) + f > 8 || file(i) + f < 1);
     }
 
+    constexpr std::uint64_t shiftRightNoWrap(std::uint64_t b)
+    {
+        return (b >> 1) & 9187201950435737471ULL; // No H file
+    }
+
+    constexpr std::uint64_t shiftLeftNoWrap(std::uint64_t b)
+    {
+        return (b << 1) & 18374403900871474942ULL; // No A file
+    }
+
     // increment the file number by c. There are 8 squares per
     // row, so if file + c is greater than 8, just start counting from
     // 1 again (e.g. 6 + 2 --> 1)
