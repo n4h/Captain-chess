@@ -171,6 +171,11 @@ namespace eval
         return e;
     }
 
+    Eval Evaluator::apply7thRankBonus(board::Bitboard rooks, board::Bitboard rank) const
+    {
+        return rook7thRankBonus * (_popcnt64(rooks & rank));
+    }
+
     unsigned Evaluator::totalMaterialValue(const board::QBB& b) const
     {
         unsigned materialVal = 0;
@@ -349,6 +354,9 @@ namespace eval
 
         evaluation += this->applyKnightOutPostBonus<OutpostType::MyOutpost>(pieces[1], pieces[0], pieces[6]);
         evaluation -= this->applyKnightOutPostBonus<OutpostType::OppOutpost>(pieces[7], pieces[0], pieces[6]);
+
+        evaluation += this->apply7thRankBonus(pieces[myRooks], board::rankMask(board::a7));
+        evaluation -= this->apply7thRankBonus(pieces[theirRooks], board::rankMask(board::a2));
 
         return evaluation;
     }

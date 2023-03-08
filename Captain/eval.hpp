@@ -58,6 +58,7 @@ namespace eval
         std::pair<unsigned, Eval> _pawnBishopPenalty;
         Eval _bishopOpenDiagonalBonus;
         Eval _rookOpenFileBonus;
+        Eval rook7thRankBonus;
         Eval _bishopPairBonus;
         std::pair<Eval, Eval> _knightOutpostBonus;
 
@@ -140,12 +141,14 @@ namespace eval
 
         Eval applyAggressionBonus(std::size_t type, board::square enemyKingSq, board::Bitboard pieces) const;
 
+        Eval apply7thRankBonus(board::Bitboard rooks, board::Bitboard rank) const;
+
     public:
         Eval operator()(const board::QBB&) const;
 
         constexpr Evaluator()
             : _pawnBishopPenalty(std::make_pair(6, 50)),
-            _bishopOpenDiagonalBonus(15), _rookOpenFileBonus(25), _bishopPairBonus(25),
+            _bishopOpenDiagonalBonus(15), _rookOpenFileBonus(25), rook7thRankBonus(25), _bishopPairBonus(25),
             _knightOutpostBonus(std::make_pair(15, 15))
         {
             _aggressionBonuses[0] = std::make_pair(0, 0);
@@ -162,7 +165,7 @@ namespace eval
             _aggressionBonuses[10] = std::make_pair(3, 5);
             _aggressionBonuses[11] = std::make_pair(0, 0);
         }
-
+        // TODO update mutate and crossover to support new eval terms
         const Evaluator& mutate(bool randomize);
 
         static Evaluator crossover(const Evaluator& e1, const Evaluator& e2)
