@@ -47,13 +47,14 @@ namespace eval
     {
         using PSQT = std::array<Eval, 64>;
         std::array<Eval, 5> piecevals = {100, 300, 300, 500, 900};
-        std::array<Eval, 9> knightmobility = {0, 0, 5, 10, 15, 15, 15, 15, 20};
-        std::array<Eval, 14> bishopmobility = { 0, 0, 0, 5, 5, 10, 10, 15, 15, 15, 20, 20, 25, 25 };
-        std::array<Eval, 8> rookvertmobility = {0, 0, 0, 5, 5, 10, 10, 15};
-        std::array<Eval, 8> rookhormobility = { -5, 0, 0, 0, 10, 10, 10, 15 };
+        Eval knightmobility = 3;
+        Eval bishopmobility = 3;
+        Eval rookvertmobility = 2;
+        Eval rookhormobility = 2;
         Eval doubledpawnpenalty = 50;
         Eval tripledpawnpenalty = 100;
         Eval isolatedpawnpenalty = 25;
+        std::array<Eval, 6> _passedPawnBonus = {0, 10, 50, 50, 100, 300};
         std::array<std::pair<unsigned, Eval>, 12> _aggressionBonuses;
         std::pair<unsigned, Eval> _pawnBishopPenalty;
         Eval _bishopOpenDiagonalBonus;
@@ -65,6 +66,16 @@ namespace eval
         enum OutpostType {MyOutpost, OppOutpost};
 
         unsigned totalMaterialValue(const board::QBB& b) const;
+
+        constexpr std::pair<board::Bitboard, board::Bitboard> detectPassedPawns(board::Bitboard myPawns, board::Bitboard theirPawns) const
+        {
+            board::Bitboard myPawnSpans = movegen::pawnAttacksLeft(myPawns) | movegen::pawnAttacksRight(myPawns) | movegen::pawnMovesUp(myPawns);
+            myPawnSpans |= movegen::KSNorth(0, myPawnSpans);
+            board::Bitboard theirPawnSpans = movegen::enemyPawnAttacksLeft(theirPawns) | movegen::enemyPawnAttacksRight(theirPawns) | (theirPawns >> 8);
+            theirPawnSpans |= movegen::KSSouth(0, theirPawnSpans);
+
+            return std::make_pair(myPawns & ~theirPawnSpans, theirPawns & ~myPawnSpans);
+        }
 
         constexpr Eval aggressionBonus(board::square psq, board::square enemyKingSq, std::pair<unsigned, Eval> aggression) const
         {

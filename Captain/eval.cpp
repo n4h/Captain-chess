@@ -223,7 +223,7 @@ namespace eval
         return e;
     }
 
-    Eval Evaluator::evalPawns(board::Bitboard myPawns, board::Bitboard theirPawns) const noexcept
+    Eval Evaluator::evalPawns(const board::Bitboard myPawns, const board::Bitboard theirPawns) const noexcept
     {
         std::array<board::Bitboard, 8> files = {board::fileMask(board::a1), board::fileMask(board::b1), 
         board::fileMask(board::c1), board::fileMask(board::d1), board::fileMask(board::e1),
@@ -258,6 +258,22 @@ namespace eval
                     evaluation += isolatedpawnpenalty;
                 }
             }
+        }
+
+        auto [myPassedPawns, theirPassedPawns] = detectPassedPawns(myPawns, theirPawns);
+
+        aux::GetNextBit<board::square> ppSquare(myPassedPawns);
+        while (ppSquare())
+        {
+            auto rank = aux::rank(ppSquare.next);
+            evaluation += _passedPawnBonus[rank - 1];
+        }
+
+        ppSquare = aux::GetNextBit<board::square>{theirPassedPawns};
+        while (ppSquare())
+        {
+            auto rank = 7 - aux::rank(ppSquare.next);
+            evaluation -= _passedPawnBonus[rank - 1];
         }
 
         return evaluation;
@@ -303,48 +319,48 @@ namespace eval
         {
             movegen::AttackMap moves = movegen::knightAttacks(mobility.next);
             moves &= ~(movegen::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
-            evaluation += knightmobility[_popcnt64(moves)];
+            evaluation += knightmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[theirKnights] };
         while (mobility())
         {
             movegen::AttackMap moves = movegen::knightAttacks(mobility.next);
             moves &= ~(movegen::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
-            evaluation -= knightmobility[_popcnt64(moves)];
+            evaluation -= knightmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[myBishops] };
         while (mobility())
         {
-            movegen::AttackMap moves = movegen::hypqAllDiag(pieces[myPawns] | pieces[theirPawns], mobility.next);
-            moves &= ~movegen::enemyPawnAttacks(pieces[theirPawns]);
-            evaluation += bishopmobility[_popcnt64(moves)];
+            movegen::AttackMap moves = movegen::hypqAllDiag(b.getOccupancy() & ~pieces[myQueens], mobility.next);
+            moves &= ~(movegen::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
+            evaluation += bishopmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[theirBishops] };
         while (mobility())
         {
-            movegen::AttackMap moves = movegen::hypqAllDiag(pieces[myPawns] | pieces[theirPawns], mobility.next);
-            moves &= ~movegen::pawnAttacks(pieces[myPawns]);
-            evaluation -= bishopmobility[_popcnt64(moves)];
+            movegen::AttackMap moves = movegen::hypqAllDiag(b.getOccupancy() & ~pieces[theirQueens], mobility.next);
+            moves &= ~(movegen::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
+            evaluation -= bishopmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[myRooks] };
         while (mobility())
         {
-            movegen::AttackMap moves = movegen::hypqRank(pieces[myPawns] | pieces[theirPawns], mobility.next);
-            moves &= ~movegen::enemyPawnAttacks(pieces[theirPawns]);
-            evaluation += rookhormobility[_popcnt64(moves)];
-            moves = movegen::hypqFile(pieces[myPawns] | pieces[theirPawns], mobility.next);
-            moves &= ~movegen::enemyPawnAttacks(pieces[theirPawns]);
-            evaluation += rookvertmobility[_popcnt64(moves)];
+            movegen::AttackMap moves = movegen::hypqRank(b.getOccupancy() & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
+            moves &= ~(movegen::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
+            evaluation += rookhormobility*_popcnt64(moves);
+            moves = movegen::hypqFile(b.getOccupancy() & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
+            moves &= ~(movegen::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
+            evaluation += rookvertmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[theirRooks] };
         while (mobility())
         {
-            movegen::AttackMap moves = movegen::hypqRank(pieces[myPawns] | pieces[theirPawns], mobility.next);
-            moves &= ~movegen::pawnAttacks(pieces[myPawns]);
-            evaluation -= rookhormobility[_popcnt64(moves)];
-            moves = movegen::hypqFile(pieces[myPawns] | pieces[theirPawns], mobility.next);
-            moves &= ~movegen::pawnAttacks(pieces[myPawns]);
-            evaluation -= rookvertmobility[_popcnt64(moves)];
+            movegen::AttackMap moves = movegen::hypqRank(b.getOccupancy() & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
+            moves &= ~(movegen::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
+            evaluation -= rookhormobility*_popcnt64(moves);
+            moves = movegen::hypqFile(b.getOccupancy() & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
+            moves &= ~(movegen::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
+            evaluation -= rookvertmobility*_popcnt64(moves);
         }
 
         evaluation += evalPawns(pieces[myPawns], pieces[theirPawns]); // TODO store this in pawn hash
@@ -354,6 +370,9 @@ namespace eval
 
         evaluation += this->applyKnightOutPostBonus<OutpostType::MyOutpost>(pieces[1], pieces[0], pieces[6]);
         evaluation -= this->applyKnightOutPostBonus<OutpostType::OppOutpost>(pieces[7], pieces[0], pieces[6]);
+
+        evaluation += this->rookOpenFileBonus(pieces[myPawns] | pieces[theirPawns], pieces[myRooks]);
+        evaluation -= this->rookOpenFileBonus(pieces[myPawns] | pieces[theirPawns], pieces[theirRooks]);
 
         evaluation += this->apply7thRankBonus(pieces[myRooks], board::rankMask(board::a7));
         evaluation -= this->apply7thRankBonus(pieces[theirRooks], board::rankMask(board::a2));
