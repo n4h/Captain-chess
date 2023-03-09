@@ -61,11 +61,25 @@ namespace eval
         Eval _rookOpenFileBonus;
         Eval rook7thRankBonus;
         Eval _bishopPairBonus;
+        Eval _kingCenterBonus = 20;
+        Eval _kingCenterRingBonus = 15;
         std::pair<Eval, Eval> _knightOutpostBonus;
 
         enum OutpostType {MyOutpost, OppOutpost};
 
         unsigned totalMaterialValue(const board::QBB& b) const;
+
+        bool isEndgame(const board::QBB&) const;
+
+        constexpr Eval kingCentralization(board::square s) const
+        {
+            if (aux::setbit(s) & constants::center)
+                return _kingCenterBonus;
+            else if (aux::setbit(s) & constants::centerRing)
+                return _kingCenterRingBonus;
+            else
+                return 0;
+        }
 
         constexpr std::pair<board::Bitboard, board::Bitboard> detectPassedPawns(board::Bitboard myPawns, board::Bitboard theirPawns) const
         {

@@ -190,6 +190,15 @@ namespace eval
         return materialVal;
     }
 
+    bool Evaluator::isEndgame(const board::QBB& b) const
+    {
+        auto materialValue = 900 * (b.getQueens());
+        materialValue += 500 * (b.getRooks());
+        materialValue += 300 * (b.getBishops());
+        materialValue += 300 * (b.getKnights());
+        return materialValue < 1900;
+    }
+
     Eval Evaluator::bishopOpenDiagonalBonus(board::Bitboard occ, board::Bitboard bishops) const
     {
         unsigned long index = 0;
@@ -364,6 +373,16 @@ namespace eval
         }
 
         evaluation += evalPawns(pieces[myPawns], pieces[theirPawns]); // TODO store this in pawn hash
+
+        if (isEndgame(b))
+        {
+            evaluation += kingCentralization(myKingSq);
+            evaluation -= kingCentralization(oppKingSq);
+        }
+        else
+        {
+            (void)0;// TODO King Safety
+        }
 
         evaluation += this->bishopPairBonus((pieces[2] & constants::whiteSquares) && (pieces[2] & constants::blackSquares));
         evaluation -= this->bishopPairBonus((pieces[8] & constants::whiteSquares) && (pieces[8] & constants::blackSquares));

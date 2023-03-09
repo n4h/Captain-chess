@@ -65,5 +65,7 @@ namespace constants
     constexpr std::uint64_t blackSquares = ~whiteSquares;
     constexpr std::uint64_t topHalf = 0xffffffff00000000ULL;
     constexpr std::uint64_t botHalf = ~topHalf;
+    constexpr std::uint64_t center = 0x1818000000ULL;
+    constexpr std::uint64_t centerRing = 0x3c24243c0000ULL;
 }
 #endif
