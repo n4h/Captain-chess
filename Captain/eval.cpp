@@ -192,10 +192,10 @@ namespace eval
 
     bool Evaluator::isEndgame(const board::QBB& b) const
     {
-        auto materialValue = 900 * (b.getQueens());
-        materialValue += 500 * (b.getRooks());
-        materialValue += 300 * (b.getBishops());
-        materialValue += 300 * (b.getKnights());
+        auto materialValue = 900 * (b.getQueens() & ~b.side);
+        materialValue += 500 * (b.getRooks() & ~b.side);
+        materialValue += 300 * (b.getBishops() & ~b.side);
+        materialValue += 300 * (b.getKnights() & ~b.side);
         return materialValue < 1900;
     }
 
