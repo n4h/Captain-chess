@@ -38,6 +38,7 @@ namespace eval
     Eval mvvlva(const board::QBB&, board::Move);
     Eval see(const board::QBB&, board::Move);
     Eval evalCapture(const board::QBB&, board::Move);
+    Eval squareControl(const board::QBB& b, board::square s);
 
     Eval computeMaterialValue(board::Bitboard, const std::array<Eval, 64>&);
 
