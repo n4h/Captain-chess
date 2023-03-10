@@ -97,7 +97,7 @@ namespace eval
         Eval _bishopPairBonus;
         Eval _kingCenterBonus = 20;
         Eval _kingCenterRingBonus = 15;
-        Eval _centerSquareValue = 5;
+        Eval _centerSquareValue = 25;
         std::pair<Eval, Eval> _knightOutpostBonus;
 
         enum OutpostType {MyOutpost, OppOutpost};
