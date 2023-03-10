@@ -206,7 +206,7 @@ namespace board
         const auto fromBB = setbit(fromSq);
         const auto toBB = setbit(toSq);
         const auto fromPcType = getPieceType(static_cast<square>(fromSq)) >> 1;
-        const auto toPcType = getPieceType(static_cast<square>(fromSq)) >> 1;
+        const auto toPcType = getPieceType(static_cast<square>(toSq)) >> 1;
         
         // 50 move rule counter and color flip
         Bitboard add1 = 0x1'01'00'00'00U;
