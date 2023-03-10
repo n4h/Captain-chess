@@ -97,6 +97,7 @@ namespace eval
         Eval _bishopPairBonus;
         Eval _kingCenterBonus = 20;
         Eval _kingCenterRingBonus = 15;
+        Eval _centerSquareValue = 5;
         std::pair<Eval, Eval> _knightOutpostBonus;
 
         enum OutpostType {MyOutpost, OppOutpost};
@@ -104,6 +105,16 @@ namespace eval
         unsigned totalMaterialValue(const board::QBB& b) const;
 
         bool isEndgame(const board::QBB&) const;
+
+        constexpr Eval centerControl(const board::QBB& b) const
+        {
+            Eval control = 0;
+            control += _centerSquareValue * (squareControl(b, board::e4) > 0 ? 1 : -1);
+            control += _centerSquareValue * (squareControl(b, board::d4) > 0 ? 1 : -1);
+            control += _centerSquareValue * (squareControl(b, board::e5) > 0 ? 1 : -1);
+            control += _centerSquareValue * (squareControl(b, board::d5) > 0 ? 1 : -1);
+            return control;
+        }
 
         constexpr Eval kingCentralization(board::square s) const
         {
