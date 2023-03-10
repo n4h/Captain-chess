@@ -209,10 +209,11 @@ namespace board
         const auto toPcType = getPieceType(static_cast<square>(toSq)) >> 1;
         
         // 50 move rule counter and color flip
-        Bitboard add1 = 0x1'01'00'00'00U;
+        constexpr Bitboard counter50 = 0x7f7f000000ULL;
+        Bitboard add1 = 0x1'01'00'00'00ULL + (epc & counter50);
         add1 *= 1U >> toPcType;
         add1 *= 1U - (2U >> fromPcType);
-        epc += add1;
+        epc = add1 + (epc & ~counter50);
         epc ^= 0x80'80'00'00'00U;
 
         side &= ~fromBB;

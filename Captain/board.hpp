@@ -506,7 +506,7 @@ namespace board
 
         constexpr auto get50() const noexcept
         {
-            return _bextr_u64(epc, 24, 6);
+            return _bextr_u64(epc, 24, 7) / 2;
         }
 
         constexpr Bitboard getCastling() const noexcept
