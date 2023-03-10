@@ -383,8 +383,6 @@ namespace eval
         {
             (void)0;// TODO King Safety
         }
-        
-        evaluation += this->centerControl(b);
 
         evaluation += this->bishopPairBonus((pieces[2] & constants::whiteSquares) && (pieces[2] & constants::blackSquares));
         evaluation -= this->bishopPairBonus((pieces[8] & constants::whiteSquares) && (pieces[8] & constants::blackSquares));

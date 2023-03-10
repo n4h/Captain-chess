@@ -39,7 +39,7 @@ namespace eval
     Eval see(const board::QBB&, board::Move);
     Eval evalCapture(const board::QBB&, board::Move);
 
-    // TODO take into account X ray attacks
+    // TODO better squareControl function
     constexpr Eval squareControl(const board::QBB& b, board::square s)
     {
         Eval control = 0;
@@ -97,7 +97,6 @@ namespace eval
         Eval _bishopPairBonus;
         Eval _kingCenterBonus = 20;
         Eval _kingCenterRingBonus = 15;
-        Eval _centerSquareValue = 25;
         std::pair<Eval, Eval> _knightOutpostBonus;
 
         enum OutpostType {MyOutpost, OppOutpost};
@@ -105,16 +104,6 @@ namespace eval
         unsigned totalMaterialValue(const board::QBB& b) const;
 
         bool isEndgame(const board::QBB&) const;
-
-        constexpr Eval centerControl(const board::QBB& b) const
-        {
-            Eval control = 0;
-            control += _centerSquareValue * (squareControl(b, board::e4) > 0 ? 1 : -1);
-            control += _centerSquareValue * (squareControl(b, board::d4) > 0 ? 1 : -1);
-            control += _centerSquareValue * (squareControl(b, board::e5) > 0 ? 1 : -1);
-            control += _centerSquareValue * (squareControl(b, board::d5) > 0 ? 1 : -1);
-            return control;
-        }
 
         constexpr Eval kingCentralization(board::square s) const
         {
