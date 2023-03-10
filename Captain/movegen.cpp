@@ -289,10 +289,4 @@ namespace movegen
         pawns |= enemyPawnAttacks(s) & b.my(b.getPawns());
         return orth | diag | knight | kings | pawns;
     }
-    Bitboard getSliderAttackers(Bitboard occ, board::square s, Bitboard diag, Bitboard orth)
-    {
-        orth &= KSAllOrth(occ, s);
-        diag &= KSAllDiag(occ, s);
-        return orth | diag;
-    }
 }

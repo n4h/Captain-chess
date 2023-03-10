@@ -397,7 +397,7 @@ namespace movegen
     }
 
     template<typename T>
-    AttackMap kingAttacks(T idx)
+    constexpr AttackMap kingAttacks(T idx)
     {
         Bitboard king;
         if constexpr (std::is_same_v<T, board::square>)
@@ -426,7 +426,7 @@ namespace movegen
     }
 
     template<typename T>
-    AttackMap knightAttacks(T idx)
+    constexpr AttackMap knightAttacks(T idx)
     {
         Bitboard knight;
         if constexpr (std::is_same_v<T, board::square>)
@@ -586,7 +586,13 @@ namespace movegen
     bool moveGivesCheck(const board::QBB& b, board::Move);
 
     Bitboard getSqAttackers(const board::QBB& b, board::square s);
-    Bitboard getSliderAttackers(Bitboard, board::square, Bitboard diag, Bitboard orth);
+
+    constexpr Bitboard getSliderAttackers(Bitboard occ, board::square s, Bitboard diag, Bitboard orth)
+    {
+        orth &= KSAllOrth(occ, s);
+        diag &= KSAllDiag(occ, s);
+        return orth | diag;
+    }
 
     template<typename Attacks, typename T, std::size_t N>
     void addMoves(Bitboard pieces, Movelist<T, N>& ml, Attacks dest)
