@@ -153,40 +153,6 @@ namespace eval
         return scores[0];
     }
 
-    // TODO take into account X ray attacks
-    Eval squareControl(const board::QBB& b, board::square s)
-    {
-        Eval control = 0;
-
-        auto myAttackers = b.my(b.getPawns()) & movegen::enemyPawnAttacks(s);
-        auto theirAttackers = b.their(b.getPawns()) & movegen::pawnAttacks(s);
-        control += 900 * (_popcnt64(myAttackers) - _popcnt64(theirAttackers));
-
-        myAttackers = b.my(b.getKnights()) & movegen::knightAttacks(s);
-        theirAttackers = b.their(b.getKnights()) & movegen::knightAttacks(s);
-        control += 500 * (_popcnt64(myAttackers) - _popcnt64(theirAttackers));
-
-        const auto sliders = movegen::getSliderAttackers(b.getOccupancy(), s, b.getDiagSliders(), b.getOrthSliders());
-
-        myAttackers = b.my(b.getBishops()) & sliders;
-        theirAttackers = b.their(b.getBishops()) & sliders;
-        control += 500 * (_popcnt64(myAttackers) - _popcnt64(theirAttackers));
-
-        myAttackers = b.my(b.getRooks()) & sliders;
-        theirAttackers = b.their(b.getRooks()) & sliders;
-        control += 300 * (_popcnt64(myAttackers) - _popcnt64(theirAttackers));
-
-        myAttackers = b.my(b.getQueens()) & sliders;
-        theirAttackers = b.their(b.getQueens()) & sliders;
-        control += 100 * (_popcnt64(myAttackers) - _popcnt64(theirAttackers));
-
-        myAttackers = b.my(b.getKings()) & movegen::kingAttacks(s);
-        theirAttackers = b.their(b.getKings()) & movegen::kingAttacks(s);
-        control += 50 * (_popcnt64(myAttackers) - _popcnt64(theirAttackers));
-
-        return control;
-    }
-
     Eval evalCapture(const board::QBB& b, board::Move m)
     {
         Eval mvvlvaScore = mvvlva(b, m);
