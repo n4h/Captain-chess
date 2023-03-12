@@ -69,11 +69,11 @@ namespace Tuning
                 peakFitness = (*pop)[0];
             }
 
-            std::shuffle(pop->begin(), pop->begin() + 4000, g);
+            std::shuffle(pop->begin(), pop->begin() + 200, g);
 
             std::unique_ptr<Population> newpop = std::make_unique<Population>();
             auto k = newpop->begin();
-            for (auto j = pop->begin() + 1; j != pop->begin() + 4001; j += 2)
+            for (auto j = pop->begin() + 1; j != pop->begin() + 201; j += 2)
             {
                 auto i = j - 1;
                 for (std::size_t n = 0; n != 3; ++n)
