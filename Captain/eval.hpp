@@ -90,14 +90,13 @@ namespace eval
         Eval isolatedpawnpenalty = 25;
         std::array<Eval, 6> _passedPawnBonus = {0, 10, 50, 50, 100, 300};
         std::array<std::pair<unsigned, Eval>, 12> _aggressionBonuses;
-        std::pair<unsigned, Eval> _pawnBishopPenalty;
-        Eval _bishopOpenDiagonalBonus;
-        Eval _rookOpenFileBonus;
-        Eval rook7thRankBonus;
-        Eval _bishopPairBonus;
+        Eval _bishopOpenDiagonalBonus = 15;
+        Eval _rookOpenFileBonus = 25;
+        Eval rook7thRankBonus = 25;
+        Eval _bishopPairBonus = 25;
         Eval _kingCenterBonus = 20;
         Eval _kingCenterRingBonus = 15;
-        std::pair<Eval, Eval> _knightOutpostBonus;
+        Eval _knightOutpostBonus = 15;
 
         enum OutpostType {MyOutpost, OppOutpost};
 
@@ -135,13 +134,7 @@ namespace eval
             return (l1dist(pRank, pFile, kRank, kFile) <= closeness) * bonus;
         }
 
-        constexpr Eval pawnCountBishopPenalty(unsigned pawnCount, bool bishopsExist) const
-        {
-            return bishopsExist * (pawnCount >= _pawnBishopPenalty.first) * _pawnBishopPenalty.second;
-        }
-
         Eval bishopOpenDiagonalBonus(board::Bitboard occ, board::Bitboard bishops) const;
-
 
         Eval rookOpenFileBonus(board::Bitboard pawns, board::Bitboard rooks) const;
 
@@ -164,7 +157,7 @@ namespace eval
                     myKnight = movegen::pawnAttacks(myKnight);
                     if (!(myKnight & enemyPawns))
                     {
-                        return _knightOutpostBonus.first;
+                        return _knightOutpostBonus;
                     }
                 }
                 return 0;
@@ -178,7 +171,7 @@ namespace eval
                     myKnight = movegen::enemyPawnAttacks(myKnight);
                     if (!(myKnight & myPawns))
                     {
-                        return _knightOutpostBonus.second;
+                        return _knightOutpostBonus;
                     }
                 }
                 return 0;
@@ -206,9 +199,6 @@ namespace eval
         Eval operator()(const board::QBB&) const;
 
         constexpr Evaluator()
-            : _pawnBishopPenalty(std::make_pair(6, 50)),
-            _bishopOpenDiagonalBonus(15), _rookOpenFileBonus(25), rook7thRankBonus(25), _bishopPairBonus(25),
-            _knightOutpostBonus(std::make_pair(15, 15))
         {
             _aggressionBonuses[0] = std::make_pair(0, 0);
             _aggressionBonuses[1] = std::make_pair(4, 5);
@@ -235,13 +225,31 @@ namespace eval
                 return whiche(aux::seed) ? e1 : e2;
             };
 
+            for (std::size_t i = 0; i != e.piecevals.size(); ++i)
+            {
+                e.piecevals[i] = parent().piecevals[i];
+            }
+
+            for (std::size_t i = 0; i != e._passedPawnBonus.size(); ++i)
+            {
+                e._passedPawnBonus[i] = parent()._passedPawnBonus[i];
+            }
+
+            e.knightmobility = parent().knightmobility;
+            e.bishopmobility = parent().bishopmobility;
+            e.rookvertmobility = parent().rookvertmobility;
+            e.rookhormobility = parent().rookhormobility;
+            e.doubledpawnpenalty = parent().doubledpawnpenalty;
+            e.tripledpawnpenalty = parent().tripledpawnpenalty;
+            e.isolatedpawnpenalty = parent().isolatedpawnpenalty;
             e._bishopOpenDiagonalBonus = parent()._bishopOpenDiagonalBonus;
             e._rookOpenFileBonus = parent()._rookOpenFileBonus;
+            e.rook7thRankBonus = parent().rook7thRankBonus;
             e._bishopPairBonus = parent()._bishopPairBonus;
-            e._knightOutpostBonus.first = parent()._knightOutpostBonus.first;
-            e._knightOutpostBonus.second = parent()._knightOutpostBonus.second;
-            e._pawnBishopPenalty.first = parent()._pawnBishopPenalty.first;
-            e._pawnBishopPenalty.second = parent()._pawnBishopPenalty.second;
+            e._kingCenterBonus = parent()._kingCenterBonus;
+            e._kingCenterRingBonus = parent()._kingCenterRingBonus;
+            e._knightOutpostBonus = parent()._knightOutpostBonus;
+            e._knightOutpostBonus = parent()._knightOutpostBonus;
 
             for (std::size_t i = 0; i != 12; ++i)
             {

@@ -403,29 +403,47 @@ namespace eval
     {
         std::bernoulli_distribution doMutate(randomize ? 0.85 : 1.0/2000.0);
         std::uniform_int_distribution positionalBonus(-50, 50);
-        std::uniform_int_distribution gamePhase(-500, 500);
-        std::uniform_int_distribution PSQT(-100, 100);
         std::uniform_int_distribution ZeroTo8(0, 8);
 
         auto mutate = [&](auto& mutator, int p = 0) {
             return doMutate(aux::seed) ? mutator(aux::seed) : p;
         };
 
-        for (std::size_t i = 0; i != 12; ++i)
+        for (std::size_t i = 0; i != _aggressionBonuses.size(); ++i)
         {
             _aggressionBonuses[i].first = mutate(ZeroTo8, _aggressionBonuses[i].first);
             _aggressionBonuses[i].second += mutate(positionalBonus);
         }
 
-        _pawnBishopPenalty.first = mutate(ZeroTo8, _pawnBishopPenalty.first);
-        _pawnBishopPenalty.second += mutate(positionalBonus);
+        for (std::size_t i = 0; i != piecevals.size(); ++i)
+        {
+            piecevals[i] += mutate(positionalBonus);
+        }
+
+        for (std::size_t i = 0; i != _passedPawnBonus.size(); ++i)
+        {
+            _passedPawnBonus[i] += mutate(positionalBonus);
+        }
+
+
+        knightmobility = mutate(ZeroTo8, knightmobility);
+        bishopmobility = mutate(ZeroTo8, bishopmobility);
+        rookvertmobility = mutate(ZeroTo8, rookvertmobility);
+        rookhormobility = mutate(ZeroTo8, rookhormobility);
+
+        doubledpawnpenalty += mutate(positionalBonus);
+        tripledpawnpenalty += mutate(positionalBonus);
+        isolatedpawnpenalty += mutate(positionalBonus);
 
         _bishopOpenDiagonalBonus += mutate(positionalBonus);
         _rookOpenFileBonus += mutate(positionalBonus);
         _bishopPairBonus += mutate(positionalBonus);
+        rook7thRankBonus += mutate(positionalBonus);
 
-        _knightOutpostBonus.first += mutate(positionalBonus);
-        _knightOutpostBonus.second += mutate(positionalBonus);
+        _kingCenterBonus += mutate(positionalBonus);
+        _kingCenterRingBonus += mutate(positionalBonus);
+
+        _knightOutpostBonus += mutate(positionalBonus);
 
         return *this;
     }
@@ -433,66 +451,53 @@ namespace eval
     std::string Evaluator::asString() const
     {
         std::ostringstream oss;
-        /*
-        std::array<std::string, 12> PSQTNames= {"wpawns", "wknights", "wbishops", "wrooks", "wqueens", "wking",
-        "bpawns", "bknights", "bbishops", "brooks", "bqueens", "bking" };
 
-        auto printPSQTName = [&](std::size_t i) {oss << PSQTNames[i] << "="; };
-        
-        auto printArrayVal = [&](std::size_t sq, Eval e) {
-            if (sq % 8 == 0)
-                oss << '\n';
-            oss << e << ",";
-        };
+        auto printTerm = [&](const std::string& name, Eval e) {oss << name << "=" << e << '\n'; };
 
-        
-        auto printPSQTSet = [&](const auto& set) {
-            for (std::size_t n = 0; n != 12; ++n)
+        auto printArray = [&](const std::string& name, const auto& array)
+        {
+            oss << name << "={";
+            for (const auto& i : array)
             {
-                oss << '\n';
-                printPSQTName(n);
-                oss << "{";
-                for (std::size_t m = 0; m != 64; ++m)
-                {
-                    printArrayVal(m, set[n][m]);
-                }
-                oss << "}";
-                oss << '\n';
+                oss << i << ",";
             }
+            oss << "}" << '\n';
         };
-        */
+
+        auto printArrayOfPairs = [&](const std::string& name, const auto& array)
+        {
+            oss << name << "={";
+            for (const auto& [i, j] : array)
+            {
+                oss << "(" << i << "," << j << ")" << ",";
+            }
+            oss << "}" << '\n';
+        };
+
         oss << '\n';
         auto now = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
-        oss << "Tuning completed date/time: " << now << '\n';
+        oss << "Tuning completed date/time: " << now << '\n' << '\n';
 
-        oss << '\n';
-        oss << "aggression";
-        oss << '\n';
+        printTerm("knightmobility", knightmobility);
+        printTerm("bishopmobility", bishopmobility);
+        printTerm("rookvertmobility", rookvertmobility);
+        printTerm("rookhormobility", rookhormobility);
 
-        for (const auto& [dist, bonus] : _aggressionBonuses)
-        {
-            oss << "<" << dist << "," << bonus << ">";
-        }
+        printTerm("doubledpawnpenalty", doubledpawnpenalty);
+        printTerm("tripledpawnpenalty", tripledpawnpenalty);
+        printTerm("isolatedpawnpenalty", isolatedpawnpenalty);
 
-        oss << '\n';
-        oss << "pawnbishoppenalty";
-        oss << '\n';
+        printArray("_passedPawnBonus", _passedPawnBonus);
+        printArrayOfPairs("_aggressionBonuses", _aggressionBonuses);
 
-        oss << "<" << _pawnBishopPenalty.first << "," << _pawnBishopPenalty.second << ">";
+        printTerm("_bishopOpenDiagonalBonus", _bishopOpenDiagonalBonus);
+        printTerm("_rookOpenFileBonus", _rookOpenFileBonus);
+        printTerm("rook7thRankBonus", rook7thRankBonus);
+        printTerm("_bishopPairBonus", _bishopPairBonus);
+        printTerm("_kingCenterBonus", _kingCenterBonus);
+        printTerm("_kingCenterRingBonus", _kingCenterRingBonus);
+        printTerm("_knightOutpostBonus", _knightOutpostBonus);
 
-        oss << '\n';
-        oss << "opendiagonal,openfile,pair";
-        oss << '\n';
-
-        oss << "<" << _bishopOpenDiagonalBonus << "," << _rookOpenFileBonus << "," << _bishopPairBonus << ">";
-
-        oss << '\n';
-        oss << "knightoutpost";
-        oss << '\n';
-
-        oss << "<" << _knightOutpostBonus.first << "," << _knightOutpostBonus.second << ">";
-
-        oss << '\n';
         return oss.str();
 
     }
