@@ -32,7 +32,7 @@ namespace Tuning
     using eval::Evaluator;
 
     using Fitness = std::uint64_t;
-    using Population = std::array<std::pair<Evaluator, Fitness>, 10'000>;
+    using Population = std::array<std::pair<Evaluator, Fitness>, 500>;
     using engine::Engine;
 
     class Tuner
