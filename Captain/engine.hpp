@@ -104,10 +104,6 @@ namespace engine
         void printPV(const board::QBB& b);
         std::string line2string(board::QBB b, const std::vector<board::Move>& moves);
         std::chrono::milliseconds elapsed() const;
-        static bool futilityPruning(const board::QBB& before, board::Move m, int depth, bool PV)
-        {
-            return !PV && depth == 1 && !before.isCapture(m) && !moves::isInCheck(before) && !moves::moveGivesCheck(before, m);
-        }
 
         std::osyncstream engine_out;
         SearchSettings settings;

@@ -479,25 +479,28 @@ namespace engine
         std::size_t i = 0;
         Eval besteval = negInf;
         const bool PVNode = isPVNode(alpha, beta);
-        //auto staticEval = std::make_pair(0, false);
+
+        const bool doFPruning = (depth == 1) && !moves::isInCheck(b);
+        bool moveWasPruned = false;
+
+        auto materialBalance = evaluate.materialBalance(b);
+
         for (; moves.next(b, nextMove); ++i)
         {
             if (!SearchFlags::searching.test())
             {
                 throw Timeout();
             }
-            /*
-            if (futilityPruning(b, nextMove, depth, PVNode))
-            {
-                if (!staticEval.second) staticEval = std::make_pair(evaluate(b), true);
 
-                if (staticEval.first + 900 < alpha)
+            if (doFPruning && !moves::moveGivesCheck(b, nextMove))
+            {
+                if (materialBalance + eval::getCaptureValue(b, nextMove) + 200 <= alpha)
                 {
-                    moves.disableQuiets();
+                    moveWasPruned = true;
                     continue;
                 }
             }
-            */
+            
             auto oldhash = hash;
             bcopy.makeMove(nextMove);
 
@@ -526,7 +529,7 @@ namespace engine
             if (besteval >= beta)
             {
                 nodeType = Tables::CUT;
-                Tables::tt.tryStore(hash, depth, besteval, nextMove, nodeType, initialPos);
+                Tables::tt.tryStore(hash, depth, besteval, nextMove, nodeType, initialPos, moveWasPruned);
                 if (!b.isCapture(nextMove))
                 {
                     killers.storeKiller(nextMove, ply());
@@ -551,11 +554,11 @@ namespace engine
 
         if (nodeType == Tables::PV)
         {
-            Tables::tt.store(hash, depth, besteval, topMove, nodeType, initialPos);
+            Tables::tt.tryStore(hash, depth, besteval, topMove, nodeType, initialPos, moveWasPruned);
         }
         else
         {
-            Tables::tt.tryStore(hash, depth, besteval, topMove, nodeType, initialPos);
+            Tables::tt.tryStore(hash, depth, besteval, topMove, nodeType, initialPos, moveWasPruned);
         }
         return besteval;
     }
