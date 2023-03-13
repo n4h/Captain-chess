@@ -317,36 +317,43 @@ namespace engine
         auto captureIterations = ml.size();
         bool check = moves::isInCheck(b);
         Eval standpat = negInf;
+
         if (!check)
         {
-            standpat = evaluate(b);
-            if (standpat >= beta)
+            if (ml.size())
             {
-                return standpat;
-            }
-            else if (standpat >= alpha)
-            {
-                alpha = standpat;
-            }
-        }
-        if (!check && !ml.size())
-        {
-            movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);
-            if (!ml.size())
-            {
-                return 0;
+                standpat = evaluate(b);
+                if (standpat >= beta)
+                {
+                    return standpat;
+                }
+                else if (standpat >= alpha)
+                {
+                    alpha = standpat;
+                }
             }
             else
             {
-                return standpat;
+                moves::genMoves<!moves::QSearch, moves::Quiets>(b, ml);
+                if (ml.size())
+                {
+                    return evaluate(b);
+                }
+                else
+                {
+                    return 0;
+                }
             }
         }
-        else if (check && !ml.size())
+        else
         {
-            movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);
             if (!ml.size())
             {
-                return negInf;
+                moves::genMoves<!moves::QSearch, moves::Quiets>(b, ml);
+                if (!ml.size())
+                {
+                    return negInf;
+                }
             }
         }
 
@@ -354,11 +361,10 @@ namespace engine
         Eval currEval = standpat;
 
         board::QBB bcopy = b;
-        // TODO replace usage of mvvlva with SEE
         for (std::size_t i = 0; auto& [move, score] : ml)
         {
             if (i < captureIterations)
-                score = eval::mvvlva(b, move);
+                score = eval::see(b, move);
             ++i;
         }
 
@@ -368,23 +374,11 @@ namespace engine
             {
                 std::iter_swap(ml.begin() + i, std::max_element(ml.begin() + i, ml.end()));
             }
-            if (i < captureIterations)
+            if (!check && i < captureIterations)
             {
-                if (!check && eval::getCaptureValue(b, ml[i].m) + 200 + standpat <= alpha)
+                if (ml[i].score < 0 || eval::getCaptureValue(b, ml[i].m) + 200 + standpat <= alpha)
                 {
                     continue;
-                }
-                if (ml[i].score < 0)
-                {
-                    ml[i].score = eval::see(b, ml[i].m);
-                    if (ml[i].score < 0)
-                    {
-                        if (check && i + 1 == captureIterations)
-                        {
-                            movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);
-                        }
-                        continue;
-                    }
                 }
             }
             if (!SearchFlags::searching.test())
