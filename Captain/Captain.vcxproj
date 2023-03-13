@@ -388,8 +388,8 @@
     <ClInclude Include="board.hpp">
       <FileType>Document</FileType>
     </ClInclude>
-    <ClCompile Include="movegen.cpp" />
-    <ClInclude Include="movegen.hpp">
+    <ClCompile Include="moves.cpp" />
+    <ClInclude Include="moves.hpp">
       <FileType>Document</FileType>
     </ClInclude>
     <ClCompile Include="perft.cpp" />

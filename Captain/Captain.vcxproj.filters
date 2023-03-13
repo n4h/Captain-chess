@@ -27,7 +27,7 @@
     <ClCompile Include="eval.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="movegen.cpp">
+    <ClCompile Include="moves.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="engine.cpp">
@@ -68,7 +68,7 @@
     <ClInclude Include="board.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="movegen.hpp">
+    <ClInclude Include="moves.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="perft.hpp">

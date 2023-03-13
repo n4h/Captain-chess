@@ -23,7 +23,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <string>
 
 #include "board.hpp"
-#include "movegen.hpp"
+#include "moves.hpp"
 #include "constants.hpp"
 #include "auxiliary.hpp"
 #include "perft.hpp"

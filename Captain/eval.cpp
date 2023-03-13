@@ -24,7 +24,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "eval.hpp"
 #include "board.hpp"
-#include "movegen.hpp"
+#include "moves.hpp"
 #include "auxiliary.hpp"
 #include "constants.hpp"
 
@@ -114,7 +114,7 @@ namespace eval
         const board::square target = board::getMoveToSq(m);
         auto targettype = (b.getPieceType(target) >> 1) - 1;
         const auto movetype = board::getMoveInfo<constants::moveTypeMask>(m);
-        board::Bitboard attackers = movegen::getSqAttackers(b, target);
+        board::Bitboard attackers = moves::getSqAttackers(b, target);
         board::Bitboard attacker = aux::setbit(board::getMoveInfo<board::fromMask>(m));
         auto attackertype = b.getPieceType(board::getMoveFromSq(m)) >> 1;
 
@@ -132,7 +132,7 @@ namespace eval
         diag &= ~attacker;
         orth &= ~attacker;
         side = ~side;
-        attackers |= movegen::getSliderAttackers(occ, target, diag, orth);
+        attackers |= moves::getSliderAttackers(occ, target, diag, orth);
         attackertype = getLVA(b, attackers & side, attacker);
         std::size_t i = 1;
         for (; i != 32 && attackertype; ++i)
@@ -145,7 +145,7 @@ namespace eval
             diag &= ~attacker;
             orth &= ~attacker;
             side = ~side;
-            attackers |= movegen::getSliderAttackers(occ, target, diag, orth);
+            attackers |= moves::getSliderAttackers(occ, target, diag, orth);
             attackertype = getLVA(b, attackers & side, attacker);
         }
         while (--i)
@@ -207,11 +207,11 @@ namespace eval
         {
             bishops = _blsr_u64(bishops);
             auto square = board::square(index);
-            if (board::diagMask(square) == movegen::hypqDiag(occ, square))
+            if (board::diagMask(square) == moves::hypqDiag(occ, square))
             {
                 e += _bishopOpenDiagonalBonus;
             }
-            if (board::antiDiagMask(square) == movegen::hypqAntiDiag(occ, square))
+            if (board::antiDiagMask(square) == moves::hypqAntiDiag(occ, square))
             {
                 e += _bishopOpenDiagonalBonus;
             }
@@ -326,49 +326,49 @@ namespace eval
         aux::GetNextBit<board::Bitboard> mobility(pieces[myKnights]);
         while (mobility())
         {
-            movegen::AttackMap moves = movegen::knightAttacks(mobility.next);
-            moves &= ~(movegen::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
+            moves::AttackMap moves = moves::knightAttacks(mobility.next);
+            moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += knightmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[theirKnights] };
         while (mobility())
         {
-            movegen::AttackMap moves = movegen::knightAttacks(mobility.next);
-            moves &= ~(movegen::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
+            moves::AttackMap moves = moves::knightAttacks(mobility.next);
+            moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
             evaluation -= knightmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[myBishops] };
         while (mobility())
         {
-            movegen::AttackMap moves = movegen::hypqAllDiag(b.getOccupancy() & ~pieces[myQueens], mobility.next);
-            moves &= ~(movegen::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
+            moves::AttackMap moves = moves::hypqAllDiag(b.getOccupancy() & ~pieces[myQueens], mobility.next);
+            moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += bishopmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[theirBishops] };
         while (mobility())
         {
-            movegen::AttackMap moves = movegen::hypqAllDiag(b.getOccupancy() & ~pieces[theirQueens], mobility.next);
-            moves &= ~(movegen::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
+            moves::AttackMap moves = moves::hypqAllDiag(b.getOccupancy() & ~pieces[theirQueens], mobility.next);
+            moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
             evaluation -= bishopmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[myRooks] };
         while (mobility())
         {
-            movegen::AttackMap moves = movegen::hypqRank(b.getOccupancy() & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
-            moves &= ~(movegen::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
+            moves::AttackMap moves = moves::hypqRank(b.getOccupancy() & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
+            moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += rookhormobility*_popcnt64(moves);
-            moves = movegen::hypqFile(b.getOccupancy() & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
-            moves &= ~(movegen::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
+            moves = moves::hypqFile(b.getOccupancy() & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
+            moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += rookvertmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[theirRooks] };
         while (mobility())
         {
-            movegen::AttackMap moves = movegen::hypqRank(b.getOccupancy() & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
-            moves &= ~(movegen::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
+            moves::AttackMap moves = moves::hypqRank(b.getOccupancy() & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
+            moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
             evaluation -= rookhormobility*_popcnt64(moves);
-            moves = movegen::hypqFile(b.getOccupancy() & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
-            moves &= ~(movegen::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
+            moves = moves::hypqFile(b.getOccupancy() & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
+            moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
             evaluation -= rookvertmobility*_popcnt64(moves);
         }
 

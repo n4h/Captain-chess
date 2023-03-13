@@ -30,7 +30,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "engine.hpp"
 #include "board.hpp"
-#include "movegen.hpp"
+#include "moves.hpp"
 #include "eval.hpp"
 #include "auxiliary.hpp"
 #include "uci.hpp"
@@ -140,8 +140,8 @@ namespace engine
 
     int Engine::LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV)
     {
-        if (movegen::isInCheck(before)
-            || movegen::isInCheck(after)
+        if (moves::isInCheck(before)
+            || moves::isInCheck(after)
             || currDepth < 3
             || PV
             || before.isCapture(m)
@@ -211,7 +211,7 @@ namespace engine
             moveTime = aux::castms((0.95*mytime) / settings.movestogo);
         }
         rootMoves.clear();
-        movegen::genMoves(b, rootMoves);
+        moves::genMoves(b, rootMoves);
         
         for (auto& i : rootMoves)
         {
@@ -312,10 +312,10 @@ namespace engine
         }
 
 
-        movegen::Movelist<movegen::ScoredMove> ml;
-        movegen::genMoves<movegen::QSearch>(b, ml);
+        moves::Movelist<moves::ScoredMove> ml;
+        moves::genMoves<moves::QSearch>(b, ml);
         auto captureIterations = ml.size();
-        bool check = movegen::isInCheck(b);
+        bool check = moves::isInCheck(b);
         Eval standpat = negInf;
         if (!check)
         {
@@ -404,7 +404,7 @@ namespace engine
             }
             if (check && i + 1 == captureIterations)
             {
-                movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, ml);
+                moves::genMoves<!moves::QSearch, moves::Quiets>(b, ml);
             }
         }
         return currEval;
@@ -453,7 +453,7 @@ namespace engine
 
         PrincipalVariation pvChild;
 
-        const bool inCheck = movegen::isInCheck(b);
+        const bool inCheck = moves::isInCheck(b);
 
         if (!nullBranch && !inCheck)
         {
@@ -479,7 +479,7 @@ namespace engine
 
         board::Move topMove = 0;
         Eval currEval = negInf;
-        movegen::MoveOrder moves(&killers, &historyHeuristic, b, hash, ply());
+        moves::MoveOrder moves(&killers, &historyHeuristic, b, hash, ply());
         board::Move nextMove = 0;
         board::QBB bcopy = b;
         std::size_t i = 0;
@@ -552,7 +552,7 @@ namespace engine
         }
         if (i == 0)
         {
-            return movegen::isInCheck(b) ? negInf : 0;
+            return moves::isInCheck(b) ? negInf : 0;
         }
 
         if (nodeType == Tables::PV)

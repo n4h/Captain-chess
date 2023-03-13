@@ -38,9 +38,9 @@ namespace perft
             ++perftResult;
             return;
         }
-        movegen::Movelist moveList;
-        movegen::genMoves<movegen::QSearch>(b, moveList);
-        movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, moveList);
+        moves::Movelist moveList;
+        moves::genMoves<moves::QSearch>(b, moveList);
+        moves::genMoves<!moves::QSearch, moves::Quiets>(b, moveList);
 
         board::QBB bcopy = b;
 

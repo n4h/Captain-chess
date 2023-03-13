@@ -29,7 +29,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <iostream>
 
 #include "board.hpp"
-#include "movegen.hpp"
+#include "moves.hpp"
 #include "eval.hpp"
 #include "auxiliary.hpp"
 #include "searchflags.hpp"
@@ -106,7 +106,7 @@ namespace engine
         std::chrono::milliseconds elapsed() const;
         static bool futilityPruning(const board::QBB& before, board::Move m, int depth, bool PV)
         {
-            return !PV && depth == 1 && !before.isCapture(m) && !movegen::isInCheck(before) && !movegen::moveGivesCheck(before, m);
+            return !PV && depth == 1 && !before.isCapture(m) && !moves::isInCheck(before) && !moves::moveGivesCheck(before, m);
         }
 
         std::osyncstream engine_out;
@@ -121,7 +121,7 @@ namespace engine
         std::size_t initialMove = 0;
         std::vector<std::uint64_t> prevPos;
         std::size_t initialPos = 0;
-        movegen::Movelist<movegen::ScoredMove> rootMoves;
+        moves::Movelist<moves::ScoredMove> rootMoves;
         bool engineW = true;
         std::chrono::milliseconds moveTime = 0ms;
         Tables::KillerTable killers;

@@ -24,11 +24,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <cstddef>
 
-#include "movegen.hpp"
+#include "moves.hpp"
 #include "board.hpp"
 #include "auxiliary.hpp"
 
-namespace movegen
+namespace moves
 {
     bool isLegalMove(const board::QBB& b, board::Move m)
     {

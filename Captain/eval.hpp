@@ -26,7 +26,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "auxiliary.hpp"
 #include "board.hpp"
-#include "movegen.hpp"
+#include "moves.hpp"
 
 namespace eval
 {
@@ -44,15 +44,15 @@ namespace eval
     {
         Eval control = 0;
 
-        auto myAttackers = b.my(b.getPawns()) & movegen::enemyPawnAttacks(s);
-        auto theirAttackers = b.their(b.getPawns()) & movegen::pawnAttacks(s);
+        auto myAttackers = b.my(b.getPawns()) & moves::enemyPawnAttacks(s);
+        auto theirAttackers = b.their(b.getPawns()) & moves::pawnAttacks(s);
         control += 900 * (_popcnt64(myAttackers) - _popcnt64(theirAttackers));
 
-        myAttackers = b.my(b.getKnights()) & movegen::knightAttacks(s);
-        theirAttackers = b.their(b.getKnights()) & movegen::knightAttacks(s);
+        myAttackers = b.my(b.getKnights()) & moves::knightAttacks(s);
+        theirAttackers = b.their(b.getKnights()) & moves::knightAttacks(s);
         control += 500 * (_popcnt64(myAttackers) - _popcnt64(theirAttackers));
 
-        const auto sliders = movegen::getSliderAttackers(b.getOccupancy(), s, b.getDiagSliders(), b.getOrthSliders());
+        const auto sliders = moves::getSliderAttackers(b.getOccupancy(), s, b.getDiagSliders(), b.getOrthSliders());
 
         myAttackers = b.my(b.getBishops()) & sliders;
         theirAttackers = b.their(b.getBishops()) & sliders;
@@ -66,8 +66,8 @@ namespace eval
         theirAttackers = b.their(b.getQueens()) & sliders;
         control += 100 * (_popcnt64(myAttackers) - _popcnt64(theirAttackers));
 
-        myAttackers = b.my(b.getKings()) & movegen::kingAttacks(s);
-        theirAttackers = b.their(b.getKings()) & movegen::kingAttacks(s);
+        myAttackers = b.my(b.getKings()) & moves::kingAttacks(s);
+        theirAttackers = b.their(b.getKings()) & moves::kingAttacks(s);
         control += 50 * (_popcnt64(myAttackers) - _popcnt64(theirAttackers));
 
         return control;
@@ -116,10 +116,10 @@ namespace eval
 
         constexpr std::pair<board::Bitboard, board::Bitboard> detectPassedPawns(board::Bitboard myPawns, board::Bitboard theirPawns) const
         {
-            board::Bitboard myPawnSpans = movegen::pawnAttacksLeft(myPawns) | movegen::pawnAttacksRight(myPawns) | movegen::pawnMovesUp(myPawns);
-            myPawnSpans |= movegen::KSNorth(0, myPawnSpans);
-            board::Bitboard theirPawnSpans = movegen::enemyPawnAttacksLeft(theirPawns) | movegen::enemyPawnAttacksRight(theirPawns) | (theirPawns >> 8);
-            theirPawnSpans |= movegen::KSSouth(0, theirPawnSpans);
+            board::Bitboard myPawnSpans = moves::pawnAttacksLeft(myPawns) | moves::pawnAttacksRight(myPawns) | moves::pawnMovesUp(myPawns);
+            myPawnSpans |= moves::KSNorth(0, myPawnSpans);
+            board::Bitboard theirPawnSpans = moves::enemyPawnAttacksLeft(theirPawns) | moves::enemyPawnAttacksRight(theirPawns) | (theirPawns >> 8);
+            theirPawnSpans |= moves::KSSouth(0, theirPawnSpans);
 
             return std::make_pair(myPawns & ~theirPawnSpans, theirPawns & ~myPawnSpans);
         }
@@ -151,10 +151,10 @@ namespace eval
             if constexpr (t == OutpostType::MyOutpost)
             {
                 board::Bitboard myKnight = setbit(knightsq);
-                if ((myKnight & constants::topHalf) && (movegen::pawnAttacks(myPawns) & myKnight))
+                if ((myKnight & constants::topHalf) && (moves::pawnAttacks(myPawns) & myKnight))
                 {
-                    myKnight |= movegen::KSNorth(0, myKnight);
-                    myKnight = movegen::pawnAttacks(myKnight);
+                    myKnight |= moves::KSNorth(0, myKnight);
+                    myKnight = moves::pawnAttacks(myKnight);
                     if (!(myKnight & enemyPawns))
                     {
                         return _knightOutpostBonus;
@@ -165,10 +165,10 @@ namespace eval
             else if constexpr (t == OutpostType::OppOutpost)
             {
                 board::Bitboard myKnight = setbit(knightsq);
-                if ((myKnight & constants::botHalf) && (movegen::enemyPawnAttacks(enemyPawns) & myKnight))
+                if ((myKnight & constants::botHalf) && (moves::enemyPawnAttacks(enemyPawns) & myKnight))
                 {
-                    myKnight |= movegen::KSSouth(0, myKnight);
-                    myKnight = movegen::enemyPawnAttacks(myKnight);
+                    myKnight |= moves::KSSouth(0, myKnight);
+                    myKnight = moves::enemyPawnAttacks(myKnight);
                     if (!(myKnight & myPawns))
                     {
                         return _knightOutpostBonus;

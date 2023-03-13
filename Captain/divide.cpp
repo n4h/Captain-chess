@@ -69,9 +69,9 @@ namespace divide
     }
     std::size_t perftDivide(const board::QBB& b, std::size_t t)
     {
-        movegen::Movelist moves;
-        movegen::genMoves<movegen::QSearch>(b, moves);
-        movegen::genMoves<!movegen::QSearch, movegen::Quiets>(b, moves);
+        moves::Movelist moves;
+        moves::genMoves<moves::QSearch>(b, moves);
+        moves::genMoves<!moves::QSearch, moves::Quiets>(b, moves);
         std::size_t total = 0;
         std::osyncstream perftdivide_out(std::cout);
         board::QBB bcopy = b;

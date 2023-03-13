@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #define PERFT_H
 
 #include "board.hpp"
-#include "movegen.hpp"
+#include "moves.hpp"
 
 namespace perft
 {

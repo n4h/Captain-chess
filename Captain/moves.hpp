@@ -35,7 +35,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "auxiliary.hpp"
 #include "constants.hpp"
 
-namespace movegen
+namespace moves
 {
 
     using AttackMap = board::Bitboard;
@@ -652,11 +652,11 @@ namespace movegen
             }
         }
     }
-#define addLeftPMoves movegen::addPawnMoves<true, 7>
-#define addRightPMoves movegen::addPawnMoves<true, 9>
-#define addUpPMoves movegen::addPawnMoves<true, 8>
-#define addPinUpPMove movegen::addPawnMoves<false, 8>
-#define addUp2PMoves movegen::addPawnMoves<false, 16>
+#define addLeftPMoves moves::addPawnMoves<true, 7>
+#define addRightPMoves moves::addPawnMoves<true, 9>
+#define addUpPMoves moves::addPawnMoves<true, 8>
+#define addPinUpPMove moves::addPawnMoves<false, 8>
+#define addUp2PMoves moves::addPawnMoves<false, 16>
 
     template<typename T, std::size_t N>
     void addEPMoves(Movelist<T, N>& ml, Bitboard pawns, Bitboard enp)
@@ -1052,6 +1052,7 @@ namespace movegen
         board::Move k2move = 0;
         bool quietsDisabled = false;
     };
+
 }
 
 #endif
