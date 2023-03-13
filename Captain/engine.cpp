@@ -480,10 +480,10 @@ namespace engine
         Eval besteval = negInf;
         const bool PVNode = isPVNode(alpha, beta);
 
-        const bool doFPruning = (depth == 1) && !moves::isInCheck(b);
+        //const bool doFPruning = (depth == 1) && !moves::isInCheck(b);
         bool moveWasPruned = false;
 
-        auto materialBalance = evaluate.materialBalance(b);
+        //auto materialBalance = evaluate.materialBalance(b);
 
         for (; moves.next(b, nextMove); ++i)
         {
@@ -491,7 +491,7 @@ namespace engine
             {
                 throw Timeout();
             }
-
+            /*
             if (doFPruning && !moves::moveGivesCheck(b, nextMove))
             {
                 if (materialBalance + eval::getCaptureValue(b, nextMove) + 200 <= alpha)
@@ -500,7 +500,7 @@ namespace engine
                     continue;
                 }
             }
-            
+            */
             auto oldhash = hash;
             bcopy.makeMove(nextMove);
 
