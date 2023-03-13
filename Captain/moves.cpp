@@ -261,7 +261,7 @@ namespace moves
         return checkers;
     }
     bool moveGivesCheck(const board::QBB& b, board::Move m)
-    {
+    { // TODO detect more kinds of checks
         auto oppKing = b.their(b.getKings());
         switch (b.getPieceCode(board::getMoveFromSq(m)))
         {
@@ -270,7 +270,7 @@ namespace moves
         case constants::knightCode:
             return knightAttacks(board::getMoveToSq(m)) & oppKing;
         case constants::bishopCode:
-            return hypqAllDiag(b.getOccupancy(), board::getMoveToSq(m)) & oppKing;
+            return hypqAllDiag(b.getOccupancy(), board::getMoveToSq(m)) & oppKing; // TODO wrong occupancy being passed to hypq???
         case constants::rookCode:
             return hypqAllOrth(b.getOccupancy(), board::getMoveToSq(m)) & oppKing;
         case constants::queenCode:
