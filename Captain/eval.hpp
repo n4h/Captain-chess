@@ -198,6 +198,8 @@ namespace eval
     public:
         Eval operator()(const board::QBB&) const;
 
+        Eval materialBalance(const board::QBB& b) const;
+
         constexpr Evaluator()
         {
             _aggressionBonuses[0] = std::make_pair(0, 0);

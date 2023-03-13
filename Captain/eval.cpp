@@ -86,14 +86,14 @@ namespace eval
 
     Eval getCaptureValue(const board::QBB& b, board::Move m)
     {
-        Eval values[6] = { 100, 300, 300, 500, 900, 10000 };
+        Eval values[7] = { 0, 100, 300, 300, 500, 900, 10000 };
         if (board::getMoveInfo<constants::moveTypeMask>(m) == constants::enPCap)
         {
             return 100;
         }
         else
         {
-            return values[(b.getPieceType(board::getMoveToSq(m)) >> 1) - 1];
+            return values[b.getPieceCode(board::getMoveToSq(m))];
         }
     }
 
@@ -174,6 +174,17 @@ namespace eval
     Eval Evaluator::apply7thRankBonus(board::Bitboard rooks, board::Bitboard rank) const
     {
         return rook7thRankBonus * (_popcnt64(rooks & rank));
+    }
+
+    Eval Evaluator::materialBalance(const board::QBB& b) const
+    {
+        Eval balance = 0;
+        balance += piecevals[0] * (_popcnt64(b.my(b.getPawns())) - _popcnt64(b.their(b.getPawns())));
+        balance += piecevals[1] * (_popcnt64(b.my(b.getKnights())) - _popcnt64(b.their(b.getKnights())));
+        balance += piecevals[2] * (_popcnt64(b.my(b.getBishops())) - _popcnt64(b.their(b.getBishops())));
+        balance += piecevals[3] * (_popcnt64(b.my(b.getRooks())) - _popcnt64(b.their(b.getRooks())));
+        balance += piecevals[4] * (_popcnt64(b.my(b.getQueens())) - _popcnt64(b.their(b.getQueens())));
+        return balance;
     }
 
     unsigned Evaluator::totalMaterialValue(const board::QBB& b) const
