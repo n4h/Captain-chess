@@ -256,5 +256,11 @@ namespace aux
             }
         }
     };
+
+    constexpr bool inRange(std::integral auto lower, std::integral auto x, std::integral auto higher)
+    {
+        return lower <= x && x <= higher;
+    }
+
 }
 #endif
