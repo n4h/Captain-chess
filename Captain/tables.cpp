@@ -78,8 +78,10 @@ namespace Tables
         return curr.depth < depth;
     }
 
-    void TTable::tryStore(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age)
+    void TTable::tryStore(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age, bool anyPruning)
     {
+        if (anyPruning)
+            return;
         const auto& currEntry = (*this)[hash];
         if (isBetterEntry(currEntry, depth, age))
         {

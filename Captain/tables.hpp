@@ -62,7 +62,7 @@ namespace Tables
         
         void clear();
         
-        void tryStore(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age);
+        void tryStore(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age, bool anyPruning);
         void store(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age);
 
         Entry& operator[](std::uint64_t hash) noexcept;
