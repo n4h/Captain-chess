@@ -263,19 +263,129 @@ namespace moves
     bool moveGivesCheck(const board::QBB& b, board::Move m)
     { // TODO detect more kinds of checks
         auto oppKing = b.their(b.getKings());
-        switch (b.getPieceCode(board::getMoveFromSq(m)))
+        auto occ = b.getOccupancy();
+        const auto fromSq = board::getMoveFromSq(m);
+        const auto movetype = board::getMoveInfo<constants::moveTypeMask>(m);
+        switch (b.getPieceCode(fromSq))
         {
         case constants::pawnCode:
-            return pawnAttacks(board::getMoveToSq(m)) & oppKing;
+        {
+            if (board::isPromo(m))
+            {
+                occ ^= aux::setbit(fromSq);
+                occ |= aux::setbit(board::getMoveToSq(m));
+                auto [diag, orth] = std::make_pair(b.my(b.getDiagSliders()), b.my(b.getOrthSliders()));
+
+                
+                if (movetype == constants::queenPromo || movetype == constants::bishopPromo)
+                    diag |= aux::setbit(board::getMoveToSq(m));
+                if (movetype == constants::queenPromo || movetype == constants::rookPromo)
+                    orth |= aux::setbit(board::getMoveToSq(m));
+
+                auto orthAttacks = KSAllOrth(occ, orth);
+                auto diagAttacks = KSAllDiag(occ, diag);
+
+                if (movetype == constants::knightPromo)
+                {
+                    auto promotedPawnAttack = knightAttacks(aux::setbit(board::getMoveToSq(m)));
+                    return (orthAttacks | diagAttacks | promotedPawnAttack) & oppKing;
+                }
+                else
+                {
+                    auto orthAttacks = KSAllOrth(occ, orth);
+                    auto diagAttacks = KSAllDiag(occ, diag);
+                    return (orthAttacks | diagAttacks) & oppKing;
+                }
+            }
+            else
+            {
+                occ ^= aux::setbit(fromSq);
+                occ |= aux::setbit(board::getMoveToSq(m));
+                occ ^= movetype == constants::enPCap ? aux::setbit(board::getMoveToSq(m)) >> 8 : 0ULL;
+                auto [diag, orth] = std::make_pair(b.my(b.getDiagSliders()), b.my(b.getOrthSliders()));
+
+                auto orthAttacks = KSAllOrth(occ, orth);
+                auto diagAttacks = KSAllDiag(occ, diag);
+                auto movedPawnAttack = pawnAttacks(board::getMoveToSq(m));
+
+                return (orthAttacks | diagAttacks | movedPawnAttack) & oppKing;
+            }
+        }
         case constants::knightCode:
-            return knightAttacks(board::getMoveToSq(m)) & oppKing;
+        {
+            occ ^= aux::setbit(fromSq);
+            occ |= aux::setbit(board::getMoveToSq(m));
+            auto [diag, orth] = std::make_pair(b.my(b.getDiagSliders()), b.my(b.getOrthSliders()));
+
+            auto orthAttacks = KSAllOrth(occ, orth);
+            auto diagAttacks = KSAllDiag(occ, diag);
+            auto movedKnightAttack = knightAttacks(board::getMoveToSq(m));
+
+            return (orthAttacks | diagAttacks | movedKnightAttack) & oppKing;
+        }
         case constants::bishopCode:
-            return hypqAllDiag(b.getOccupancy(), board::getMoveToSq(m)) & oppKing; // TODO wrong occupancy being passed to hypq???
+        {
+            occ ^= aux::setbit(fromSq);
+            occ |= aux::setbit(board::getMoveToSq(m));
+            auto [diag, orth] = std::make_pair(b.my(b.getDiagSliders()), b.my(b.getOrthSliders()));
+            diag ^= aux::setbit(fromSq);
+            diag |= aux::setbit(board::getMoveToSq(m));
+
+            auto orthAttacks = KSAllOrth(occ, orth);
+            auto diagAttacks = KSAllDiag(occ, diag);
+
+            return (orthAttacks | diagAttacks) & oppKing;
+        }
         case constants::rookCode:
-            return hypqAllOrth(b.getOccupancy(), board::getMoveToSq(m)) & oppKing;
+        {
+            occ ^= aux::setbit(fromSq);
+            occ |= aux::setbit(board::getMoveToSq(m));
+            auto [diag, orth] = std::make_pair(b.my(b.getDiagSliders()), b.my(b.getOrthSliders()));
+            orth ^= aux::setbit(fromSq);
+            orth |= aux::setbit(board::getMoveToSq(m));
+
+            auto orthAttacks = KSAllOrth(occ, orth);
+            auto diagAttacks = KSAllDiag(occ, diag);
+
+            return (orthAttacks | diagAttacks) & oppKing;
+        }
         case constants::queenCode:
-            bool c = hypqAllDiag(b.getOccupancy(), board::getMoveToSq(m)) & oppKing;
-            return c || (hypqAllOrth(b.getOccupancy(), board::getMoveToSq(m)) & oppKing);
+        {
+            occ ^= aux::setbit(fromSq);
+            occ |= aux::setbit(board::getMoveToSq(m));
+            auto [diag, orth] = std::make_pair(b.my(b.getDiagSliders()), b.my(b.getOrthSliders()));
+            diag ^= aux::setbit(fromSq);
+            diag |= aux::setbit(board::getMoveToSq(m));
+            orth ^= aux::setbit(fromSq);
+            orth |= aux::setbit(board::getMoveToSq(m));
+
+            auto orthAttacks = KSAllOrth(occ, orth);
+            auto diagAttacks = KSAllDiag(occ, diag);
+
+            return (orthAttacks | diagAttacks) & oppKing;
+        }
+        case constants::kingCode:
+        {
+            occ ^= aux::setbit(fromSq);
+            occ |= aux::setbit(board::getMoveToSq(m));
+            auto [diag, orth] = std::make_pair(b.my(b.getDiagSliders()), b.my(b.getOrthSliders()));
+            if (movetype == constants::KSCastle)
+            {
+                orth ^= aux::setbit(board::h1) | aux::setbit(board::f1);
+                occ ^= aux::setbit(board::h1) | aux::setbit(board::f1);
+            }
+            else if (movetype == constants::QSCastle)
+            {
+                orth ^= aux::setbit(board::a1) | aux::setbit(board::d1);
+                occ ^= aux::setbit(board::a1) | aux::setbit(board::d1);
+            }
+
+
+            auto orthAttacks = KSAllOrth(occ, orth);
+            auto diagAttacks = KSAllDiag(occ, diag);
+
+            return (orthAttacks | diagAttacks) & oppKing;
+        }
         }
         return false;
     }
