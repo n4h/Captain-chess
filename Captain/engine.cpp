@@ -485,13 +485,14 @@ namespace engine
         board::Move nextMove = 0;
         board::QBB bcopy = b;
         std::size_t i = 0;
-        Eval besteval = negInf;
+        Eval besteval;
         const bool PVNode = isPVNode(alpha, beta);
 
-        //const bool doFPruning = (depth == 1) && !moves::isInCheck(b);
+        const bool doFPruning = (depth == 1 || depth == 2) && !moves::isInCheck(b);
         bool moveWasPruned = false;
 
-        //auto materialBalance = evaluate.materialBalance(b);
+        auto materialBalance = evaluate.materialBalance(b);
+
 
         for (; moves.next(b, nextMove); ++i)
         {
@@ -499,16 +500,25 @@ namespace engine
             {
                 throw Timeout();
             }
-            /*
+            
             if (doFPruning && !moves::moveGivesCheck(b, nextMove))
             {
-                if (materialBalance + eval::getCaptureValue(b, nextMove) + 200 <= alpha)
+                Eval margin = posInf;
+                if (depth == 1)
+                    margin = 300;
+                else if (depth == 2)
+                    margin = 500;
+                bool isMovingTo7thRank = moves::getBB(board::getMoveToSq(nextMove)) & board::rankMask(board::a7);
+                if (!boundsCloseToMate(alpha, beta) 
+                    && !board::isPromo(nextMove)
+                    && !(b.getPieceType(board::getMoveFromSq(nextMove)) == constants::myPawn && isMovingTo7thRank)
+                    && materialBalance + eval::getCaptureValue(b, nextMove) + margin <= alpha)
                 {
                     moveWasPruned = true;
                     continue;
                 }
             }
-            */
+            
             auto oldhash = hash;
             bcopy.makeMove(nextMove);
 
