@@ -156,6 +156,14 @@ namespace engine
         }
     }
 
+    constexpr bool Engine::boundsCloseToMate(Eval alpha, Eval beta)
+    {
+        return !aux::inRange(negInf - 200, alpha, negInf + 200)
+            && !aux::inRange(negInf - 200, beta, negInf + 200)
+            && !aux::inRange(posInf - 200, alpha, posInf + 200)
+            && !aux::inRange(posInf - 200, beta, posInf + 200);
+    }
+
     void Engine::uciUpdate()
     {
         if (aux::castsec(std::chrono::steady_clock::now() - lastUpdate).count() >= 2)

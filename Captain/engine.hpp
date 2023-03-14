@@ -124,6 +124,8 @@ namespace engine
         Tables::HistoryTable historyHeuristic;
         eval::Evaluator evaluate;
 
+        static constexpr bool boundsCloseToMate(Eval alpha, Eval beta);
+
 #ifdef CAPTAIN_TRACE_SEARCH
         std::ofstream search_trace{"captain_searchtrace.txt"};
         board::QBB initialBoard;
