@@ -156,14 +156,6 @@ namespace engine
         }
     }
 
-    constexpr bool Engine::boundsCloseToMate(Eval alpha, Eval beta)
-    {
-        return !aux::inRange(negInf - 200, alpha, negInf + 200)
-            && !aux::inRange(negInf - 200, beta, negInf + 200)
-            && !aux::inRange(posInf - 200, alpha, posInf + 200)
-            && !aux::inRange(posInf - 200, beta, posInf + 200);
-    }
-
     void Engine::uciUpdate()
     {
         if (aux::castsec(std::chrono::steady_clock::now() - lastUpdate).count() >= 2)
@@ -485,7 +477,7 @@ namespace engine
         board::Move nextMove = 0;
         board::QBB bcopy = b;
         std::size_t i = 0;
-        Eval besteval;
+        Eval besteval = negInf;
         const bool PVNode = isPVNode(alpha, beta);
 
         const bool doFPruning = (depth == 1 || depth == 2) && !moves::isInCheck(b);
@@ -509,7 +501,8 @@ namespace engine
                 else if (depth == 2)
                     margin = 500;
                 bool isMovingTo7thRank = moves::getBB(board::getMoveToSq(nextMove)) & board::rankMask(board::a7);
-                if (!boundsCloseToMate(alpha, beta) 
+                if (std::abs(alpha) < 10000
+                    && std::abs(beta) < 10000
                     && !board::isPromo(nextMove)
                     && !(b.getPieceType(board::getMoveFromSq(nextMove)) == constants::myPawn && isMovingTo7thRank)
                     && materialBalance + eval::getCaptureValue(b, nextMove) + margin <= alpha)
