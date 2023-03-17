@@ -330,9 +330,7 @@ namespace engine
     {
         StoreInfo recordNode(prevPos, hash);
 
-        if (threeFoldRep())
-            return 0;
-        if (b.get50() == 50)
+        if (insufficientMaterial(b) || threeFoldRep() || b.get50() == 50)
             return 0;
         if (shouldStop())
             SearchFlags::searching.clear();
@@ -449,8 +447,9 @@ namespace engine
         {
             return quiesceSearch(b, alpha, beta, depth);
         }
+        StoreInfo recordNode(prevPos, hash);
         auto nodeType = Tables::ALL;
-        
+
         if (shouldStop())
         {
             SearchFlags::searching.clear();
@@ -458,16 +457,8 @@ namespace engine
 
         uciUpdate();
 
-        if (b.get50() == 50)
-        {
+        if (insufficientMaterial(b) || threeFoldRep() || b.get50() == 50)
             return 0;
-        }
-
-        StoreInfo recordNode(prevPos, hash);
-        if (threeFoldRep())
-        {
-            return 0;
-        }
         ++nodes;
         
         if (Tables::tt[hash].key == hash && Tables::tt[hash].depth >= depth)
