@@ -482,9 +482,15 @@ namespace engine
 
         const bool doFPruning = (depth == 1 || depth == 2) && !moves::isInCheck(b);
         bool moveWasPruned = false;
+        bool everythingPruned = true;
 
         auto materialBalance = evaluate.materialBalance(b);
 
+        Eval margin = posInf;
+        if (depth == 1)
+            margin = 300;
+        else if (depth == 2)
+            margin = 500;
 
         for (; moves.next(b, nextMove); ++i)
         {
@@ -493,25 +499,22 @@ namespace engine
                 throw Timeout();
             }
             
-            if (doFPruning && !moves::moveGivesCheck(b, nextMove))
+            bool isMovingTo7thRank = moves::getBB(board::getMoveToSq(nextMove)) & board::rankMask(board::a7);
+            if (doFPruning 
+                && !PVNode
+                && i != 0
+                && !moves::moveGivesCheck(b, nextMove)
+                && std::abs(alpha) < 10000
+                && std::abs(beta) < 10000
+                && !board::isPromo(nextMove)
+                && !(b.getPieceType(board::getMoveFromSq(nextMove)) == constants::myPawn && isMovingTo7thRank)
+                && materialBalance + eval::getCaptureValue(b, nextMove) + margin <= alpha)
             {
-                Eval margin = posInf;
-                if (depth == 1)
-                    margin = 300;
-                else if (depth == 2)
-                    margin = 500;
-                bool isMovingTo7thRank = moves::getBB(board::getMoveToSq(nextMove)) & board::rankMask(board::a7);
-                if (std::abs(alpha) < 10000
-                    && std::abs(beta) < 10000
-                    && !board::isPromo(nextMove)
-                    && !(b.getPieceType(board::getMoveFromSq(nextMove)) == constants::myPawn && isMovingTo7thRank)
-                    && materialBalance + eval::getCaptureValue(b, nextMove) + margin <= alpha)
-                {
-                    moveWasPruned = true;
-                    continue;
-                }
+                moveWasPruned = true;
+                continue;
             }
-            
+
+            everythingPruned = false;
             auto oldhash = hash;
             bcopy.makeMove(nextMove);
 
@@ -571,6 +574,6 @@ namespace engine
         {
             Tables::tt.tryStore(hash, depth, besteval, topMove, nodeType, initialPos, moveWasPruned);
         }
-        return besteval;
+        return everythingPruned ? alpha : besteval;
     }
 }
