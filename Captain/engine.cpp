@@ -133,6 +133,45 @@ namespace engine
         return cnt >= 3;
     }
 
+    bool Engine::insufficientMaterial(const board::QBB& b) const
+    {
+        switch (_popcnt64(b.getOccupancy()))
+        {
+        case 0:
+        case 1:
+        case 2:
+            // Only kings
+            return true;
+        case 3:
+            // Two of the pieces are kings, so presence of minor piece
+            // indicates that the third piece is a minor piece
+            return b.getKnights() | b.getBishops();
+        case 4:
+        {
+            const auto myBishops = b.my(b.getBishops());
+            const auto theirBishops = b.their(b.getBishops());
+            const auto bishops = b.getBishops();
+            if (myBishops && theirBishops)
+            {
+                if (!(constants::whiteSquares & bishops) != !(constants::blackSquares & bishops))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        default:
+            return false;
+        }
+    }
+
     bool Engine::isPVNode(Eval alpha, Eval beta)
     {
         return alpha + 1 != beta;

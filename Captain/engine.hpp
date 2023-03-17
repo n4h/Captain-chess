@@ -97,6 +97,7 @@ namespace engine
         bool shouldStop() noexcept;
         void uciUpdate();
         bool threeFoldRep() const;
+        bool insufficientMaterial(const board::QBB&) const;
         Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
         Eval alphaBetaSearch(const board::QBB&, PrincipalVariation& pv, Eval, Eval, int, bool);
         bool isPVNode(Eval alpha, Eval beta);
