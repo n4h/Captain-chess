@@ -88,6 +88,7 @@ namespace eval
         Eval doubledpawnpenalty = 50;
         Eval tripledpawnpenalty = 100;
         Eval isolatedpawnpenalty = 25;
+        //Eval backwardspawnpenalty = 5; // TODO update genetic algorithm functions
         std::array<Eval, 6> _passedPawnBonus = {0, 10, 50, 50, 100, 300};
         std::array<std::pair<unsigned, Eval>, 12> _aggressionBonuses;
         Eval _bishopOpenDiagonalBonus = 15;

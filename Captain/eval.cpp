@@ -124,7 +124,7 @@ namespace eval
         board::Bitboard side = b.side;
 
         std::array<Eval, 6> pieceval = {100, 300, 300, 500, 900, 10000};
-        std::array<Eval, 32> scores;
+        std::array<Eval, 32> scores{};
         scores[0] = movetype == constants::enPCap ? pieceval[0] : pieceval[targettype];
         targettype = attackertype - 1;
         attackers ^= attacker;
@@ -292,9 +292,14 @@ namespace eval
         ppSquare = aux::GetNextBit<board::square>{theirPassedPawns};
         while (ppSquare())
         {
-            auto rank = 7 - aux::rank(ppSquare.next);
+            auto rank = aux::flip(aux::rank(ppSquare.next));
             evaluation -= _passedPawnBonus[rank - 1];
         }
+
+        //auto [myBackwards, theirBackwards] = moves::backwardPawns(myPawns, theirPawns);
+
+        //evaluation -= backwardspawnpenalty * _popcnt64(myBackwards);
+        //evaluation += backwardspawnpenalty * _popcnt64(theirBackwards);
 
         return evaluation;
     }
