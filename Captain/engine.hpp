@@ -59,8 +59,8 @@ namespace engine
         bool infiniteSearch = false;
         bool ponder = false;
         std::chrono::milliseconds maxTime = std::chrono::milliseconds::max();
-        std::chrono::milliseconds wmsec = 0ms;
-        std::chrono::milliseconds bmsec = 0ms;
+        std::chrono::milliseconds wmsec = std::chrono::milliseconds::max();
+        std::chrono::milliseconds bmsec = std::chrono::milliseconds::max();
         std::chrono::milliseconds winc = 0ms;
         std::chrono::milliseconds binc = 0ms;
     };
