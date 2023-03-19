@@ -546,6 +546,58 @@ namespace moves
         Bitboard upOnce = (pawns << 8) & empty;
         return (upOnce << 8) & empty;
     }
+    // All squares to the North of pawns
+    constexpr Bitboard pawnNorthSpan(BitboardOrSquare auto pawns)
+    {
+        auto pawnsBB = getBB(pawns);
+        return KSNorth(0ULL,pawnsBB);
+    }
+    // All squares to the south of pawns
+    constexpr Bitboard pawnSouthSpan(BitboardOrSquare auto pawns)
+    {
+        auto pawnsBB = getBB(pawns);
+        return KSSouth(0ULL, pawnsBB);
+    }
+
+    constexpr Bitboard pawnNAttackSpan(BitboardOrSquare auto pawns)
+    {
+        auto pawnsBB = getBB(pawns);
+        auto mypawnAttacks = pawnAttacks(pawnsBB);
+        return pawnNorthSpan(mypawnAttacks) | mypawnAttacks;
+    }
+
+    constexpr Bitboard pawnSAttackSpan(BitboardOrSquare auto pawns)
+    {
+        auto pawnsBB = getBB(pawns);
+        auto pawnAttacks = enemyPawnAttacks(pawnsBB);
+        return pawnSouthSpan(pawnAttacks) | pawnAttacks;
+    }
+
+    constexpr std::pair<Bitboard, Bitboard> backwardPawns(Bitboard myPawns, Bitboard theirPawns)
+    {
+        const auto myStops = myPawns << 8;
+        const auto theirStops = theirPawns >> 8;
+
+        const auto myAttacks = pawnAttacks(myPawns);
+        const auto theirAttacks = enemyPawnAttacks(theirPawns);
+
+        const auto myAttackSpan = pawnNAttackSpan(myPawns);
+        const auto theirAttackSpan = pawnSAttackSpan(theirPawns);
+        
+        auto possMyBackwards = (myStops & theirAttacks & ~myAttackSpan) >> 8;
+        auto possTheirBackwards = (theirStops & myAttacks & ~theirAttackSpan) << 8;
+
+        auto myBackwards = possMyBackwards & (board::rankMask(board::a2) | board::rankMask(board::a3));
+        auto theirBackwards = possTheirBackwards & (board::rankMask(board::a6) | board::rankMask(board::a7));
+
+        possMyBackwards -= myBackwards;
+        possTheirBackwards -= theirBackwards;
+
+        possMyBackwards &= (myStops & enemyPawnAttacks(theirPawns & ~theirBackwards)) >> 8;
+        possTheirBackwards &= (theirStops & pawnAttacks(myPawns & ~myBackwards)) << 8;
+
+        return { myBackwards | possMyBackwards, theirBackwards | possTheirBackwards};
+    }
 
     template<typename T>
     constexpr Bitboard forwardPawnMoves(Bitboard occ, T pawns)
