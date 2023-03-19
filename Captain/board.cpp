@@ -64,20 +64,13 @@ namespace board
 
     std::vector<std::string> splitString(std::string s, const char d)
     {
-        // TODO better string split
         std::vector<std::string> split = {};
+        std::stringstream stream(s);
         std::string word = "";
-        for (auto i = s.cbegin(); i != s.cend(); ++i)
+        while (std::getline(stream, word, d))
         {
-            if (*i != d)
-            {
-                word += *i;
-                continue;
-            }
-            if (word != "") split.push_back(word);
-            word = "";
+            split.push_back(word);
         }
-        if (word != "") split.push_back(word);
         return split;
     }
 

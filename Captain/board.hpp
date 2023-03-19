@@ -382,6 +382,8 @@ namespace board
         return static_cast<Color>(static_cast<int>(c) * -1);
     }
 
+    std::vector<std::string> splitString(std::string s, const char d);
+
 #include <xmmintrin.h>
     using QBBDelta = std::array<std::uint64_t, 4>;
     struct QBB
