@@ -254,18 +254,18 @@ namespace engine
         
         for (auto& i : rootMoves)
         {
-            i.score = negInf;
+            i.score = rootMinBound;
         }
-
-        Eval worstCase = negInf;
-        this->eval = negInf;
+        Eval worstCase = rootMinBound;
+        this->eval = rootMinBound;
         board::QBB bcopy = b;
         for (unsigned int k = 1; k <= 128; ++k)
         {
             currIDdepth = k;
-            worstCase = negInf;
+            worstCase = rootMinBound;
             PrincipalVariation pv;
             std::size_t i = 0;
+            
             for (auto& [move, score] : rootMoves)
             {
                 if (!SearchFlags::searching.test())
@@ -278,14 +278,14 @@ namespace engine
                 {
                     if (i == 0)
                     {
-                        score = -alphaBetaSearch(bcopy, pv, negInf, -worstCase, k - 1, false);
+                        score = -alphaBetaSearch(bcopy, pv, rootMinBound, -worstCase, k - 1, false);
                     }
                     else
                     {
                         auto tmp = -alphaBetaSearch(bcopy, pv, -worstCase - 1, -worstCase, k - 1, false);
                         if (tmp > worstCase)
                         {
-                            tmp = -alphaBetaSearch(bcopy, pv, negInf, -worstCase, k - 1, false);
+                            tmp = -alphaBetaSearch(bcopy, pv, rootMinBound, -worstCase, k - 1, false);
                         }
                         score = tmp;
                     }
@@ -479,7 +479,7 @@ namespace engine
 
         const bool inCheck = moves::isInCheck(b);
 
-        if (!nullBranch && !inCheck)
+        if (!isPVNode(alpha, beta) && !nullBranch && !inCheck)
         {
             board::QBB bnull = b;
             auto oldhash = hash;

@@ -50,6 +50,8 @@ namespace engine
     // 12000 is arbitrary 
     constexpr auto negInf = -12000;
     constexpr auto posInf = 12000;
+    constexpr auto rootMinBound = -13000;
+    constexpr auto rootMaxBound = 13000;
 
     struct SearchSettings
     {
