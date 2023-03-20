@@ -292,7 +292,7 @@ namespace eval
         ppSquare = aux::GetNextBit<board::square>{theirPassedPawns};
         while (ppSquare())
         {
-            auto rank = aux::flip(aux::rank(ppSquare.next));
+            auto rank = aux::rank(aux::flip(ppSquare.next));
             evaluation -= _passedPawnBonus[rank - 1];
         }
 
