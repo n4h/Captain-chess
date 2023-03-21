@@ -322,7 +322,7 @@ namespace eval
             b.their(b.getQueens()),
             b.their(b.getKings()),
         };
-
+        const auto occ = b.getOccupancy();
         enum {myPawns, myKnights, myBishops, myRooks, myQueens, myKing,
             theirPawns, theirKnights, theirBishops, theirRooks, theirQueens, theirKing,};
 
@@ -356,34 +356,34 @@ namespace eval
         mobility = GetNextBit<board::Bitboard>{ pieces[myBishops] };
         while (mobility())
         {
-            moves::AttackMap moves = moves::hypqAllDiag(b.getOccupancy() & ~pieces[myQueens], mobility.next);
+            moves::AttackMap moves = moves::hypqAllDiag(occ & ~pieces[myQueens], mobility.next);
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += bishopmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[theirBishops] };
         while (mobility())
         {
-            moves::AttackMap moves = moves::hypqAllDiag(b.getOccupancy() & ~pieces[theirQueens], mobility.next);
+            moves::AttackMap moves = moves::hypqAllDiag(occ & ~pieces[theirQueens], mobility.next);
             moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
             evaluation -= bishopmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[myRooks] };
         while (mobility())
         {
-            moves::AttackMap moves = moves::hypqRank(b.getOccupancy() & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
+            moves::AttackMap moves = moves::hypqRank(occ & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += rookhormobility*_popcnt64(moves);
-            moves = moves::hypqFile(b.getOccupancy() & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
+            moves = moves::hypqFile(occ & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += rookvertmobility*_popcnt64(moves);
         }
         mobility = GetNextBit<board::Bitboard>{ pieces[theirRooks] };
         while (mobility())
         {
-            moves::AttackMap moves = moves::hypqRank(b.getOccupancy() & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
+            moves::AttackMap moves = moves::hypqRank(occ & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
             moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
             evaluation -= rookhormobility*_popcnt64(moves);
-            moves = moves::hypqFile(b.getOccupancy() & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
+            moves = moves::hypqFile(occ & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
             moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
             evaluation -= rookvertmobility*_popcnt64(moves);
         }
