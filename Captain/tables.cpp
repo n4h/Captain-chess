@@ -127,7 +127,8 @@ namespace Tables
             table[i].eval = 0;
             table[i].key = 0;
             table[i].depth = 0;
-            table[i].nodeType = 0;
+            table[i].move = 0;
+            table[i].nodeType = NONE;
             table[i].age = 0;
         }
     }
