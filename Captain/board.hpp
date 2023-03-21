@@ -398,7 +398,7 @@ namespace board
         // has never moved
         std::uint64_t epc = 0;
         QBB() {}
-        QBB(const std::string&);
+        QBB(const std::string&, bool moveNumInfo = true);
 
         void makeMove(const Move);
 
