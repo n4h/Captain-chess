@@ -185,13 +185,16 @@ namespace engine
             || PV
             || before.isCapture(m)
             || board::isPromo(m)
-            || i < 4)
+            || i < 3)
         {
             return 0;
         }
         else
         {
-            return ply() >= 6 ? 2 : 1; 
+            assert(currDepth >= 0);
+            assert(i >= 0);
+            return std::sqrt(currDepth - 1) + std::sqrt(i - 1);
+            //return ply() >= 6 ? 2 : 1; 
         }
     }
 
