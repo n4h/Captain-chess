@@ -955,6 +955,7 @@ namespace moves
             addMoves(myKing, ml, [mine, attacks](board::square idx) {return kingAttacks(idx) & ~attacks & ~mine; });
         }
     }
+    enum class Stage : unsigned {none, hash, captureStageGen, captureStage, killer1Stage, killer2Stage, quietsGen, quiets, losingCaptures };
 
     template<typename KillerTable, typename History>
     class MoveOrder
@@ -979,6 +980,7 @@ namespace moves
                     {
                         m = hashmove;
                         stage = Stage::captureStageGen;
+                        stageReturned = Stage::hash;
                         return true;
                     }
                 }
@@ -1013,6 +1015,7 @@ namespace moves
                         std::iter_swap(captureBegin, bestCapture);
                         m = captureBegin->m;
                         ++captureBegin;
+                        stageReturned = Stage::captureStage;
                         return true;
                     }
                 }
@@ -1022,6 +1025,7 @@ namespace moves
                 if (k1move != hashmove && isLegalMove(b, k1move))
                 {
                     m = k1move;
+                    stageReturned = Stage::killer1Stage;
                     return true;
                 }
                 [[fallthrough]];
@@ -1030,6 +1034,7 @@ namespace moves
                 if (k2move != hashmove && isLegalMove(b, k2move))
                 {
                     m = k2move;
+                    stageReturned = Stage::killer2Stage;
                     return true;
                 }
                 [[fallthrough]];
@@ -1055,6 +1060,7 @@ namespace moves
                     std::iter_swap(quietsCurrent, max);
                     m = quietsCurrent->m;
                     ++quietsCurrent;
+                    stageReturned = Stage::quiets;
                     return true;
                 }
                 [[fallthrough]];
@@ -1067,6 +1073,7 @@ namespace moves
                 {
                     m = losingCapturesBegin->m;
                     ++losingCapturesBegin;
+                    stageReturned = Stage::losingCaptures;
                     return true;
                 }
             default:
@@ -1086,11 +1093,13 @@ namespace moves
         const board::QBB& b;
         std::uint64_t hash = 0;
         std::size_t d = 0;
-        enum class Stage : unsigned {hash, captureStageGen, captureStage, killer1Stage, killer2Stage, quietsGen, quiets, losingCaptures};
         Stage stage = Stage::hash;
         board::Move hashmove = 0;
         board::Move k1move = 0;
         board::Move k2move = 0;
+    public:
+        Stage stageReturned = Stage::none;
+
     };
 
 }
