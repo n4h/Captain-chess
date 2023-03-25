@@ -19,46 +19,44 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef CAPTAIN_TUNING_HPP
 #define CAPTAIN_TUNING_HPP
 
-#include <cstddef>
-#include <cstdint>
+#include <vector>
 #include <utility>
-
-#include "eval.hpp"
-#include "engine.hpp"
-#include "board.hpp"
 
 namespace Tuning
 {
-    using eval::Evaluator;
+    template<typename Agent, typename Fitness>
+    using Population = std::vector<std::pair<Agent, Fitness>>;
 
-    using Fitness = std::uint64_t;
-    using Population = std::array<std::pair<Evaluator, Fitness>, 500>;
-    using engine::Engine;
 
+    struct GeneticOperators
+    {
+
+    };
+
+    template<typename Agent, 
+        typename Fitness>
     class Tuner
     {
-        Engine* e;
-        std::vector<std::pair<board::QBB, eval::Eval>> testpositions;
-        std::unique_ptr<Population> pop;
-        std::size_t maxGenerations = 300;
-        Fitness computeFitness(const Evaluator& ev);
-        void evalTestPositions();
+        Population<Agent, Fitness> pop;
     public:
-        Tuner(Engine* engine, std::size_t maxgens) :e(engine), maxGenerations(maxgens)
+        Tune(Population<Agent, Fitness> population) 
+            : pop(std::move(population)) {}
+
+        Agent get_best() const
         {
-            pop = std::make_unique<Population>();
-            for (auto i = pop->begin(); i != pop->end(); ++i)
+            return pop[0];
+        }
+
+        template<typename Stoppage>
+        tune(Stoppage stop)
+        {
+            while (!stop())
             {
-                i->first.mutate(true);
+                std::for_each(std::execution::par, pop.begin(), pop.end(), [this](auto& i) {
+                    i.second = FitnessEvaluator<Fitness>(i.first);
+                    });
             }
         }
-        constexpr void setParameters(std::size_t maxGen)
-        {
-            maxGenerations = maxGen;
-        }
-        void loadTestPositions(std::string s);
-        std::pair<bool, eval::Eval> searchPosition(const board::QBB&);
-        std::pair<Evaluator, Fitness> tune();
     };
 }
 
