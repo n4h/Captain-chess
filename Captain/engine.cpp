@@ -177,24 +177,22 @@ namespace engine
         return alpha + 1 != beta;
     }
 
-    int Engine::LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV)
+    int Engine::LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV, bool isKiller)
     {
         if (moves::isInCheck(before)
             || moves::isInCheck(after)
             || currDepth < 3
             || PV
+            || isKiller
             || before.isCapture(m)
             || board::isPromo(m)
-            || i < 3)
+            || i < 4)
         {
             return 0;
         }
         else
         {
-            assert(currDepth >= 0);
-            assert(i >= 0);
-            return std::sqrt(currDepth - 1) + std::sqrt(i - 1);
-            //return ply() >= 6 ? 2 : 1; 
+            return ply() >= 6 ? 2 : 1; 
         }
     }
 
@@ -559,7 +557,8 @@ namespace engine
             }
             else
             {
-                auto LMRReduction = LMR(i, b, nextMove, bcopy, depth, PVNode);
+                bool isKiller = moves.stageReturned == moves::Stage::killer1Stage || moves.stageReturned == moves::Stage::killer2Stage;
+                auto LMRReduction = LMR(i, b, nextMove, bcopy, depth, PVNode, isKiller);
                 currEval = -alphaBetaSearch(bcopy, pvChild, -alpha - 1, -alpha, depth - 1 - LMRReduction, nullBranch);
                 if (LMRReduction && currEval > alpha)
                 {

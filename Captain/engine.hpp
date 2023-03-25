@@ -103,7 +103,7 @@ namespace engine
         Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
         Eval alphaBetaSearch(const board::QBB&, PrincipalVariation& pv, Eval, Eval, int, bool);
         bool isPVNode(Eval alpha, Eval beta);
-        int LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV);
+        int LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV, bool isKiller);
         void printPV(const board::QBB& b);
         std::string line2string(board::QBB b, const std::vector<board::Move>& moves);
         std::chrono::milliseconds elapsed() const;
