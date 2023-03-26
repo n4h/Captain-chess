@@ -47,7 +47,7 @@ namespace Tuning
         Tuner(Population<Agent, Fitness> population)
             : pop(std::move(population))
         {
-            assert(population.size() > 0);
+            assert(pop.size() > 0);
             historical_best = pop[0];
         }
 
@@ -64,7 +64,10 @@ namespace Tuning
         template<typename FitnessPolicy>
         void tune(double mutation_rate, double selectivity, std::size_t max_generations, FitnessPolicy fitness)
         {
-            assert(0 <= mutation_rate <= 1 && 0 < selectivity < 1);
+            assert(0 <= mutation_rate);
+            assert(mutation_rate <= 1);
+            assert(0 < selectivity);
+            assert(selectivity < 1);
             std::random_device rd;
             std::minstd_rand g{rd()};
             std::size_t generations = 0;
