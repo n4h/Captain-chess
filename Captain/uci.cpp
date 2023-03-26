@@ -215,7 +215,7 @@ namespace uci
         }
     }
 
-    void UCIProtocol::Tune(double mutation, double selectivity, int popsize, std::string file)
+    void UCIProtocol::Tune(double mutation, double selectivity, std::size_t popsize, std::string file)
     {
         TestPositions EPDsuite;
         EPDsuite.loadPositions(file);
@@ -274,7 +274,7 @@ namespace uci
         return std::make_tuple(m, incHalfClock);
     }
 
-    board::Move SAN2ucimove(board::QBB& b, std::string s)
+    board::Move SAN2ucimove(board::QBB& b, const std::string& s)
     {
         bool wtm = b.isWhiteToPlay();
         auto coords = [wtm](board::square s) -> board::square {
@@ -347,5 +347,61 @@ namespace uci
             }
         }
         return 0;
+    }
+
+    void TestPositions::loadPositions(std::string filename)
+    {
+        std::ifstream test{ filename };
+        std::string input;
+        while (std::getline(test, input))
+        {
+            std::vector<std::string> pos = {};
+            std::istringstream iss{ input };
+            std::string term;
+            while (iss >> term)
+                pos.push_back(term);
+            assert(pos[4] == "bm");
+
+            std::string fen = pos[0] + " " + pos[1] + " " + pos[2] + " " + pos[3];
+
+            board::QBB b{ fen, false };
+
+            std::vector<board::Move> ml = {};
+            for (std::size_t i = 5; i != pos.size(); ++i)
+            {
+                ml.push_back(SAN2ucimove(b, pos[i]));
+            }
+
+            positions.push_back(std::make_pair(b, ml));
+        }
+    }
+
+    std::uint64_t TestPositions::score(const eval::Evaluator& e)
+    {
+        engine::Engine eng;
+        engine::SearchSettings ss;
+        ss.maxTime = 1000ms;
+        ss.infiniteSearch = true;
+        eng.setSettings(ss);
+        eng.setEvaluator(e);
+        std::uint64_t mistakes = 0;
+        for (const auto& [pos, ml] : positions)
+        {
+            eng.newGame();
+            std::vector<std::uint64_t> posHash = { Tables::tt.initialHash(pos) };
+            std::vector<board::Move> moves = {};
+            SearchFlags::searching.test_and_set();
+            eng.rootSearch(pos, std::chrono::steady_clock::now(), moves, posHash);
+            auto bestmove = eng.rootMoves[0].m;
+            bool found = false;
+            for (auto i : ml)
+            {
+                if (i == bestmove)
+                    found = true;
+            }
+            if (!found)
+                ++mistakes;
+        }
+        return mistakes;
     }
 }

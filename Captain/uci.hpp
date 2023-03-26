@@ -23,6 +23,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <string>
 #include <future>
 #include <syncstream>
+#include <chrono>
 
 #include "board.hpp"
 #include "engine.hpp"
@@ -31,6 +32,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace uci
 {
+    using namespace std::literals::chrono_literals;
     class UCIProtocol
     {
     public:
@@ -42,7 +44,7 @@ namespace uci
         void UCIGoCommand(const std::vector<std::string>&);
         void UCIStopCommand();
         void UCISetOptionCommand(const std::vector<std::string>&);
-        void Tune(double, double, int, std::string);
+        void Tune(double, double, std::size_t, std::string);
         std::osyncstream uci_out;
         std::string UCIName = "Captain v4.0";
         std::string UCIAuthor = "Narbeh Mouradian";
@@ -66,60 +68,9 @@ namespace uci
 
         std::vector<std::pair<board::QBB, BestMoveList>> positions;
 
-        void loadPositions(std::string filename)
-        {
-            std::ifstream test{ filename };
-            std::string input;
-            while (std::getline(test, input))
-            {
-                std::vector<std::string> pos = {};
-                std::istringstream iss{ input };
-                std::string term;
-                while (iss >> term)
-                    pos.push_back(term);
-                assert(pos[4] == "bm");
+        void loadPositions(std::string filename);
 
-                std::string fen = pos[0] + " " + pos[1] + " " + pos[2] + " " + pos[3];
-
-                board::QBB b{ fen, false };
-
-                std::vector<board::Move> ml = {};
-                for (std::size_t i = 5; i != pos.size(); ++i)
-                {
-                    ml.push_back(SAN2ucimove(b, pos[i]));
-                }
-
-                positions.push_back(std::make_pair(b, ml));
-            }
-        }
-
-        std::uint64_t score(const eval::Evaluator& e)
-        {
-            engine::Engine eng;
-            engine::SearchSettings ss;
-            ss.maxTime = 1000ms;
-            ss.infiniteSearch = true;
-            eng.setSettings(ss);
-            std::uint64_t mistakes = 0;
-            for (const auto& [pos, ml] : positions)
-            {
-                eng.newGame();
-                std::vector<std::uint64_t> posHash = { Tables::tt.initialHash(pos) };
-                std::vector<board::Move> moves = {};
-                SearchFlags::searching.test_and_set();
-                eng.rootSearch(pos, std::chrono::steady_clock::now(), moves, posHash);
-                auto bestmove = eng.rootMoves[0].m;
-                bool found = false;
-                for (auto i : ml)
-                {
-                    if (i == bestmove)
-                        found = true;
-                }
-                if (!found)
-                    ++mistakes;
-            }
-            return mistakes;
-        }
+        std::uint64_t score(const eval::Evaluator& e);
     };
 }
 
