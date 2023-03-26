@@ -68,7 +68,29 @@ namespace uci
 
         void loadPositions(std::string filename)
         {
+            std::ifstream test{ filename };
+            std::string input;
+            while (std::getline(test, input))
+            {
+                std::vector<std::string> pos = {};
+                std::istringstream iss{ input };
+                std::string term;
+                while (iss >> term)
+                    pos.push_back(term);
+                assert(pos[4] == "bm");
 
+                std::string fen = pos[0] + " " + pos[1] + " " + pos[2] + " " + pos[3];
+
+                board::QBB b{ fen, false };
+
+                std::vector<board::Move> ml = {};
+                for (std::size_t i = 5; i != pos.size(); ++i)
+                {
+                    ml.push_back(SAN2ucimove(b, pos[i]));
+                }
+
+                positions.push_back(std::make_pair(b, ml));
+            }
         }
 
         std::uint64_t score(const eval::Evaluator& e)
