@@ -27,6 +27,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <execution>
 #include <random>
 #include <optional>
+#include <limits>
 
 namespace Tuning
 {
@@ -73,7 +74,7 @@ namespace Tuning
                     i.second = fitness(i.first);
                     });
 
-                std::sort(std::execution::par, pop->begin(), pop->end(), [](const auto& a, const auto& b) {
+                std::sort(std::execution::par, pop.begin(), pop.end(), [](const auto& a, const auto& b) {
                     return a.second < b.second;
                     });
 
@@ -96,8 +97,8 @@ namespace Tuning
                 pop.resize(numSelected);
                 const auto select_end = pop.end();
 
-                std::for_each(std::execution::par, pop.begin(), pop.end(), [mutation_rate](auto& i) {
-                    mutate(i, mutation_rate);
+                std::for_each(std::execution::par, pop.begin(), pop.end(), [this, mutation_rate](auto& i) {
+                    this->mutate(i.first, mutation_rate);
                     });
 
                 if (pop.size() < popsize)
@@ -106,11 +107,10 @@ namespace Tuning
                     auto i = pop.begin();
                     auto j = pop.begin() + 1;
                     assert(j != pop.end());
-                    std::size_t missing = popsize - pop.size();
                     for (std::size_t missing = popsize - pop.size(); missing != 0; --missing)
                     {
                         assert(i < select_end && i < select_end);
-                        pop.push_back(crossover(*i, *j));
+                        pop.push_back(std::make_pair(crossover(i->first, j->first), std::numeric_limits<Fitness>::max()));
                         i = j + 1;
                         j = i + 1;
                         if (i == select_end)
