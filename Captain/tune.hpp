@@ -50,14 +50,14 @@ namespace Tuning
             historical_best = pop[0];
         }
 
-        Agent get_current_best() const
+        auto get_current_best() const
         {
-            return pop[0].first;
+            return pop[0];
         }
 
-        Agent get_historical_best() const noexcept
+        auto get_historical_best() const noexcept
         {
-            return historical_best.value().first;
+            return historical_best.value();
         }
 
         template<typename FitnessPolicy>
