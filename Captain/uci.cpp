@@ -216,24 +216,21 @@ namespace uci
     }
 
     void UCIProtocol::Tune(double mutation, double selectivity, int popsize, std::string file)
-    {/*
-        t.loadTestPositions(file);
-        const auto& [evaluator, fitness] = t.tune();
-        
-        output << evaluator.asString();
-        uci_out << "avg. centipawn error " << fitness << std::endl;
-        uci_out.emit();*/
-        (void)file;
+    {
+        TestPositions EPDsuite;
+        EPDsuite.loadPositions(file);
 
-        std::vector<std::pair<eval::Evaluator, std::uint32_t>> initialPop{ popsize };
-        eval::EvaluatorGeneticOps ego;
-        for (auto& i : initialPop)
+        std::vector<std::pair<eval::Evaluator, std::uint64_t>> initialPop{ popsize };
+
+        for (eval::EvaluatorGeneticOps ego; auto& i : initialPop)
         {
             ego.mutate(i.first, 0.95);
         }
         Tuning::Tuner t{ initialPop };
 
-        t.tune(mutation, selectivity, 500, );
+        t.tune(mutation, selectivity, 500, [&EPDsuite](const eval::Evaluator& e) {
+            return EPDsuite.score(e);
+            });
 
         const auto [evaluator, fitness] = t.get_historical_best();
 
