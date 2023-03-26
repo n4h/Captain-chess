@@ -98,7 +98,11 @@ namespace uci
                 UCIStopCommand();
             if (UCIMessage[0] == "tune")
             {
-                Tune(std::stod(UCIMessage[1]), std::stod(UCIMessage[2]), std::stoi(UCIMessage[3]), UCIMessage[4]);
+                Tune(std::stod(UCIMessage[1]), 
+                    std::stod(UCIMessage[2]), 
+                    std::stoi(UCIMessage[3]), 
+                    std::stoi(UCIMessage[4]), 
+                    UCIMessage[5]);
             }
         }
     }
@@ -215,7 +219,7 @@ namespace uci
         }
     }
 
-    void UCIProtocol::Tune(double mutation, double selectivity, std::size_t popsize, std::string file)
+    void UCIProtocol::Tune(double mutation, double selectivity, std::size_t popsize, std::size_t gens, std::string file)
     {
         TestPositions EPDsuite;
         EPDsuite.loadPositions(file);
@@ -228,7 +232,7 @@ namespace uci
         }
         Tuning::Tuner t{ initialPop };
 
-        t.tune(mutation, selectivity, 500, [&EPDsuite](const eval::Evaluator& e) {
+        t.tune(mutation, selectivity, gens, [&EPDsuite](const eval::Evaluator& e) {
             return EPDsuite.score(e);
             });
 

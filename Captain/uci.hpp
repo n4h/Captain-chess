@@ -44,7 +44,7 @@ namespace uci
         void UCIGoCommand(const std::vector<std::string>&);
         void UCIStopCommand();
         void UCISetOptionCommand(const std::vector<std::string>&);
-        void Tune(double, double, std::size_t, std::string);
+        void Tune(double, double, std::size_t, std::size_t, std::string);
         std::osyncstream uci_out;
         std::string UCIName = "Captain v4.0";
         std::string UCIAuthor = "Narbeh Mouradian";
