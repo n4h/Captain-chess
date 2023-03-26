@@ -75,6 +75,7 @@ namespace engine
         double getEval();
         Engine() :engine_out(std::cout) {}
         void setSettings(SearchSettings ss) noexcept { settings = ss; }
+        void setEvaluator(const eval::Evaluator& e) { evaluate = e; }
         void newGame();
         Eval eval = 0;
         moves::Movelist<moves::ScoredMove> rootMoves;
