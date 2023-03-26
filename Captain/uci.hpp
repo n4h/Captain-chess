@@ -60,6 +60,45 @@ namespace uci
 
     board::Move SAN2ucimove(const board::QBB&, const std::string&);
 
+    struct TestPositions
+    {
+        using BestMoveList = std::vector<board::Move>;
+
+        std::vector<std::pair<board::QBB, BestMoveList>> positions;
+
+        void loadPositions(std::string filename)
+        {
+
+        }
+
+        std::uint64_t score(const eval::Evaluator& e)
+        {
+            engine::Engine eng;
+            engine::SearchSettings ss;
+            ss.maxTime = 1000ms;
+            ss.infiniteSearch = true;
+            eng.setSettings(ss);
+            std::uint64_t mistakes = 0;
+            for (const auto& [pos, ml] : positions)
+            {
+                eng.newGame();
+                std::vector<std::uint64_t> posHash = { Tables::tt.initialHash(pos) };
+                std::vector<board::Move> moves = {};
+                SearchFlags::searching.test_and_set();
+                eng.rootSearch(pos, std::chrono::steady_clock::now(), moves, posHash);
+                auto bestmove = eng.rootMoves[0].m;
+                bool found = false;
+                for (auto i : ml)
+                {
+                    if (i == bestmove)
+                        found = true;
+                }
+                if (!found)
+                    ++mistakes;
+            }
+            return mistakes;
+        }
+    };
 }
 
 
