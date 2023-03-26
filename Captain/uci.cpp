@@ -27,6 +27,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <functional>
 #include <cstdlib>
 #include <tuple>
+#include <locale>
 
 #include "uci.hpp"
 #include "board.hpp"
@@ -96,7 +97,9 @@ namespace uci
             if (UCIMessage[0] == "stop")
                 UCIStopCommand();
             if (UCIMessage[0] == "tune")
-                Tune(UCIMessage[1]);
+            {
+                Tune(std::stod(UCIMessage[1]), std::stod(UCIMessage[2]), std::stoi(UCIMessage[3]), UCIMessage[4]);
+            }
         }
     }
 
@@ -212,14 +215,31 @@ namespace uci
         }
     }
 
-    void UCIProtocol::Tune(std::string file)
-    {
-        Tuning::Tuner t{ &(this->e), 300 };
+    void UCIProtocol::Tune(double mutation, double selectivity, int popsize, std::string file)
+    {/*
         t.loadTestPositions(file);
         const auto& [evaluator, fitness] = t.tune();
-        std::ofstream output{ std::string("finalevaluator.txt") };
+        
         output << evaluator.asString();
         uci_out << "avg. centipawn error " << fitness << std::endl;
+        uci_out.emit();*/
+        (void)file;
+
+        std::vector<std::pair<eval::Evaluator, std::uint32_t>> initialPop{ popsize };
+        eval::EvaluatorGeneticOps ego;
+        for (auto& i : initialPop)
+        {
+            ego.mutate(i.first, 0.95);
+        }
+        Tuning::Tuner t{ initialPop };
+
+        t.tune(mutation, selectivity, 500, );
+
+        const auto [evaluator, fitness] = t.get_historical_best();
+
+        std::ofstream output{ std::string("finalevaluator.txt") };
+        output << evaluator.asString();
+        uci_out << "fitness " << fitness << std::endl;
         uci_out.emit();
     }
 
