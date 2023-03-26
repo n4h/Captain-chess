@@ -77,6 +77,7 @@ namespace engine
         void setSettings(SearchSettings ss) noexcept { settings = ss; }
         void newGame();
         Eval eval = 0;
+        moves::Movelist<moves::ScoredMove> rootMoves;
     private:
         template<typename T, typename T2>
         struct StoreInfo
@@ -120,7 +121,7 @@ namespace engine
         std::size_t initialMove = 0;
         std::vector<std::uint64_t> prevPos;
         std::size_t initialPos = 0;
-        moves::Movelist<moves::ScoredMove> rootMoves;
+        
         bool engineW = true;
         std::chrono::milliseconds moveTime = 0ms;
         Tables::KillerTable killers;
