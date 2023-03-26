@@ -135,6 +135,30 @@ namespace moves
         }
     };
 
+    constexpr board::Move constructMove(board::square from, board::square to, std::uint32_t type = constants::QMove)
+    {
+        board::Move m = from;
+        m |= to << constants::toMaskOffset;
+        m |= type << constants::moveTypeOffset;
+        return m;
+    }
+
+    constexpr board::Move constructKSCastle()
+    {
+        board::Move m = board::e1;
+        m |= board::g1 << constants::toMaskOffset;
+        m |= constants::KSCastle << constants::moveTypeOffset;
+        return m;
+    }
+
+    constexpr board::Move constructQSCastle()
+    {
+        board::Move m = board::e1;
+        m |= board::c1 << constants::toMaskOffset;
+        m |= constants::QSCastle << constants::moveTypeOffset;
+        return m;
+    }
+
     bool isLegalMove(const board::QBB& b, board::Move m);
 
     // trying out "Kogge Stone" algorithms
