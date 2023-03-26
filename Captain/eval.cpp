@@ -415,55 +415,6 @@ namespace eval
         return evaluation;
     }
 
-    const Evaluator& Evaluator::mutate(bool randomize)
-    {
-        std::bernoulli_distribution doMutate(randomize ? 0.85 : 1.0/2000.0);
-        std::uniform_int_distribution positionalBonus(-50, 50);
-        std::uniform_int_distribution ZeroTo8(0, 8);
-
-        auto mutate = [&](auto& mutator, int p = 0) {
-            return doMutate(aux::seed) ? mutator(aux::seed) : p;
-        };
-
-        for (std::size_t i = 0; i != _aggressionBonuses.size(); ++i)
-        {
-            _aggressionBonuses[i].first = mutate(ZeroTo8, _aggressionBonuses[i].first);
-            _aggressionBonuses[i].second += mutate(positionalBonus);
-        }
-
-        for (std::size_t i = 0; i != piecevals.size(); ++i)
-        {
-            piecevals[i] += mutate(positionalBonus);
-        }
-
-        for (std::size_t i = 0; i != _passedPawnBonus.size(); ++i)
-        {
-            _passedPawnBonus[i] += mutate(positionalBonus);
-        }
-
-
-        knightmobility = mutate(ZeroTo8, knightmobility);
-        bishopmobility = mutate(ZeroTo8, bishopmobility);
-        rookvertmobility = mutate(ZeroTo8, rookvertmobility);
-        rookhormobility = mutate(ZeroTo8, rookhormobility);
-
-        doubledpawnpenalty += mutate(positionalBonus);
-        tripledpawnpenalty += mutate(positionalBonus);
-        isolatedpawnpenalty += mutate(positionalBonus);
-
-        _bishopOpenDiagonalBonus += mutate(positionalBonus);
-        _rookOpenFileBonus += mutate(positionalBonus);
-        _bishopPairBonus += mutate(positionalBonus);
-        rook7thRankBonus += mutate(positionalBonus);
-
-        _kingCenterBonus += mutate(positionalBonus);
-        _kingCenterRingBonus += mutate(positionalBonus);
-
-        _knightOutpostBonus += mutate(positionalBonus);
-
-        return *this;
-    }
-
     std::string Evaluator::asString() const
     {
         std::ostringstream oss;
@@ -516,5 +467,95 @@ namespace eval
 
         return oss.str();
 
+    }
+
+    void EvaluatorGeneticOps::mutate(Evaluator& e, double mutation_rate)
+    {
+        std::bernoulli_distribution doMutate(mutation_rate);
+        std::uniform_int_distribution positionalBonus(-50, 50);
+        std::uniform_int_distribution ZeroTo8(0, 8);
+
+        auto mutate = [&](auto& mutator, int p = 0) {
+            return doMutate(aux::seed) ? mutator(aux::seed) : p;
+        };
+
+        for (std::size_t i = 0; i != e._aggressionBonuses.size(); ++i)
+        {
+            e._aggressionBonuses[i].first = mutate(ZeroTo8, e._aggressionBonuses[i].first);
+            e._aggressionBonuses[i].second += mutate(positionalBonus);
+        }
+
+        for (std::size_t i = 0; i != e.piecevals.size(); ++i)
+        {
+            e.piecevals[i] += mutate(positionalBonus);
+        }
+
+        for (std::size_t i = 0; i != e._passedPawnBonus.size(); ++i)
+        {
+            e._passedPawnBonus[i] += mutate(positionalBonus);
+        }
+
+
+        e.knightmobility = mutate(ZeroTo8, e.knightmobility);
+        e.bishopmobility = mutate(ZeroTo8, e.bishopmobility);
+        e.rookvertmobility = mutate(ZeroTo8, e.rookvertmobility);
+        e.rookhormobility = mutate(ZeroTo8, e.rookhormobility);
+
+        e.doubledpawnpenalty += mutate(positionalBonus);
+        e.tripledpawnpenalty += mutate(positionalBonus);
+        e.isolatedpawnpenalty += mutate(positionalBonus);
+
+        e._bishopOpenDiagonalBonus += mutate(positionalBonus);
+        e._rookOpenFileBonus += mutate(positionalBonus);
+        e._bishopPairBonus += mutate(positionalBonus);
+        e.rook7thRankBonus += mutate(positionalBonus);
+
+        e._kingCenterBonus += mutate(positionalBonus);
+        e._kingCenterRingBonus += mutate(positionalBonus);
+
+        e._knightOutpostBonus += mutate(positionalBonus);
+    }
+
+    Evaluator EvaluatorGeneticOps::crossover(const Evaluator& e1, const Evaluator& e2)
+    {
+        Evaluator e;
+        std::bernoulli_distribution which_e;
+        auto parent = [&e1, &e2, &which_e]() -> const Evaluator& {
+            return which_e(aux::seed) ? e1 : e2;
+        };
+
+        for (std::size_t i = 0; i != e.piecevals.size(); ++i)
+        {
+            e.piecevals[i] = parent().piecevals[i];
+        }
+
+        for (std::size_t i = 0; i != e._passedPawnBonus.size(); ++i)
+        {
+            e._passedPawnBonus[i] = parent()._passedPawnBonus[i];
+        }
+
+        e.knightmobility = parent().knightmobility;
+        e.bishopmobility = parent().bishopmobility;
+        e.rookvertmobility = parent().rookvertmobility;
+        e.rookhormobility = parent().rookhormobility;
+        e.doubledpawnpenalty = parent().doubledpawnpenalty;
+        e.tripledpawnpenalty = parent().tripledpawnpenalty;
+        e.isolatedpawnpenalty = parent().isolatedpawnpenalty;
+        e._bishopOpenDiagonalBonus = parent()._bishopOpenDiagonalBonus;
+        e._rookOpenFileBonus = parent()._rookOpenFileBonus;
+        e.rook7thRankBonus = parent().rook7thRankBonus;
+        e._bishopPairBonus = parent()._bishopPairBonus;
+        e._kingCenterBonus = parent()._kingCenterBonus;
+        e._kingCenterRingBonus = parent()._kingCenterRingBonus;
+        e._knightOutpostBonus = parent()._knightOutpostBonus;
+        e._knightOutpostBonus = parent()._knightOutpostBonus;
+
+        for (std::size_t i = 0; i != 12; ++i)
+        {
+            e._aggressionBonuses[i].first = parent()._aggressionBonuses[i].first;
+            e._aggressionBonuses[i].second = parent()._aggressionBonuses[i].second;
+        }
+
+        return e;
     }
 }

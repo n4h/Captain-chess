@@ -197,6 +197,9 @@ namespace eval
         Eval apply7thRankBonus(board::Bitboard rooks, board::Bitboard rank) const;
 
     public:
+        friend struct EvaluatorGeneticOps;
+        using GAOps = EvaluatorGeneticOps;
+
         Eval operator()(const board::QBB&) const;
 
         Eval materialBalance(const board::QBB& b) const;
@@ -217,52 +220,13 @@ namespace eval
             _aggressionBonuses[10] = std::make_pair(3, 5);
             _aggressionBonuses[11] = std::make_pair(0, 0);
         }
-        // TODO update mutate and crossover to support new eval terms
-        const Evaluator& mutate(bool randomize);
-
-        static Evaluator crossover(const Evaluator& e1, const Evaluator& e2)
-        {
-            Evaluator e;
-            std::bernoulli_distribution whiche;
-            auto parent = [&e1, &e2, &whiche]() -> const Evaluator& {
-                return whiche(aux::seed) ? e1 : e2;
-            };
-
-            for (std::size_t i = 0; i != e.piecevals.size(); ++i)
-            {
-                e.piecevals[i] = parent().piecevals[i];
-            }
-
-            for (std::size_t i = 0; i != e._passedPawnBonus.size(); ++i)
-            {
-                e._passedPawnBonus[i] = parent()._passedPawnBonus[i];
-            }
-
-            e.knightmobility = parent().knightmobility;
-            e.bishopmobility = parent().bishopmobility;
-            e.rookvertmobility = parent().rookvertmobility;
-            e.rookhormobility = parent().rookhormobility;
-            e.doubledpawnpenalty = parent().doubledpawnpenalty;
-            e.tripledpawnpenalty = parent().tripledpawnpenalty;
-            e.isolatedpawnpenalty = parent().isolatedpawnpenalty;
-            e._bishopOpenDiagonalBonus = parent()._bishopOpenDiagonalBonus;
-            e._rookOpenFileBonus = parent()._rookOpenFileBonus;
-            e.rook7thRankBonus = parent().rook7thRankBonus;
-            e._bishopPairBonus = parent()._bishopPairBonus;
-            e._kingCenterBonus = parent()._kingCenterBonus;
-            e._kingCenterRingBonus = parent()._kingCenterRingBonus;
-            e._knightOutpostBonus = parent()._knightOutpostBonus;
-            e._knightOutpostBonus = parent()._knightOutpostBonus;
-
-            for (std::size_t i = 0; i != 12; ++i)
-            {
-                e._aggressionBonuses[i].first = parent()._aggressionBonuses[i].first;
-                e._aggressionBonuses[i].second = parent()._aggressionBonuses[i].second;
-            }
-
-            return e;
-        }
         std::string asString() const;
+    };
+
+    struct EvaluatorGeneticOps
+    {
+        void mutate(Evaluator&, double mutation_rate);
+        Evaluator crossover(const Evaluator&, const Evaluator&);
     };
 }
 #endif
