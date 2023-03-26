@@ -57,6 +57,9 @@ namespace uci
     };
 
     std::tuple<board::Move, bool> uciMove2boardMove(const board::QBB&, const std::string&, board::Color);
+
+    board::Move SAN2ucimove(const board::QBB&, const std::string&);
+
 }
 
 
