@@ -232,6 +232,10 @@ namespace uci
         }
         Tuning::Tuner t{ initialPop };
 
+        uci_out << "Current score " << EPDsuite.score(eval::Evaluator{}) << std::endl;
+        uci_out.emit();
+        std::this_thread::sleep_for(std::chrono::seconds{ 10 });
+
         t.tune(mutation, selectivity, gens, [&EPDsuite](const eval::Evaluator& e) {
             return EPDsuite.score(e);
             });
