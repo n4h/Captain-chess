@@ -298,7 +298,7 @@ namespace uci
         if ((s.size() == 2) && aux::isFile(s[0]) && aux::isNumber(s[1]))
         {
             auto file = aux::fileNumber(s[0]);
-            auto rank = unsigned(s[1] - '0');
+            auto rank = unsigned(s[1] - '0' - 1);
             auto dest = coords(board::square(aux::index(rank, file)));
 
             for (auto m : ml)
@@ -313,7 +313,7 @@ namespace uci
         else
         {
             auto file = aux::fileNumber(*(s.rbegin() + 1));
-            auto rank = unsigned(*(s.rbegin()) - '0');
+            auto rank = unsigned(*(s.rbegin()) - '0' - 1);
             auto dest = coords(board::square(aux::index(rank, file)));
             
             unsigned piecetype = constants::pawnCode;
@@ -350,6 +350,7 @@ namespace uci
                 }
             }
         }
+        assert(false);
         return 0;
     }
 
@@ -375,7 +376,7 @@ namespace uci
             {
                 ml.push_back(SAN2ucimove(b, pos[i]));
             }
-
+            assert(ml.size() > 0);
             positions.push_back(std::make_pair(b, ml));
         }
     }
