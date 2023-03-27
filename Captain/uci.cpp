@@ -385,7 +385,7 @@ namespace uci
     {
         engine::Engine eng;
         engine::SearchSettings ss;
-        ss.maxNodes = 10'000;
+        ss.maxDepth = 2;
         eng.setSettings(ss);
         eng.setEvaluator(e);
         std::uint64_t mistakes = 0;
