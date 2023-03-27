@@ -71,7 +71,7 @@ namespace Tuning
             std::random_device rd;
             std::minstd_rand g{rd()};
             std::size_t generations = 0;
-            while (generations < max_generations || pop[0].second == 0)
+            while (generations < max_generations)
             {
                 std::for_each(std::execution::par, pop.begin(), pop.end(), [&fitness](auto& i) {
                     i.second = fitness(i.first);
