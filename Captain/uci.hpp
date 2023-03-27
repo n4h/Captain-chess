@@ -70,7 +70,7 @@ namespace uci
 
         void loadPositions(std::string filename);
 
-        std::uint64_t score(const eval::Evaluator& e);
+        std::uint64_t score(const eval::Evaluator& e) const;
     };
 }
 

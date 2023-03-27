@@ -381,7 +381,7 @@ namespace uci
         }
     }
 
-    std::uint64_t TestPositions::score(const eval::Evaluator& e)
+    std::uint64_t TestPositions::score(const eval::Evaluator& e) const
     {
         engine::Engine eng;
         engine::SearchSettings ss;
