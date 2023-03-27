@@ -112,16 +112,16 @@ namespace Tuning
                     assert(j != pop.end());
                     for (std::size_t missing = popsize - pop.size(); missing != 0; --missing)
                     {
-                        assert(i < select_end && i < select_end);
+                        assert(i < pop.begin() + numSelected && j < pop.begin() + numSelected);
                         pop.push_back(std::make_pair(crossover(i->first, j->first), std::numeric_limits<Fitness>::max()));
                         i = j + 1;
                         j = i + 1;
-                        if (i == select_end)
+                        if (i == pop.begin() + numSelected)
                         {
                             i = pop.begin();
                             j = pop.begin() + 1;
                         }
-                        else if (j == select_end)
+                        else if (j == pop.begin() + numSelected)
                         {
                             j = pop.begin();
                         }
