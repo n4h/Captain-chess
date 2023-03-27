@@ -48,7 +48,6 @@ namespace Tuning
             : pop(std::move(population))
         {
             assert(pop.size() > 0);
-            historical_best = pop[0];
         }
 
         auto get_current_best() const
@@ -98,7 +97,6 @@ namespace Tuning
                 assert(numSelected >= 2);
 
                 pop.resize(numSelected);
-                const auto select_end = pop.end();
 
                 std::for_each(std::execution::par, pop.begin(), pop.end(), [this, mutation_rate](auto& i) {
                     this->mutate(i.first, mutation_rate);
