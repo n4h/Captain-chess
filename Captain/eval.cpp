@@ -445,6 +445,8 @@ namespace eval
         auto now = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
         oss << "Tuning completed date/time: " << now << '\n' << '\n';
 
+        printArray("piecevals", piecevals);
+
         printTerm("knightmobility", knightmobility);
         printTerm("bishopmobility", bishopmobility);
         printTerm("rookvertmobility", rookvertmobility);
