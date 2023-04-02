@@ -244,7 +244,7 @@ namespace engine
         auto moveNumber = (prevPos.size() + 2) / 2;
         if (settings.movestogo == std::numeric_limits<std::size_t>::max() || settings.movestogo == 0)
         {
-            moveTime = aux::castms(moveNumber < 12 ? mytime / 40 : 0.1 * mytime);
+            moveTime = aux::castms(moveNumber < 12 ? mytime / 40 : 0.05 * mytime);
         }
         else
         {
