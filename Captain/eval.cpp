@@ -397,7 +397,7 @@ namespace eval
         }
         else
         {
-            (void)0;// TODO King Safety
+            evaluation += kingSafety(b, myKingSq, oppKingSq);
         }
 
         evaluation += this->bishopPairBonus((pieces[2] & constants::whiteSquares) && (pieces[2] & constants::blackSquares));
@@ -466,6 +466,9 @@ namespace eval
         printTerm("_kingCenterBonus", _kingCenterBonus);
         printTerm("_kingCenterRingBonus", _kingCenterRingBonus);
         printTerm("_knightOutpostBonus", _knightOutpostBonus);
+        printTerm("openFileNextToKingPenalty", openFileNextToKingPenalty);
+        printTerm("pawnShieldBonus", pawnShieldBonus);
+        printTerm("kingOpenFilePenalty", kingOpenFilePenalty);
 
         return oss.str();
 
@@ -516,6 +519,11 @@ namespace eval
         e._kingCenterRingBonus += mutate(positionalBonus);
 
         e._knightOutpostBonus += mutate(positionalBonus);
+
+        e.openFileNextToKingPenalty += mutate(positionalBonus);
+        e.pawnShieldBonus += mutate(positionalBonus);
+
+        e.kingOpenFilePenalty += mutate(positionalBonus);
     }
 
     Evaluator EvaluatorGeneticOps::crossover(const Evaluator& e1, const Evaluator& e2)
@@ -551,6 +559,9 @@ namespace eval
         e._kingCenterRingBonus = parent()._kingCenterRingBonus;
         e._knightOutpostBonus = parent()._knightOutpostBonus;
         e._knightOutpostBonus = parent()._knightOutpostBonus;
+        e.openFileNextToKingPenalty = parent().openFileNextToKingPenalty;
+        e.pawnShieldBonus = parent().pawnShieldBonus;
+        e.kingOpenFilePenalty = parent().kingOpenFilePenalty;
 
         for (std::size_t i = 0; i != 12; ++i)
         {

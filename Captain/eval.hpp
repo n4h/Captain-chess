@@ -98,6 +98,9 @@ namespace eval
         Eval _kingCenterBonus = 20;
         Eval _kingCenterRingBonus = 15;
         Eval _knightOutpostBonus = 15;
+        Eval openFileNextToKingPenalty = 16;
+        Eval kingOpenFilePenalty = 30;
+        Eval pawnShieldBonus = 10;
 
         enum OutpostType {MyOutpost, OppOutpost};
 
@@ -113,6 +116,61 @@ namespace eval
                 return _kingCenterRingBonus;
             else
                 return 0;
+        }
+
+        constexpr Eval kingSafety(const board::QBB& b, board::square myKing, board::square theirKing) const
+        {
+            auto myKingFile = board::fileMask(myKing);
+            auto theirKingFile = board::fileMask(theirKing);
+
+            auto pawns = b.getPawns();
+            auto myPawns = b.my(pawns);
+            auto theirPawns = b.their(pawns);
+
+            double myScalingFactor = (_popcnt64(b.their(b.getKnights())) * piecevals[1]
+                + _popcnt64(b.their(b.getBishops())) * piecevals[2]
+                + _popcnt64(b.their(b.getRooks())) * piecevals[3]
+                + _popcnt64(b.their(b.getQueens())) * piecevals[4]);
+            myScalingFactor /= 2 * (piecevals[1] + piecevals[2] + piecevals[3]) + piecevals[4];
+
+            double theirScalingFactor = (_popcnt64(b.my(b.getKnights())) * piecevals[1]
+                + _popcnt64(b.my(b.getBishops())) * piecevals[2]
+                + _popcnt64(b.my(b.getRooks())) * piecevals[3]
+                + _popcnt64(b.my(b.getQueens())) * piecevals[4]);
+            theirScalingFactor /= 2 * (piecevals[1] + piecevals[2] + piecevals[3]) + piecevals[4];
+
+
+            Eval evaluation = 0;
+
+            if (!(myKingFile & pawns))
+                evaluation -= myScalingFactor * kingOpenFilePenalty;
+            if (!(theirKingFile & pawns))
+                evaluation += theirScalingFactor * kingOpenFilePenalty;
+
+
+            if (!(aux::shiftLeftNoWrap(myKingFile) & pawns))
+                evaluation -= myScalingFactor * openFileNextToKingPenalty;
+
+            if (!(aux::shiftRightNoWrap(myKingFile) & pawns))
+                evaluation -= 0.5 * myScalingFactor * openFileNextToKingPenalty;
+
+            if (!(aux::shiftLeftNoWrap(theirKingFile) & pawns))
+                evaluation += theirScalingFactor * openFileNextToKingPenalty;
+
+            if (!(aux::shiftRightNoWrap(theirKingFile) & pawns))
+                evaluation += 0.5 * theirScalingFactor * openFileNextToKingPenalty;
+
+            auto pawnShield = moves::pawnAttacks(myKing) | moves::pawnMovesUp(myKing);
+
+            if (pawnShield == (pawnShield & myPawns))
+                evaluation += myScalingFactor * pawnShieldBonus;
+            
+            pawnShield = moves::enemyPawnAttacks(theirKing) | (moves::getBB(theirKing) >> 8);
+
+            if (pawnShield == (pawnShield & theirPawns))
+                evaluation -= theirScalingFactor * pawnShieldBonus;
+
+            return evaluation;
         }
 
         constexpr std::pair<board::Bitboard, board::Bitboard> detectPassedPawns(board::Bitboard myPawns, board::Bitboard theirPawns) const
