@@ -169,6 +169,8 @@ namespace uci
                 ss.winc = std::chrono::milliseconds(std::stoi(command[index + 1]));
             else if (i == "binc")
                 ss.binc = std::chrono::milliseconds(std::stoi(command[index + 1]));
+            else if (i == "movetime")
+                ss.maxTime = std::chrono::milliseconds(std::stoi(command[index + 1]));
             else if (i == "nodes")
                 ss.maxNodes = (std::size_t)std::stoi(command[index + 1]);
             else if (i == "wtime")
