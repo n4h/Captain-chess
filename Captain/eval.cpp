@@ -112,21 +112,21 @@ namespace eval
     Eval see(const board::QBB& b, board::Move m)
     {
         const board::square target = board::getMoveToSq(m);
-        auto targettype = (b.getPieceType(target) >> 1) - 1;
+        auto targettype = b.getPieceCode(target);
         const auto movetype = board::getMoveInfo<constants::moveTypeMask>(m);
         board::Bitboard attackers = moves::getSqAttackers(b, target);
         board::Bitboard attacker = aux::setbit(board::getMoveInfo<board::fromMask>(m));
-        auto attackertype = b.getPieceType(board::getMoveFromSq(m)) >> 1;
+        auto attackertype = b.getPieceCode(board::getMoveFromSq(m));
 
         board::Bitboard occ = b.getOccupancy();
         board::Bitboard orth = b.getOrthSliders();
         board::Bitboard diag = b.getDiagSliders();
         board::Bitboard side = b.side;
 
-        std::array<Eval, 6> pieceval = {100, 300, 300, 500, 900, 10000};
+        std::array<Eval, 7> pieceval = {0, 100, 300, 300, 500, 900, 10000};
         std::array<Eval, 32> scores{};
-        scores[0] = movetype == constants::enPCap ? pieceval[0] : pieceval[targettype];
-        targettype = attackertype - 1;
+        scores[0] = movetype == constants::enPCap ? pieceval[1] : pieceval[targettype];
+        targettype = attackertype;
         attackers ^= attacker;
         occ ^= attacker;
         diag &= ~attacker;
@@ -139,7 +139,7 @@ namespace eval
         {
             scores[i] = pieceval[targettype] - scores[i - 1];
             if (scores[i] < 0) break;
-            targettype = attackertype - 1;
+            targettype = attackertype;
             attackers ^= attacker;
             occ ^= attacker;
             diag &= ~attacker;
