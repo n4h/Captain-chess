@@ -114,7 +114,7 @@ namespace eval
         const board::square target = board::getMoveToSq(m);
         auto targettype = b.getPieceCode(target);
         const auto movetype = board::getMoveInfo<constants::moveTypeMask>(m);
-        board::Bitboard attackers = moves::getSqAttackers(b, target);
+        board::Bitboard attackers = moves::getAllAttackers(b, b.getOccupancy(), target);
         board::Bitboard attacker = aux::setbit(board::getMoveInfo<board::fromMask>(m));
         auto attackertype = b.getPieceCode(board::getMoveFromSq(m));
 
@@ -300,6 +300,88 @@ namespace eval
 
         //evaluation -= backwardspawnpenalty * _popcnt64(myBackwards);
         //evaluation += backwardspawnpenalty * _popcnt64(theirBackwards);
+
+        return evaluation;
+    }
+
+    Eval Evaluator::kingSafety(const board::QBB& b, board::square myKing, board::square theirKing) const
+    {
+        auto myKingFile = board::fileMask(myKing);
+        auto theirKingFile = board::fileMask(theirKing);
+
+        const auto pawns = b.getPawns();
+        const auto myPawns = b.my(pawns);
+        const auto theirPawns = b.their(pawns);
+
+        double myScalingFactor = (_popcnt64(b.their(b.getKnights())) * piecevals[1]
+            + _popcnt64(b.their(b.getBishops())) * piecevals[2]
+            + _popcnt64(b.their(b.getRooks())) * piecevals[3]
+            + _popcnt64(b.their(b.getQueens())) * piecevals[4]);
+        myScalingFactor /= 2 * (piecevals[1] + piecevals[2] + piecevals[3]) + piecevals[4];
+
+        double theirScalingFactor = (_popcnt64(b.my(b.getKnights())) * piecevals[1]
+            + _popcnt64(b.my(b.getBishops())) * piecevals[2]
+            + _popcnt64(b.my(b.getRooks())) * piecevals[3]
+            + _popcnt64(b.my(b.getQueens())) * piecevals[4]);
+        theirScalingFactor /= 2 * (piecevals[1] + piecevals[2] + piecevals[3]) + piecevals[4];
+
+
+        Eval evaluation = 0;
+
+        if (!(myKingFile & pawns))
+            evaluation -= myScalingFactor * kingOpenFilePenalty;
+        if (!(theirKingFile & pawns))
+            evaluation += theirScalingFactor * kingOpenFilePenalty;
+
+
+        if (!(aux::shiftLeftNoWrap(myKingFile) & pawns))
+            evaluation -= myScalingFactor * openFileNextToKingPenalty;
+
+        if (!(aux::shiftRightNoWrap(myKingFile) & pawns))
+            evaluation -= 0.5 * myScalingFactor * openFileNextToKingPenalty;
+
+        if (!(aux::shiftLeftNoWrap(theirKingFile) & pawns))
+            evaluation += theirScalingFactor * openFileNextToKingPenalty;
+
+        if (!(aux::shiftRightNoWrap(theirKingFile) & pawns))
+            evaluation += 0.5 * theirScalingFactor * openFileNextToKingPenalty;
+
+        auto pawnShield = moves::pawnAttacks(myKing) | moves::pawnMovesUp(myKing);
+
+        if (pawnShield == (pawnShield & myPawns))
+            evaluation += myScalingFactor * pawnShieldBonus;
+
+        pawnShield = moves::enemyPawnAttacks(theirKing) | (moves::getBB(theirKing) >> 8);
+
+        if (pawnShield == (pawnShield & theirPawns))
+            evaluation -= theirScalingFactor * pawnShieldBonus;
+
+        auto kingArea = moves::kingAttacks(myKing) | moves::getBB(myKing);
+
+        auto [pAttackers, kAttackers, bAttackers, rAttackers, qAttackers, _]
+            = moves::getTheirAttackers(b, kingArea | myPawns | theirPawns, kingArea);
+        (void)_;
+
+        auto kingAttackerValueIdx = [this](auto popcnt, std::size_t i) {
+            return popcnt == 1 ? kingAttackerValue[i] : popcnt > 1 ? kingAttackerValue[i + 5] : 0;
+        };
+
+        evaluation -= myScalingFactor * kingAttackerValueIdx(_popcnt64(pAttackers), 0);
+        evaluation -= myScalingFactor * kingAttackerValueIdx(_popcnt64(kAttackers), 1);
+        evaluation -= myScalingFactor * kingAttackerValueIdx(_popcnt64(bAttackers), 2);
+        evaluation -= myScalingFactor * kingAttackerValueIdx(_popcnt64(rAttackers), 3);
+        evaluation -= myScalingFactor * kingAttackerValueIdx(_popcnt64(qAttackers), 4);
+
+        kingArea = moves::kingAttacks(theirKing) | moves::getBB(theirKing);
+
+        std::tie(pAttackers, kAttackers, bAttackers, rAttackers, qAttackers, std::ignore)
+            = moves::getMyAttackers(b, kingArea | myPawns | theirPawns, kingArea);
+
+        evaluation += theirScalingFactor * kingAttackerValueIdx(_popcnt64(pAttackers), 0);
+        evaluation += theirScalingFactor * kingAttackerValueIdx(_popcnt64(kAttackers), 1);
+        evaluation += theirScalingFactor * kingAttackerValueIdx(_popcnt64(bAttackers), 2);
+        evaluation += theirScalingFactor * kingAttackerValueIdx(_popcnt64(rAttackers), 3);
+        evaluation += theirScalingFactor * kingAttackerValueIdx(_popcnt64(qAttackers), 4);
 
         return evaluation;
     }
