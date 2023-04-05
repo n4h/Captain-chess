@@ -661,7 +661,55 @@ namespace moves
 
     bool moveGivesCheck(const board::QBB& b, board::Move);
 
-    Bitboard getSqAttackers(const board::QBB& b, board::square s);
+    constexpr auto getTheirAttackers(const board::QBB& b, Bitboard occ, BitboardOrSquare auto squares)
+    {
+        const auto bb = getBB(squares);
+
+        auto pawnAttackers = pawnAttacks(bb) & b.their(b.getPawns());
+        auto knightAttackers = knightAttacks(bb) & b.their(b.getKnights());
+        auto bishopAttackers = KSAllDiag(occ, bb);
+        auto rookAttackers = KSAllOrth(occ, bb);
+        auto queenAttackers = (bishopAttackers | rookAttackers) & b.their(b.getQueens());
+        bishopAttackers &= b.their(b.getBishops());
+        rookAttackers &= b.their(b.getRooks());
+        auto kingAttackers = kingAttacks(bb) & b.their(b.getKings());
+
+        return std::make_tuple(pawnAttackers, knightAttackers, bishopAttackers, 
+            rookAttackers, queenAttackers, kingAttackers);
+    }
+
+    constexpr Bitboard getTheirAttackersBB(const board::QBB& b, Bitboard occ, BitboardOrSquare auto squares)
+    {
+        return std::apply([](auto... args) {return (... | args); }, getTheirAttackers(b, occ, squares));
+    }
+
+    constexpr auto getMyAttackers(const board::QBB& b, Bitboard occ, BitboardOrSquare auto squares)
+    {
+        const auto bb = getBB(squares);
+
+        auto pawnAttackers = enemyPawnAttacks(bb) & b.my(b.getPawns());
+        auto knightAttackers = knightAttacks(bb) & b.my(b.getKnights());
+        auto bishopAttackers = KSAllDiag(occ, bb);
+        auto rookAttackers = KSAllOrth(occ, bb);
+        auto queenAttackers = (bishopAttackers | rookAttackers) & b.my(b.getQueens());
+        bishopAttackers &= b.my(b.getBishops());
+        rookAttackers &= b.my(b.getRooks());
+        auto kingAttackers = kingAttacks(bb) & b.my(b.getKings());
+
+        return std::make_tuple(pawnAttackers, knightAttackers, bishopAttackers,
+            rookAttackers, queenAttackers, kingAttackers);
+    }
+
+    constexpr Bitboard getMyAttackersBB(const board::QBB& b, Bitboard occ, BitboardOrSquare auto squares)
+    {
+        return std::apply([](auto... args) {return (... | args); }, getMyAttackers(b, occ, squares));
+    }
+
+    constexpr auto getAllAttackers(const board::QBB& b, Bitboard occ, BitboardOrSquare auto squares)
+    {
+        return std::apply([](auto... args) {return (...|args); },
+            std::tuple_cat(getTheirAttackers(b, occ, squares), getMyAttackers(b, occ, squares)));
+    }
 
     constexpr Bitboard getSliderAttackers(Bitboard occ, board::square s, Bitboard diag, Bitboard orth)
     {

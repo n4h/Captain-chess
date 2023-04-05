@@ -141,7 +141,7 @@ namespace moves
                     return false;
                 if (occ & (aux::setbit(board::f1) | aux::setbit(board::g1)))
                     return false;
-                if (b.their(getSqAttackers(b, board::e1)) || b.their(getSqAttackers(b, board::f1)) || b.their(getSqAttackers(b, board::g1)))
+                if (getTheirAttackersBB(b, occ, board::e1) || getTheirAttackersBB(b, occ, board::f1) || getTheirAttackersBB(b, occ, board::g1))
                     return false;
                 return true;
             }
@@ -153,7 +153,7 @@ namespace moves
                     return false;
                 if (occ & (aux::setbit(board::d1) | aux::setbit(board::c1) | aux::setbit(board::b1)))
                     return false;
-                if (b.their(getSqAttackers(b, board::e1)) || b.their(getSqAttackers(b, board::d1)) || b.their(getSqAttackers(b, board::c1)))
+                if (getTheirAttackersBB(b, occ, board::e1) || getTheirAttackersBB(b, occ, board::d1) || getTheirAttackersBB(b, occ, board::c1))
                     return false;
                 return true;
             }
@@ -389,14 +389,5 @@ namespace moves
         }
         return false;
     }
-    Bitboard getSqAttackers(const board::QBB& b, board::square s)
-    {
-        AttackMap orth = KSAllOrth(b.getOccupancy(), s) & b.getOrthSliders();
-        AttackMap diag = KSAllDiag(b.getOccupancy(), s) & b.getDiagSliders();
-        AttackMap knight = knightAttacks(s) & b.getKnights();
-        AttackMap kings = kingAttacks(s) & b.getKings();
-        AttackMap pawns = pawnAttacks(s) & b.their(b.getPawns());
-        pawns |= enemyPawnAttacks(s) & b.my(b.getPawns());
-        return orth | diag | knight | kings | pawns;
-    }
+
 }
