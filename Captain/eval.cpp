@@ -344,29 +344,31 @@ namespace eval
         auto kingArea = moves::kingAttacks(myKing) | moves::getBB(myKing);
 
         auto [pAttackers, kAttackers, bAttackers, rAttackers, qAttackers, _]
-            = moves::getTheirAttackers(b, kingArea | myPawns | theirPawns, kingArea);
+            = moves::getTheirAttackers(b, kingArea | b.getOccupancy(), kingArea);
         (void)_;
 
-        auto kingAttackerValueIdx = [this](auto popcnt, std::size_t i) {
-            return popcnt == 1 ? kingAttackerValue[i] : popcnt > 1 ? kingAttackerValue[i + 5] : 0;
-        };
+        double attackerCountScale = (_popcnt64(pAttackers) + _popcnt64(kAttackers) + _popcnt64(bAttackers)
+            + _popcnt64(rAttackers) + _popcnt64(qAttackers)) / 5.0;
 
-        evaluation -= myScalingFactor * kingAttackerValueIdx(_popcnt64(pAttackers), 0);
-        evaluation -= myScalingFactor * kingAttackerValueIdx(_popcnt64(kAttackers), 1);
-        evaluation -= myScalingFactor * kingAttackerValueIdx(_popcnt64(bAttackers), 2);
-        evaluation -= myScalingFactor * kingAttackerValueIdx(_popcnt64(rAttackers), 3);
-        evaluation -= myScalingFactor * kingAttackerValueIdx(_popcnt64(qAttackers), 4);
+        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(pAttackers) * kingAttackerValue[0];
+        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(kAttackers) * kingAttackerValue[1];
+        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(bAttackers) * kingAttackerValue[2];
+        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(rAttackers) * kingAttackerValue[3];
+        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(qAttackers) * kingAttackerValue[4];
 
         kingArea = moves::kingAttacks(theirKing) | moves::getBB(theirKing);
 
         std::tie(pAttackers, kAttackers, bAttackers, rAttackers, qAttackers, std::ignore)
-            = moves::getMyAttackers(b, kingArea | myPawns | theirPawns, kingArea);
+            = moves::getMyAttackers(b, kingArea | b.getOccupancy(), kingArea);
 
-        evaluation += theirScalingFactor * kingAttackerValueIdx(_popcnt64(pAttackers), 0);
-        evaluation += theirScalingFactor * kingAttackerValueIdx(_popcnt64(kAttackers), 1);
-        evaluation += theirScalingFactor * kingAttackerValueIdx(_popcnt64(bAttackers), 2);
-        evaluation += theirScalingFactor * kingAttackerValueIdx(_popcnt64(rAttackers), 3);
-        evaluation += theirScalingFactor * kingAttackerValueIdx(_popcnt64(qAttackers), 4);
+        attackerCountScale = (_popcnt64(pAttackers) + _popcnt64(kAttackers) + _popcnt64(bAttackers)
+            + _popcnt64(rAttackers) + _popcnt64(qAttackers)) / 5.0;
+
+        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(pAttackers) * kingAttackerValue[0];
+        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(kAttackers) * kingAttackerValue[1];
+        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(bAttackers) * kingAttackerValue[2];
+        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(rAttackers) * kingAttackerValue[3];
+        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(qAttackers) * kingAttackerValue[4];
 
         return evaluation;
     }

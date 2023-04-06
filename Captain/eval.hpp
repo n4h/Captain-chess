@@ -99,8 +99,7 @@ namespace eval
         Eval openFileNextToKingPenalty = 16;
         Eval kingOpenFilePenalty = 30;
         Eval pawnShieldBonus = 10;
-        std::array<Eval, 10> kingAttackerValue = {25, 15, 15, 20, 20,
-            45, 25, 20, 50, 50}; // TODO add to GA/asString
+        std::array<Eval, 5> kingAttackerValue = {3, 15, 15, 35, 55}; // TODO add to GA/asString
 
         enum OutpostType {MyOutpost, OppOutpost};
 
