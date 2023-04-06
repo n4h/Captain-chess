@@ -35,9 +35,7 @@ namespace eval
 
     std::uint32_t getLVA(const board::QBB&, board::Bitboard, board::Bitboard&);
     Eval getCaptureValue(const board::QBB&, board::Move);
-    Eval mvvlva(const board::QBB&, board::Move);
     Eval see(const board::QBB&, board::Move);
-    Eval evalCapture(const board::QBB&, board::Move);
 
     // TODO better squareControl function
     constexpr Eval squareControl(const board::QBB& b, board::square s)

@@ -97,16 +97,6 @@ namespace eval
         }
     }
 
-    Eval mvvlva(const board::QBB& b, board::Move m)
-    {
-        Eval values[6] = {100, 300, 300, 500, 900, 10000}; //PNBRQK
-        board::square from = board::getMoveFromSq(m);
-        board::square to = board::getMoveToSq(m);
-        if (board::getMoveInfo<constants::moveTypeMask>(m) == constants::enPCap)
-            return 0;
-        return values[(b.getPieceType(to) >> 1) - 1] - values[(b.getPieceType(from) >> 1) - 1];
-    }
-
     // adapted from iterative SEE
     // https://www.chessprogramming.org/SEE_-_The_Swap_Algorithm
     Eval see(const board::QBB& b, board::Move m)
@@ -151,12 +141,6 @@ namespace eval
         while (--i)
             scores[i - 1] = std::min<Eval>(scores[i - 1], -scores[i]);
         return scores[0];
-    }
-
-    Eval evalCapture(const board::QBB& b, board::Move m)
-    {
-        Eval mvvlvaScore = mvvlva(b, m);
-        return mvvlvaScore >= 0 ? mvvlvaScore : see(b, m);
     }
 
     Eval Evaluator::applyAggressionBonus(std::size_t type, board::square enemyKingSq, board::Bitboard pieces) const
