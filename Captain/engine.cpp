@@ -70,7 +70,7 @@ namespace engine
         engine_out.emit();
     }
 
-    std::string Engine::line2string(board::QBB b, const std::vector<board::Move>& moves)
+    std::string Engine::line2string(board::QBB b, const std::vector<Move>& moves)
     {
         std::string s = move2uciFormat(b, moves[0]);
         b.makeMove(moves[0]);
@@ -84,7 +84,7 @@ namespace engine
 
     std::string Engine::getCurrline(board::QBB b)
     {
-        std::vector<board::Move> moves{ prevMoves.begin() + initialMove, prevMoves.end() };
+        std::vector<Move> moves{ prevMoves.begin() + initialMove, prevMoves.end() };
         return line2string(b, moves);
     }
 
@@ -93,7 +93,7 @@ namespace engine
         return prevPos.size() - initialPos;
     }
 
-    std::string Engine::move2uciFormat(const board::QBB& b, board::Move m)
+    std::string Engine::move2uciFormat(const board::QBB& b, Move m)
     {
         if (m == 0)
             return "0000";
@@ -177,7 +177,7 @@ namespace engine
         return alpha + 1 != beta;
     }
 
-    int Engine::LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV, bool isKiller)
+    int Engine::LMR(std::size_t i, const board::QBB& before, Move m, const board::QBB& after, int currDepth, bool PV, bool isKiller)
     {
         if (moves::isInCheck(before)
             || moves::isInCheck(after)
@@ -502,10 +502,10 @@ namespace engine
 
         pvChild.clear();
 
-        board::Move topMove = 0;
+        Move topMove = 0;
         Eval currEval = negInf;
         moves::MoveOrder moves(&killers, &historyHeuristic, b, hash, ply());
-        board::Move nextMove = 0;
+        Move nextMove = 0;
         board::QBB bcopy = b;
         std::size_t i = 0;
         Eval besteval = negInf;

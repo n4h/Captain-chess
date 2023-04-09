@@ -44,9 +44,9 @@ namespace engine
 
     using namespace std::literals::chrono_literals;
     using eval::Eval;
-    using MoveHistory = std::vector<board::Move>;
+    using MoveHistory = std::vector<Move>;
     using PositionHistory = std::vector<std::uint64_t>;
-    using PrincipalVariation = std::forward_list<board::Move>;
+    using PrincipalVariation = std::forward_list<Move>;
     // 12000 is arbitrary 
     constexpr auto negInf = -12000;
     constexpr auto posInf = 12000;
@@ -94,7 +94,7 @@ namespace engine
         private:
             T& h;
         };
-        std::string move2uciFormat(const board::QBB&, board::Move);
+        std::string move2uciFormat(const board::QBB&, Move);
         std::string getPVuciformat(board::QBB b);
         std::string getCurrline(board::QBB b);
         std::size_t ply() const;
@@ -105,9 +105,9 @@ namespace engine
         Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
         Eval alphaBetaSearch(const board::QBB&, PrincipalVariation& pv, Eval, Eval, int, bool);
         bool isPVNode(Eval alpha, Eval beta);
-        int LMR(std::size_t i, const board::QBB& before, board::Move m, const board::QBB& after, int currDepth, bool PV, bool isKiller);
+        int LMR(std::size_t i, const board::QBB& before, Move m, const board::QBB& after, int currDepth, bool PV, bool isKiller);
         void printPV(const board::QBB& b);
-        std::string line2string(board::QBB b, const std::vector<board::Move>& moves);
+        std::string line2string(board::QBB b, const std::vector<Move>& moves);
         std::chrono::milliseconds elapsed() const;
 
         std::osyncstream engine_out;
@@ -118,7 +118,7 @@ namespace engine
         std::uint64_t hash = 0;
         std::size_t currIDdepth = 0;
         PrincipalVariation MainPV;
-        std::vector<board::Move> prevMoves;
+        std::vector<Move> prevMoves;
         std::size_t initialMove = 0;
         std::vector<std::uint64_t> prevPos;
         std::size_t initialPos = 0;

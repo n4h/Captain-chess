@@ -30,7 +30,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace moves
 {
-    bool isLegalMove(const board::QBB& b, board::Move m)
+    bool isLegalMove(const board::QBB& b, Move m)
     {
         const auto moveType = board::getMoveInfo<constants::moveTypeMask>(m);
         if (moveType > constants::queenPromo)
@@ -260,7 +260,7 @@ namespace moves
 
         return checkers;
     }
-    bool moveGivesCheck(const board::QBB& b, board::Move m)
+    bool moveGivesCheck(const board::QBB& b, Move m)
     { // TODO detect more kinds of checks
         auto oppKing = b.their(b.getKings());
         auto occ = b.getOccupancy();

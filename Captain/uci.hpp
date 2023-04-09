@@ -29,6 +29,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "engine.hpp"
 #include "searchflags.hpp"
 #include "tables.hpp"
+#include "types.hpp"
 
 namespace uci
 {
@@ -58,13 +59,13 @@ namespace uci
         friend class engine::Engine;
     };
 
-    std::tuple<board::Move, bool> uciMove2boardMove(const board::QBB&, const std::string&, board::Color);
+    std::tuple<Move, bool> uciMove2boardMove(const board::QBB&, const std::string&, board::Color);
 
-    board::Move SAN2ucimove(const board::QBB&, const std::string&);
+    Move SAN2ucimove(const board::QBB&, const std::string&);
 
     struct TestPositions
     {
-        using BestMoveList = std::vector<board::Move>;
+        using BestMoveList = std::vector<Move>;
 
         std::vector<std::pair<board::QBB, BestMoveList>> positions;
 

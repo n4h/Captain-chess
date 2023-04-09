@@ -33,9 +33,9 @@ namespace eval
     using namespace aux;
     using Eval = std::int16_t;
 
-    std::uint32_t getLVA(const board::QBB&, board::Bitboard, board::Bitboard&);
-    Eval getCaptureValue(const board::QBB&, board::Move);
-    Eval see(const board::QBB&, board::Move);
+    std::uint32_t getLVA(const board::QBB&, Bitboard, Bitboard&);
+    Eval getCaptureValue(const board::QBB&, Move);
+    Eval see(const board::QBB&, Move);
 
     // TODO better squareControl function
     constexpr Eval squareControl(const board::QBB& b, board::square s)
@@ -71,7 +71,7 @@ namespace eval
         return control;
     }
 
-    Eval computeMaterialValue(board::Bitboard, const std::array<Eval, 64>&);
+    Eval computeMaterialValue(Bitboard, const std::array<Eval, 64>&);
 
 
     // This class represents a single evaluation function (useful for tuning)
@@ -120,11 +120,11 @@ namespace eval
 
         Eval kingSafety(const board::QBB& b, board::square myKing, board::square theirKing) const;
 
-        constexpr std::pair<board::Bitboard, board::Bitboard> detectPassedPawns(board::Bitboard myPawns, board::Bitboard theirPawns) const
+        constexpr std::pair<Bitboard, Bitboard> detectPassedPawns(Bitboard myPawns, Bitboard theirPawns) const
         {
-            board::Bitboard myPawnSpans = moves::pawnAttacksLeft(myPawns) | moves::pawnAttacksRight(myPawns) | moves::pawnMovesUp(myPawns);
+            Bitboard myPawnSpans = moves::pawnAttacksLeft(myPawns) | moves::pawnAttacksRight(myPawns) | moves::pawnMovesUp(myPawns);
             myPawnSpans |= moves::KSNorth(0, myPawnSpans);
-            board::Bitboard theirPawnSpans = moves::enemyPawnAttacksLeft(theirPawns) | moves::enemyPawnAttacksRight(theirPawns) | (theirPawns >> 8);
+            Bitboard theirPawnSpans = moves::enemyPawnAttacksLeft(theirPawns) | moves::enemyPawnAttacksRight(theirPawns) | (theirPawns >> 8);
             theirPawnSpans |= moves::KSSouth(0, theirPawnSpans);
 
             return std::make_pair(myPawns & ~theirPawnSpans, theirPawns & ~myPawnSpans);
@@ -140,11 +140,11 @@ namespace eval
             return (l1dist(pRank, pFile, kRank, kFile) <= closeness) * bonus;
         }
 
-        Eval bishopOpenDiagonalBonus(board::Bitboard occ, board::Bitboard bishops) const;
+        Eval bishopOpenDiagonalBonus(Bitboard occ, Bitboard bishops) const;
 
-        Eval rookOpenFileBonus(board::Bitboard pawns, board::Bitboard rooks) const;
+        Eval rookOpenFileBonus(Bitboard pawns, Bitboard rooks) const;
 
-        Eval evalPawns(board::Bitboard myPawns, board::Bitboard theirPawns) const noexcept;
+        Eval evalPawns(Bitboard myPawns, Bitboard theirPawns) const noexcept;
 
         constexpr Eval bishopPairBonus(bool pair) const
         {
@@ -152,11 +152,11 @@ namespace eval
         }
 
         template<OutpostType t>
-        Eval knightOutpostBonus(board::square knightsq, board::Bitboard myPawns, board::Bitboard enemyPawns) const
+        Eval knightOutpostBonus(board::square knightsq, Bitboard myPawns, Bitboard enemyPawns) const
         {
             if constexpr (t == OutpostType::MyOutpost)
             {
-                board::Bitboard myKnight = setbit(knightsq);
+                Bitboard myKnight = setbit(knightsq);
                 if ((myKnight & constants::topHalf) && (moves::pawnAttacks(myPawns) & myKnight))
                 {
                     myKnight |= moves::KSNorth(0, myKnight);
@@ -170,7 +170,7 @@ namespace eval
             }
             else if constexpr (t == OutpostType::OppOutpost)
             {
-                board::Bitboard myKnight = setbit(knightsq);
+                Bitboard myKnight = setbit(knightsq);
                 if ((myKnight & constants::botHalf) && (moves::enemyPawnAttacks(enemyPawns) & myKnight))
                 {
                     myKnight |= moves::KSSouth(0, myKnight);
@@ -185,7 +185,7 @@ namespace eval
         }
 
         template<OutpostType ot>
-        Eval applyKnightOutPostBonus(board::Bitboard knights, board::Bitboard myPawns, board::Bitboard oppPawns) const
+        Eval applyKnightOutPostBonus(Bitboard knights, Bitboard myPawns, Bitboard oppPawns) const
         {
             GetNextBit<board::square> square(knights);
             Eval e = 0;
@@ -197,9 +197,9 @@ namespace eval
             return e;
         }
 
-        Eval applyAggressionBonus(std::size_t type, board::square enemyKingSq, board::Bitboard pieces) const;
+        Eval applyAggressionBonus(std::size_t type, board::square enemyKingSq, Bitboard pieces) const;
 
-        Eval apply7thRankBonus(board::Bitboard rooks, board::Bitboard rank) const;
+        Eval apply7thRankBonus(Bitboard rooks, Bitboard rank) const;
 
     public:
         friend struct EvaluatorGeneticOps;

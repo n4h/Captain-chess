@@ -32,7 +32,7 @@ namespace eval
 {
     using namespace aux;
 
-    Eval computeMaterialValue(board::Bitboard bb, const std::array<Eval, 64>& PSQT)
+    Eval computeMaterialValue(Bitboard bb, const std::array<Eval, 64>& PSQT)
     {
         Eval mval = 0;
 
@@ -47,7 +47,7 @@ namespace eval
         return mval;
     }
 
-    std::uint32_t getLVA(const board::QBB& b, board::Bitboard attackers, board::Bitboard& least)
+    std::uint32_t getLVA(const board::QBB& b, Bitboard attackers, Bitboard& least)
     {
         // TODO rank promoting pawns higher
         if (attackers & b.getPawns())
@@ -84,7 +84,7 @@ namespace eval
         return 0;
     }
 
-    Eval getCaptureValue(const board::QBB& b, board::Move m)
+    Eval getCaptureValue(const board::QBB& b, Move m)
     {
         Eval values[7] = { 0, 100, 300, 300, 500, 900, 10000 };
         if (board::getMoveInfo<constants::moveTypeMask>(m) == constants::enPCap)
@@ -99,19 +99,19 @@ namespace eval
 
     // adapted from iterative SEE
     // https://www.chessprogramming.org/SEE_-_The_Swap_Algorithm
-    Eval see(const board::QBB& b, board::Move m)
+    Eval see(const board::QBB& b, Move m)
     {
         const board::square target = board::getMoveToSq(m);
         auto targettype = b.getPieceCode(target);
         const auto movetype = board::getMoveInfo<constants::moveTypeMask>(m);
-        board::Bitboard attackers = moves::getAllAttackers(b, b.getOccupancy(), target);
-        board::Bitboard attacker = aux::setbit(board::getMoveInfo<board::fromMask>(m));
+        Bitboard attackers = moves::getAllAttackers(b, b.getOccupancy(), target);
+        Bitboard attacker = aux::setbit(board::getMoveInfo<board::fromMask>(m));
         auto attackertype = b.getPieceCode(board::getMoveFromSq(m));
 
-        board::Bitboard occ = b.getOccupancy();
-        board::Bitboard orth = b.getOrthSliders();
-        board::Bitboard diag = b.getDiagSliders();
-        board::Bitboard side = b.side;
+        Bitboard occ = b.getOccupancy();
+        Bitboard orth = b.getOrthSliders();
+        Bitboard diag = b.getDiagSliders();
+        Bitboard side = b.side;
 
         std::array<Eval, 7> pieceval = {0, 100, 300, 300, 500, 900, 10000};
         std::array<Eval, 32> scores{};
@@ -143,7 +143,7 @@ namespace eval
         return scores[0];
     }
 
-    Eval Evaluator::applyAggressionBonus(std::size_t type, board::square enemyKingSq, board::Bitboard pieces) const
+    Eval Evaluator::applyAggressionBonus(std::size_t type, board::square enemyKingSq, Bitboard pieces) const
     {
         unsigned long index = 0;
         Eval e = 0;
@@ -155,7 +155,7 @@ namespace eval
         return e;
     }
 
-    Eval Evaluator::apply7thRankBonus(board::Bitboard rooks, board::Bitboard rank) const
+    Eval Evaluator::apply7thRankBonus(Bitboard rooks, Bitboard rank) const
     {
         return rook7thRankBonus * (_popcnt64(rooks & rank));
     }
@@ -194,7 +194,7 @@ namespace eval
         return materialValue < 1900;
     }
 
-    Eval Evaluator::bishopOpenDiagonalBonus(board::Bitboard occ, board::Bitboard bishops) const
+    Eval Evaluator::bishopOpenDiagonalBonus(Bitboard occ, Bitboard bishops) const
     {
         unsigned long index = 0;
         Eval e = 0;
@@ -214,7 +214,7 @@ namespace eval
         return e;
     }
 
-    Eval Evaluator::rookOpenFileBonus(board::Bitboard pawns, board::Bitboard rooks) const
+    Eval Evaluator::rookOpenFileBonus(Bitboard pawns, Bitboard rooks) const
     {
         unsigned long index = 0;
         Eval e = 0;
@@ -227,13 +227,13 @@ namespace eval
         return e;
     }
 
-    Eval Evaluator::evalPawns(const board::Bitboard myPawns, const board::Bitboard theirPawns) const noexcept
+    Eval Evaluator::evalPawns(const Bitboard myPawns, const Bitboard theirPawns) const noexcept
     {
-        std::array<board::Bitboard, 8> files = {board::fileMask(board::a1), board::fileMask(board::b1), 
+        std::array<Bitboard, 8> files = {board::fileMask(board::a1), board::fileMask(board::b1), 
         board::fileMask(board::c1), board::fileMask(board::d1), board::fileMask(board::e1),
         board::fileMask(board::f1), board::fileMask(board::g1), board::fileMask(board::h1)};
 
-        std::array<board::Bitboard, 8> neighboringFiles = {files[1], files[0] | files[2], 
+        std::array<Bitboard, 8> neighboringFiles = {files[1], files[0] | files[2], 
         files[1] | files[3], files[2] | files[4], files[3] | files[5], files[4] | files[6], 
         files[5] | files[7], files[6]};
 
@@ -374,7 +374,7 @@ namespace eval
     {
         Eval evaluation = 0;
 
-        const std::array<board::Bitboard, 12> pieces = {
+        const std::array<Bitboard, 12> pieces = {
             b.my(b.getPawns()),
             b.my(b.getKnights()),
             b.my(b.getBishops()),
@@ -405,35 +405,35 @@ namespace eval
             evaluation += (i < 6 ? 1 : -1) * applyAggressionBonus(i, i < 6 ? oppKingSq : myKingSq, pieces[i]);
         }
 
-        aux::GetNextBit<board::Bitboard> mobility(pieces[myKnights]);
+        aux::GetNextBit<Bitboard> mobility(pieces[myKnights]);
         while (mobility())
         {
             moves::AttackMap moves = moves::knightAttacks(mobility.next);
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += knightmobility*_popcnt64(moves);
         }
-        mobility = GetNextBit<board::Bitboard>{ pieces[theirKnights] };
+        mobility = GetNextBit<Bitboard>{ pieces[theirKnights] };
         while (mobility())
         {
             moves::AttackMap moves = moves::knightAttacks(mobility.next);
             moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
             evaluation -= knightmobility*_popcnt64(moves);
         }
-        mobility = GetNextBit<board::Bitboard>{ pieces[myBishops] };
+        mobility = GetNextBit<Bitboard>{ pieces[myBishops] };
         while (mobility())
         {
             moves::AttackMap moves = moves::hypqAllDiag(occ & ~pieces[myQueens], mobility.next);
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += bishopmobility*_popcnt64(moves);
         }
-        mobility = GetNextBit<board::Bitboard>{ pieces[theirBishops] };
+        mobility = GetNextBit<Bitboard>{ pieces[theirBishops] };
         while (mobility())
         {
             moves::AttackMap moves = moves::hypqAllDiag(occ & ~pieces[theirQueens], mobility.next);
             moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
             evaluation -= bishopmobility*_popcnt64(moves);
         }
-        mobility = GetNextBit<board::Bitboard>{ pieces[myRooks] };
+        mobility = GetNextBit<Bitboard>{ pieces[myRooks] };
         while (mobility())
         {
             moves::AttackMap moves = moves::hypqRank(occ & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
@@ -443,7 +443,7 @@ namespace eval
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += rookvertmobility*_popcnt64(moves);
         }
-        mobility = GetNextBit<board::Bitboard>{ pieces[theirRooks] };
+        mobility = GetNextBit<Bitboard>{ pieces[theirRooks] };
         while (mobility())
         {
             moves::AttackMap moves = moves::hypqRank(occ & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);

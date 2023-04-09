@@ -32,7 +32,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 namespace divide
 {
-    std::string printMove(board::Move m, board::Color stm)
+    std::string printMove(Move m, board::Color stm)
     {
         bool wmove = stm == board::Color::White;
         board::square from = static_cast<board::square>(board::getMoveInfo<constants::fromMask>(m));

@@ -32,14 +32,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <array>
 #include <cassert>
 #include "board.hpp"
+#include "types.hpp"
 #include "auxiliary.hpp"
 #include "constants.hpp"
 
 namespace moves
 {
 
-    using AttackMap = board::Bitboard;
-    using board::Bitboard;
+    using AttackMap = Bitboard;
 
     template<typename T>
     concept BitboardOrSquare = std::is_same_v <T, Bitboard> || std::is_same_v<T, board::square>;
@@ -62,9 +62,9 @@ namespace moves
 
     struct ScoredMove
     {
-        ScoredMove(board::Move _m): m(_m), score(0) {}
+        ScoredMove(Move _m): m(_m), score(0) {}
         ScoredMove() {}
-        board::Move m = 0;
+        Move m = 0;
         std::int16_t score = 0;
     };
     constexpr bool operator<(const ScoredMove& s1, const ScoredMove& s2)
@@ -88,10 +88,10 @@ namespace moves
         return s1.score >= s2.score;
     }
 
-    template<typename T = board::Move, std::size_t N = 218>
+    template<typename T = Move, std::size_t N = 218>
     struct Movelist
     {
-        static_assert(std::is_same_v<T, board::Move> || std::is_same_v<T, ScoredMove>);
+        static_assert(std::is_same_v<T, Move> || std::is_same_v<T, ScoredMove>);
     private:
         std::array<T, N> ml;
         std::size_t i = 0;
@@ -135,31 +135,31 @@ namespace moves
         }
     };
 
-    constexpr board::Move constructMove(board::square from, board::square to, std::uint32_t type = constants::QMove)
+    constexpr Move constructMove(board::square from, board::square to, std::uint32_t type = constants::QMove)
     {
-        board::Move m = from;
+        Move m = from;
         m |= to << constants::toMaskOffset;
         m |= type << constants::moveTypeOffset;
         return m;
     }
 
-    constexpr board::Move constructKSCastle()
+    constexpr Move constructKSCastle()
     {
-        board::Move m = board::e1;
+        Move m = board::e1;
         m |= board::g1 << constants::toMaskOffset;
         m |= constants::KSCastle << constants::moveTypeOffset;
         return m;
     }
 
-    constexpr board::Move constructQSCastle()
+    constexpr Move constructQSCastle()
     {
-        board::Move m = board::e1;
+        Move m = board::e1;
         m |= board::c1 << constants::toMaskOffset;
         m |= constants::QSCastle << constants::moveTypeOffset;
         return m;
     }
 
-    bool isLegalMove(const board::QBB& b, board::Move m);
+    bool isLegalMove(const board::QBB& b, Move m);
 
     // trying out "Kogge Stone" algorithms
     // https://www.chessprogramming.org/Kogge-Stone_Algorithm
@@ -659,7 +659,7 @@ namespace moves
 
     Bitboard isInCheck(const board::QBB& b);
 
-    bool moveGivesCheck(const board::QBB& b, board::Move);
+    bool moveGivesCheck(const board::QBB& b, Move);
 
     constexpr auto getTheirAttackers(const board::QBB& b, Bitboard occ, BitboardOrSquare auto squares)
     {
@@ -726,7 +726,7 @@ namespace moves
         {
             AttackMap pieceAttacks = dest(static_cast<board::square>(index));
             pieces = _blsr_u64(pieces);
-            board::Move m = index;
+            Move m = index;
             while (_BitScanForward64(&index, pieceAttacks))
             {
                 pieceAttacks = _blsr_u64(pieceAttacks);
@@ -749,7 +749,7 @@ namespace moves
         }
         while (_BitScanForward64(&index, not8))
         {
-            board::Move m = index - offset;
+            Move m = index - offset;
             not8 = _blsr_u64(not8);
             m |= index << constants::toMaskOffset;
             ml.push_back(m);
@@ -759,7 +759,7 @@ namespace moves
             AttackMap on8 = attacks & board::rankMask(board::a8);
             while (_BitScanForward64(&index, on8))
             {
-                board::Move m = index - offset;
+                Move m = index - offset;
                 on8 = _blsr_u64(not8);
                 m |= index << constants::toMaskOffset;
                 m |= constants::queenPromo << constants::moveTypeOffset;
@@ -790,14 +790,14 @@ namespace moves
         unsigned long index;
         if (_BitScanForward64(&index, enpAttacksL))
         {
-            board::Move m = index;
+            Move m = index;
             m |= (index + 9) << constants::toMaskOffset;
             m |= constants::enPCap << constants::moveTypeOffset;
             ml.push_back(m);
         }
         if (_BitScanForward64(&index, enpAttacksR))
         {
-            board::Move m = index;
+            Move m = index;
             m |= (index + 7) << constants::toMaskOffset;
             m |= constants::enPCap << constants::moveTypeOffset;
             ml.push_back(m);
@@ -931,7 +931,7 @@ namespace moves
                 constexpr Bitboard betweenKSCastle = aux::setbit(board::f1) | aux::setbit(board::g1);
                 if (b.canCastleShort() && !((enemyAttacks | occ) & betweenKSCastle))
                 {
-                    board::Move m = board::e1;
+                    Move m = board::e1;
                     m |= board::g1 << constants::toMaskOffset;
                     m |= constants::KSCastle << constants::moveTypeOffset;
                     ml.push_back(m);
@@ -940,7 +940,7 @@ namespace moves
                 constexpr Bitboard QSCastleNoAttack = aux::setbit(board::d1) | aux::setbit(board::c1);
                 if (b.canCastleLong() && !(enemyAttacks & QSCastleNoAttack) && !(occ & betweenQSCastle))
                 {
-                    board::Move m = board::e1;
+                    Move m = board::e1;
                     m |= board::c1 << constants::toMaskOffset;
                     m |= constants::QSCastle << constants::moveTypeOffset;
                     ml.push_back(m);
@@ -1035,7 +1035,7 @@ namespace moves
     public:
         MoveOrder(KillerTable* _kt, History* _ht, const board::QBB& _b, std::uint64_t h, std::size_t depth)
             :kt(_kt), ht(_ht), b(_b), hash(h), d(depth){}
-        bool next(const board::QBB& b, board::Move& m)
+        bool next(const board::QBB& b, Move& m)
         {
             switch (stage)
             {
@@ -1166,9 +1166,9 @@ namespace moves
         std::uint64_t hash = 0;
         std::size_t d = 0;
         Stage stage = Stage::hash;
-        board::Move hashmove = 0;
-        board::Move k1move = 0;
-        board::Move k2move = 0;
+        Move hashmove = 0;
+        Move k1move = 0;
+        Move k2move = 0;
     public:
         Stage stageReturned = Stage::none;
 

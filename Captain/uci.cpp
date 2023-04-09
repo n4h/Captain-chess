@@ -36,6 +36,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "constants.hpp"
 #include "divide.hpp"
 #include "tune.hpp"
+#include "types.hpp"
 
 namespace uci
 {
@@ -251,13 +252,13 @@ namespace uci
     }
 
     // we're assuming that the GUI isn't sending us invalid moves
-    std::tuple<board::Move, bool> uciMove2boardMove(const board::QBB& b, const std::string& uciMove, board::Color c)
+    std::tuple<Move, bool> uciMove2boardMove(const board::QBB& b, const std::string& uciMove, board::Color c)
     {
         auto fromFile = aux::fileNumber(uciMove[0]);
         unsigned fromRank = c == board::Color::White ? uciMove[1] - '0' - 1: 7 - (uciMove[1] - '0' - 1);
         auto toFile = aux::fileNumber(uciMove[2]);
         unsigned toRank = c == board::Color::White ? uciMove[3] - '0' - 1: 7 - (uciMove[3] - '0' - 1);
-        board::Move m = aux::index(fromRank, fromFile);
+        Move m = aux::index(fromRank, fromFile);
         m |= aux::index(toRank, toFile) << constants::toMaskOffset;
 
         board::square from = static_cast<board::square>(aux::index(fromRank, fromFile));
@@ -284,7 +285,7 @@ namespace uci
         return std::make_tuple(m, incHalfClock);
     }
 
-    board::Move SAN2ucimove(board::QBB& b, const std::string& s)
+    Move SAN2ucimove(board::QBB& b, const std::string& s)
     {
         bool wtm = b.isWhiteToPlay();
         auto coords = [wtm](board::square s) -> board::square {
@@ -342,7 +343,7 @@ namespace uci
                 break;
             }
 
-            board::Bitboard rightfile = ~(0ULL);
+            Bitboard rightfile = ~(0ULL);
             if (s.size() == 4)
                 rightfile &= board::masks::fileMask[file];
 
@@ -377,7 +378,7 @@ namespace uci
 
             board::QBB b{ fen, false };
 
-            std::vector<board::Move> ml = {};
+            std::vector<Move> ml = {};
             for (std::size_t i = 5; i != pos.size(); ++i)
             {
                 ml.push_back(SAN2ucimove(b, pos[i]));
@@ -399,7 +400,7 @@ namespace uci
         {
             eng.newGame();
             std::vector<std::uint64_t> posHash = { Tables::tt.initialHash(pos) };
-            std::vector<board::Move> moves = {};
+            std::vector<Move> moves = {};
             SearchFlags::searching.test_and_set();
             eng.rootSearch(pos, std::chrono::steady_clock::now(), moves, posHash);
             auto bestmove = eng.rootMoves[0].m;
