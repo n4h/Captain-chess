@@ -27,6 +27,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "moves.hpp"
 #include "auxiliary.hpp"
 #include "constants.hpp"
+#include "types.hpp"
 
 namespace eval
 {
