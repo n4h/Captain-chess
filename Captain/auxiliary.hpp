@@ -257,6 +257,17 @@ namespace aux
         }
     };
 
-
+    struct Xor64rng
+    {
+        std::uint64_t x = 88172645463325252ULL;
+        constexpr std::uint64_t operator()()
+        {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            return x;
+        }
+        constexpr Xor64rng(std::uint64_t seed) : x(seed) {}
+    };
 }
 #endif
