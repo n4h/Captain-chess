@@ -39,12 +39,6 @@ namespace board
 
     using std::unsigned_integral;
 
-    /*Lowest 6 bits: index of from square
-      Next 6 bits: index of to square
-      Last 4: move type (8 possible move types)
-    */
-    using Move = std::uint16_t;
-
     constexpr void addMoveInfo(Move& m, std::unsigned_integral auto info)
     {
         static_assert(sizeof(info) * CHAR_BIT > 16);
@@ -157,18 +151,6 @@ namespace board
     }
 
     std::tuple<bool, unsigned int> makeSquare(const char i);
-
-    enum square : unsigned int
-    {
-        a1, b1, c1, d1, e1, f1, g1, h1,
-        a2, b2, c2, d2, e2, f2, g2, h2,
-        a3, b3, c3, d3, e3, f3, g3, h3,
-        a4, b4, c4, d4, e4, f4, g4, h4,
-        a5, b5, c5, d5, e5, f5, g5, h5,
-        a6, b6, c6, d6, e6, f6, g6, h6,
-        a7, b7, c7, d7, e7, f7, g7, h7,
-        a8, b8, c8, d8, e8, f8, g8, h8,
-    };
 
     constexpr square castSq(std::unsigned_integral auto x)
     {
@@ -531,51 +513,69 @@ namespace board
 
     struct Board
     {
-        std::vector<QBB> states;
+    private:
+        constexpr bool valid() const noexcept
+        {
+            return boards.size()
+                && boards.size() == hashes.size()
+                && boards.size() == moves.size() + 1;
+        }
+    public:
+        std::vector<QBB> boards;
         std::vector<Hash> hashes;
         std::vector<Move> moves;
 
         operator const QBB&() const
         {
-            assert(states.size());
-            return states.back();
+            assert(valid());
+            return boards.back();
         }
         operator QBB&()
         {
-            assert(states.size());
-            return states.back();
+            assert(valid());
+            return boards.back();
         }
 
-        Board(std::string s)
+        Board(std::string s, bool b = true)
         {
-            states.emplace_back(s);
-            hashes.push_back(initialHash(states.back()));
+            boards.emplace_back(s, b);
+            hashes.push_back(initialHash(boards.back()));
+        }
+
+        Board(std::vector<Move> m)
+        {
+            boards.emplace_back("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            hashes.push_back(initialHash(boards.back()));
+            for (auto i : m)
+            {
+                makeMove(i);
+            }
+            assert(valid());
+            assert(moves == m);
         }
 
         void makeMove(Move m)
         {
-            assert(states.size());
-            assert(hashes.size());
-            assert(states.size() == hashes.size());
-
+            assert(valid());
             moves.push_back(m);
-            hashes.push_back(incrementalUpdate(states.back(), m));
-            // TODO assert hash is correct
-            states.push_back(states.back());
-            states.back().makeMove(m);
-
+            boards.push_back(boards.back());
+            boards.back().makeMove(m);
+            hashes.push_back(incrementalUpdate(m, boards[boards.size() - 2], boards.back()));
+            assert(hashes.back() == initialHash(boards.back()));
         }
 
         void unmakeMove(Move m)
         {
             assert(m == moves.back());
-            assert(moves.size());
+            assert(valid());
             moves.pop_back();
-            assert(hashes.size());
             hashes.pop_back();
-            assert(states.size());
-            states.pop_back();
+            boards.pop_back();
         }
+
+        std::uint64_t initialHash(const board::QBB&);
+        std::uint64_t incrementalUpdate(Move, const board::QBB&, const board::QBB&);
+        std::uint64_t nullUpdate(const board::QBB&);
     };
 
 }

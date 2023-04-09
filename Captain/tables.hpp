@@ -23,20 +23,18 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <array>
 #include <algorithm>
 
-#include "board.hpp"
-#include "eval.hpp"
+#include "types.hpp"
 
 namespace Tables
 {
     enum : char {NONE = 0, PV = 1, ALL = 2, CUT = 3};
-    using eval::Eval;
     
     struct Entry
     {
         std::uint64_t key = 0;
         std::int16_t depth = 0;
         Eval eval = 0;
-        board::Move move = 0;
+        Move move = 0;
         char nodeType = NONE;
         unsigned char age = 0;
     };
@@ -62,19 +60,16 @@ namespace Tables
         
         void clear();
         
-        void tryStore(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age, bool anyPruning);
-        void store(std::uint64_t hash, std::int16_t depth, Eval eval, board::Move m, char nodetype, unsigned char age);
+        void tryStore(std::uint64_t hash, std::int16_t depth, Eval eval, Move m, char nodetype, unsigned char age, bool anyPruning);
+        void store(std::uint64_t hash, std::int16_t depth, Eval eval, Move m, char nodetype, unsigned char age);
 
         Entry& operator[](std::uint64_t hash) noexcept;
 
         void resize(std::size_t);
-        std::uint64_t initialHash(const board::QBB&);
-        std::uint64_t incrementalUpdate(board::Move, const board::QBB&, const board::QBB&);
-        std::uint64_t nullUpdate(const board::QBB&);
 
-        double capturePct(const board::QBB& b) const;
-        double nodeTypePct(char nodetype) const;
-        double usedPct() const;
+        //double capturePct(const board::QBB& b) const;
+        //double nodeTypePct(char nodetype) const;
+        //double usedPct() const;
         TTable(const TTable&) = delete;
         TTable& operator=(const TTable&) = delete;
         TTable(TTable&&) = delete;
@@ -85,10 +80,10 @@ namespace Tables
 
     struct PawnEntry
     {
-        board::Bitboard myPawns = 0;
-        board::Bitboard theirPawns = 0;
+        Bitboard myPawns = 0;
+        Bitboard theirPawns = 0;
         Eval eval = 0;
-        constexpr bool valid(board::Bitboard mine, board::Bitboard theirs) const noexcept
+        constexpr bool valid(Bitboard mine, Bitboard theirs) const noexcept
         {
             return myPawns == mine && theirPawns == theirs;
         }
@@ -103,8 +98,8 @@ namespace Tables
         {
             return entries[hash % entries.size()];
         }
-        std::uint64_t initialHash(board::Bitboard pawns) const noexcept;
-        std::uint64_t incrementalUpdate(board::Bitboard pawnsOld, board::Bitboard pawnsNew) const noexcept;
+        std::uint64_t initialHash(Bitboard pawns) const noexcept;
+        std::uint64_t incrementalUpdate(Bitboard pawnsOld, Bitboard pawnsNew) const noexcept;
         constexpr void clear()
         {
             entries.fill(PawnEntry{.myPawns = 0, .theirPawns = 0, .eval = 0});
@@ -113,7 +108,7 @@ namespace Tables
 
     class KillerTable
     {
-        std::array<std::array<board::Move, 2>, 16> killers;
+        std::array<std::array<Move, 2>, 16> killers;
     public:
         KillerTable()
         {
@@ -124,7 +119,7 @@ namespace Tables
             }
         }
 
-        board::Move getKiller(std::size_t depth, std::size_t killer)
+        Move getKiller(std::size_t depth, std::size_t killer)
         {
             depth -= 1;
             if (depth <= 15)
@@ -134,7 +129,7 @@ namespace Tables
             return 0;
         }
 
-        void storeKiller(board::Move m, std::size_t depth)
+        void storeKiller(Move m, std::size_t depth)
         {
             depth -= 1;
             if (depth <= 15)
@@ -162,7 +157,7 @@ namespace Tables
                 }
             }
         }
-        std::int16_t getHistoryScore(const board::QBB& b, board::Move m)
+        std::int16_t getHistoryScore(const board::QBB& b, Move m)
         {
             auto fromSq = board::getMoveFromSq(m);
             auto toSq = board::getMoveToSq(m);
@@ -171,7 +166,7 @@ namespace Tables
             score = std::clamp(score, 0U, static_cast<unsigned>(std::numeric_limits<std::int16_t>::max()));
             return static_cast<std::int16_t>(score);
         }
-        void updateHistory(const board::QBB& b, board::Move m, int depth)
+        void updateHistory(const board::QBB& b, Move m, int depth)
         {
             auto fromSq = board::getMoveFromSq(m);
             auto toSq = board::getMoveToSq(m);
