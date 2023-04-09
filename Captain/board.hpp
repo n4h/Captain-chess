@@ -26,9 +26,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <vector>
 #include <array>
 #include <climits>
+#include <cassert>
 
 #include "constants.hpp"
 #include "auxiliary.hpp"
+#include "types.hpp"
 
 namespace board
 {
@@ -36,8 +38,6 @@ namespace board
     using namespace constants;
 
     using std::unsigned_integral;
-
-    using Bitboard = std::uint64_t;
 
     /*Lowest 6 bits: index of from square
       Next 6 bits: index of to square
@@ -527,6 +527,56 @@ namespace board
         }
     };
 
-    board::Bitboard getCastlingDiff(const board::QBB&, const board::QBB&);
+    Bitboard getCastlingDiff(const board::QBB&, const board::QBB&);
+
+    struct Board
+    {
+        std::vector<QBB> states;
+        std::vector<Hash> hashes;
+        std::vector<Move> moves;
+
+        operator const QBB&() const
+        {
+            assert(states.size());
+            return states.back();
+        }
+        operator QBB&()
+        {
+            assert(states.size());
+            return states.back();
+        }
+
+        Board(std::string s)
+        {
+            states.emplace_back(s);
+            hashes.push_back(initialHash(states.back()));
+        }
+
+        void makeMove(Move m)
+        {
+            assert(states.size());
+            assert(hashes.size());
+            assert(states.size() == hashes.size());
+
+            moves.push_back(m);
+            hashes.push_back(incrementalUpdate(states.back(), m));
+            // TODO assert hash is correct
+            states.push_back(states.back());
+            states.back().makeMove(m);
+
+        }
+
+        void unmakeMove(Move m)
+        {
+            assert(m == moves.back());
+            assert(moves.size());
+            moves.pop_back();
+            assert(hashes.size());
+            hashes.pop_back();
+            assert(states.size());
+            states.pop_back();
+        }
+    };
+
 }
 #endif

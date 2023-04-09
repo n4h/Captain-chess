@@ -399,6 +399,7 @@
     <ClInclude Include="searchflags.hpp" />
     <ClInclude Include="tables.hpp" />
     <ClInclude Include="tune.hpp" />
+    <ClInclude Include="types.hpp" />
     <ClInclude Include="uci.hpp" />
   </ItemGroup>
   <ItemGroup>
