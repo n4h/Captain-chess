@@ -95,6 +95,9 @@
     <ClInclude Include="types.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="moveorder.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="COPYING.txt">

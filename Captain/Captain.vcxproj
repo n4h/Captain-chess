@@ -389,6 +389,7 @@
       <FileType>Document</FileType>
     </ClInclude>
     <ClCompile Include="moves.cpp" />
+    <ClInclude Include="moveorder.hpp" />
     <ClInclude Include="moves.hpp">
       <FileType>Document</FileType>
     </ClInclude>

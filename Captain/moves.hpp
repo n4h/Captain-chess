@@ -31,6 +31,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <type_traits>
 #include <array>
 #include <cassert>
+
+#include "tables.hpp"
 #include "board.hpp"
 #include "types.hpp"
 #include "auxiliary.hpp"
@@ -1027,152 +1029,8 @@ namespace moves
             addMoves(myKing, ml, [mine, attacks](board::square idx) {return kingAttacks(idx) & ~attacks & ~mine; });
         }
     }
-    enum class Stage : unsigned {none, hash, captureStageGen, captureStage, killer1Stage, killer2Stage, quietsGen, quiets, losingCaptures };
-
-    template<typename KillerTable, typename History>
-    class MoveOrder
-    {
-    public:
-        MoveOrder(KillerTable* _kt, History* _ht, const board::QBB& _b, std::uint64_t h, std::size_t depth)
-            :kt(_kt), ht(_ht), b(_b), hash(h), d(depth){}
-        bool next(const board::QBB& b, Move& m)
-        {
-            switch (stage)
-            {
-            case Stage::hash:
-                hashmove = Tables::tt[hash].move;
-                if (kt)
-                {
-                    k1move = kt->getKiller(d, 0);
-                    k2move = kt->getKiller(d, 1);
-                }
-                if (Tables::tt[hash].key == hash && hashmove)
-                {
-                    if (isLegalMove(b, hashmove))
-                    {
-                        m = hashmove;
-                        stage = Stage::captureStageGen;
-                        stageReturned = Stage::hash;
-                        return true;
-                    }
-                }
-                stage = Stage::captureStageGen;
-                [[fallthrough]];
-            case Stage::captureStageGen:
-                genMoves<QSearch>(b, ml);
-                ml.remove_moves_if(ml.begin(), ml.end(), [this](auto sm) {return sm.m == hashmove; });
-                for (auto& [move, score] : ml)
-                {
-                    score = eval::see(b, move);
-                }
-                captureBegin = ml.begin();
-                captureEnd = ml.end();
-                stage = ml.size() ? Stage::captureStage : Stage::killer1Stage;
-                [[fallthrough]];
-            case Stage::captureStage:
-                if (captureBegin == captureEnd)
-                {
-                    stage = Stage::killer1Stage;
-                }
-                else
-                {
-                    auto bestCapture = std::max_element(captureBegin, captureEnd);
-                    if (bestCapture->score < 0)
-                    {
-                        losingCapturesBegin = captureBegin;
-                        stage = Stage::killer1Stage;
-                    }
-                    else
-                    {
-                        std::iter_swap(captureBegin, bestCapture);
-                        m = captureBegin->m;
-                        ++captureBegin;
-                        stageReturned = Stage::captureStage;
-                        return true;
-                    }
-                }
-                [[fallthrough]];
-            case Stage::killer1Stage:
-                stage = Stage::killer2Stage;
-                if (k1move != hashmove && isLegalMove(b, k1move))
-                {
-                    m = k1move;
-                    stageReturned = Stage::killer1Stage;
-                    return true;
-                }
-                [[fallthrough]];
-            case Stage::killer2Stage:
-                stage = Stage::quietsGen;
-                if (k2move != hashmove && isLegalMove(b, k2move))
-                {
-                    m = k2move;
-                    stageReturned = Stage::killer2Stage;
-                    return true;
-                }
-                [[fallthrough]];
-            case Stage::quietsGen:
-                quietsCurrent = captureEnd;
-                genMoves<!QSearch, Quiets>(b, ml);
-                ml.remove_moves_if(quietsCurrent, ml.end(), [this](ScoredMove k) {return k.m == hashmove || k.m == k1move || k.m == k2move; });
-                for (auto i = quietsCurrent; i != ml.end(); ++i)
-                {
-                    i->score = ht->getHistoryScore(b, i->m);
-                }
-                quietsEnd = ml.end();
-                stage = Stage::quiets;
-                [[fallthrough]];
-            case Stage::quiets:
-                if (quietsCurrent == quietsEnd)
-                {
-                    stage = Stage::losingCaptures;
-                }
-                else
-                {
-                    auto max = std::max_element(quietsCurrent, quietsEnd);
-                    std::iter_swap(quietsCurrent, max);
-                    m = quietsCurrent->m;
-                    ++quietsCurrent;
-                    stageReturned = Stage::quiets;
-                    return true;
-                }
-                [[fallthrough]];
-            case Stage::losingCaptures:
-                if (losingCapturesBegin == captureEnd)
-                {
-                    return false;
-                }
-                else
-                {
-                    m = losingCapturesBegin->m;
-                    ++losingCapturesBegin;
-                    stageReturned = Stage::losingCaptures;
-                    return true;
-                }
-            default:
-                return false;
-            }
-        }
-    private:
-        MoveOrder() {}
-        Movelist<ScoredMove, 218> ml;
-        decltype(ml.begin()) captureBegin = ml.begin();
-        decltype(ml.end()) captureEnd = ml.end();
-        decltype(ml.begin()) quietsCurrent;
-        decltype(ml.begin()) quietsEnd;
-        decltype(ml.begin()) losingCapturesBegin = ml.begin();
-        KillerTable* kt = nullptr;
-        History* ht = nullptr;
-        const board::QBB& b;
-        std::uint64_t hash = 0;
-        std::size_t d = 0;
-        Stage stage = Stage::hash;
-        Move hashmove = 0;
-        Move k1move = 0;
-        Move k2move = 0;
-    public:
-        Stage stageReturned = Stage::none;
-
-    };
+    enum class Stage : unsigned {none, hash, captureStageGen, captureStage, 
+        killer1Stage, killer2Stage, quietsGen, quiets, losingCaptures };
 
 }
 
