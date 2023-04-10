@@ -157,21 +157,15 @@ namespace Tables
                 }
             }
         }
-        std::int16_t getHistoryScore(const board::QBB& b, Move m)
+        constexpr std::int16_t getHistoryScore(unsigned int pieceCodeIdx, board::square to)
         {
-            auto fromSq = board::getMoveFromSq(m);
-            auto toSq = board::getMoveToSq(m);
-            auto piecetype = b.getPieceType(fromSq);
-            auto score = history[(piecetype >> 1) - 1][toSq];
+            auto score = history[pieceCodeIdx][to];
             score = std::clamp(score, 0U, static_cast<unsigned>(std::numeric_limits<std::int16_t>::max()));
             return static_cast<std::int16_t>(score);
         }
-        void updateHistory(const board::QBB& b, Move m, int depth)
+        constexpr void updateHistory(unsigned int pieceCodeIdx, board::square to, int depth)
         {
-            auto fromSq = board::getMoveFromSq(m);
-            auto toSq = board::getMoveToSq(m);
-            auto piecetype = b.getPieceType(fromSq);
-            history[(piecetype >> 1) - 1][toSq] += depth * depth;
+            history[pieceCodeIdx][to] += depth * depth;
         }
     };
 
