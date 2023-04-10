@@ -536,6 +536,14 @@ namespace board
             return boards.back();
         }
 
+        Board() {}
+
+        Board(const QBB& b)
+        {
+            boards.push_back(b);
+            hashes.push_back(initialHash(b));
+        }
+
         Board(std::string s, bool b = true)
         {
             boards.emplace_back(s, b);
@@ -559,14 +567,23 @@ namespace board
             assert(valid());
             moves.push_back(m);
             boards.push_back(boards.back());
-            boards.back().makeMove(m);
-            hashes.push_back(incrementalUpdate(m, boards[boards.size() - 2], boards.back()));
+            if (m != 0)
+            {
+                boards.back().makeMove(m);
+                hashes.push_back(hashes.back() ^ incrementalUpdate(m, boards[boards.size() - 2], boards.back()));
+            }
+            else
+            {
+                boards.back().doNullMove();
+                hashes.push_back(hashes.back() ^ nullUpdate(boards[boards.size() - 2]));
+            }
             assert(hashes.back() == initialHash(boards.back()));
         }
 
         void unmakeMove(Move m)
         {
             assert(m == moves.back());
+            (void)m;
             assert(valid());
             moves.pop_back();
             hashes.pop_back();
