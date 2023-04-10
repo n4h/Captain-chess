@@ -34,6 +34,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include "eval.hpp"
 #include "auxiliary.hpp"
 #include "uci.hpp"
+#include "moveorder.hpp"
 
 namespace engine
 {
@@ -70,27 +71,26 @@ namespace engine
         engine_out.emit();
     }
 
-    std::string Engine::line2string(board::QBB b, const std::vector<Move>& moves)
+    std::string Engine::line2string(const std::vector<Move>& moves)
     {
-        std::string s = move2uciFormat(b, moves[0]);
-        b.makeMove(moves[0]);
+        std::size_t k = initialPos - 1;
+        std::string s = move2uciFormat(b.boards[k++], moves[0]);
         for (std::size_t i = 1; i != moves.size(); ++i)
         {
-            s.append(" ").append(move2uciFormat(b, moves[i]));
-            b.makeMove(moves[i]);
+            s.append(" ").append(move2uciFormat(b.boards[k++], moves[i]));
         }
         return s;
     }
 
-    std::string Engine::getCurrline(board::QBB b)
+    std::string Engine::getCurrline()
     {
-        std::vector<Move> moves{ prevMoves.begin() + initialMove, prevMoves.end() };
-        return line2string(b, moves);
+        std::vector<Move> moves{ b.moves.begin() + initialMove, b.moves.end() };
+        return line2string(moves);
     }
 
     std::size_t Engine::ply() const
     {
-        return prevPos.size() - initialPos;
+        return b.boards.size() - initialPos;
     }
 
     std::string Engine::move2uciFormat(const board::QBB& b, Move m)
@@ -124,10 +124,10 @@ namespace engine
     bool Engine::threeFoldRep() const
     {
         std::size_t cnt = 0;
-        std::uint64_t currHash = prevPos.back();
-        for (int i = prevPos.size() - 1; i >= 0; i -= 2)
+        std::uint64_t currHash = b.hashes.back();
+        for (int i = b.hashes.size() - 1; i >= 0; i -= 2)
         {
-            if (prevPos[i] == currHash)
+            if (b.hashes[i] == currHash)
                 ++cnt;
         }
         return cnt >= 3;
@@ -226,22 +226,19 @@ namespace engine
         historyHeuristic = Tables::HistoryTable();
     }
 
-    void Engine::rootSearch(const board::QBB& b, std::chrono::time_point<std::chrono::steady_clock> s,
-        const MoveHistory& moveHist, const PositionHistory& posHist)
+    void Engine::rootSearch(board::Board _b, std::chrono::time_point<std::chrono::steady_clock> s)
     {
         searchStart = s;
         lastUpdate = s;
-        prevMoves = moveHist;
-        initialMove = prevMoves.size();
-        prevPos = posHist;
-        initialPos = prevPos.size();
-        engineW = b.isWhiteToPlay();
+        b = _b;
+        initialMove = b.moves.size();
+        initialPos = b.boards.size();
+        engineW = b.boards.back().isWhiteToPlay();
         currIDdepth = 0;
         nodes = 0;
-        hash = prevPos.back();
         auto mytime = engineW ? settings.wmsec : settings.bmsec;
         [[maybe_unused]] auto myinc = engineW ? settings.winc : settings.binc;
-        auto moveNumber = (prevPos.size() + 2) / 2;
+        auto moveNumber = (initialPos + 2) / 2;
         if (settings.movestogo == std::numeric_limits<std::size_t>::max() || settings.movestogo == 0)
         {
             moveTime = aux::castms(moveNumber < 12 ? mytime / 40 : 0.05 * mytime);
@@ -259,7 +256,6 @@ namespace engine
         }
         Eval worstCase = rootMinBound;
         this->eval = rootMinBound;
-        board::QBB bcopy = b;
         for (unsigned int k = 1; k <= 128; ++k)
         {
             currIDdepth = k;
@@ -271,22 +267,19 @@ namespace engine
             {
                 if (!SearchFlags::searching.test())
                     goto endsearch;
-                bcopy.makeMove(move);
-                StoreInfo recordMove(prevMoves, move);
-                auto oldhash = hash;
-                hash ^= Tables::tt.incrementalUpdate(move, b, bcopy);
+                b.makeMove(move);
                 try 
                 {
                     if (i == 0)
                     {
-                        score = -alphaBetaSearch(bcopy, pv, rootMinBound, -worstCase, k - 1, false);
+                        score = -alphaBetaSearch(pv, rootMinBound, -worstCase, k - 1, false);
                     }
                     else
                     {
-                        auto tmp = -alphaBetaSearch(bcopy, pv, -worstCase - 1, -worstCase, k - 1, false);
+                        auto tmp = -alphaBetaSearch(pv, -worstCase - 1, -worstCase, k - 1, false);
                         if (tmp > worstCase)
                         {
-                            tmp = -alphaBetaSearch(bcopy, pv, rootMinBound, -worstCase, k - 1, false);
+                            tmp = -alphaBetaSearch(pv, rootMinBound, -worstCase, k - 1, false);
                         }
                         score = tmp;
                     }
@@ -302,8 +295,7 @@ namespace engine
                     MainPV.push_front(move);
                     worstCase = score;
                 }
-                bcopy = b;
-                hash = oldhash;
+                b.unmakeMove(move);
                 ++i;
             }
 
@@ -327,20 +319,18 @@ namespace engine
         engine_out.emit();
     }
 
-    Eval Engine::quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth)
+    Eval Engine::quiesceSearch(Eval alpha, Eval beta, int depth)
     {
-        StoreInfo recordNode(prevPos, hash);
-
-        if (insufficientMaterial(b) || threeFoldRep() || b.get50() == 50)
+        if (insufficientMaterial(b) || threeFoldRep() || b.boards.back().get50() == 50)
             return 0;
         if (shouldStop())
             SearchFlags::searching.clear();
         ++nodes;
 
-        if (Tables::tt[hash].key == hash && Tables::tt[hash].depth >= depth)
+        if (Tables::tt[b.hashes.back()].key == b.hashes.back() && Tables::tt[b.hashes.back()].depth >= depth)
         {
-            auto nodetype = Tables::tt[hash].nodeType;
-            auto eval = Tables::tt[hash].eval;
+            auto nodetype = Tables::tt[b.hashes.back()].nodeType;
+            auto eval = Tables::tt[b.hashes.back()].eval;
             if (nodetype == Tables::PV)
                 return eval;
             else if (nodetype == Tables::ALL && eval < alpha)
@@ -398,7 +388,6 @@ namespace engine
 
         Eval currEval = standpat;
 
-        board::QBB bcopy = b;
         for (std::size_t i = 0; auto& [move, score] : ml)
         {
             if (i < captureIterations)
@@ -421,14 +410,10 @@ namespace engine
             }
             if (!SearchFlags::searching.test())
                 throw Timeout();
-            auto oldhash = hash;
-            bcopy.makeMove(ml[i].m);
-            StoreInfo recordMove(prevMoves, ml[i].m);
-            hash ^= Tables::tt.incrementalUpdate(ml[i].m, b, bcopy);
+            b.makeMove(ml[i].m);
             
-            currEval = std::max<Eval>(currEval, -quiesceSearch(bcopy, -beta, -alpha, depth - 1));
-            bcopy = b;
-            hash = oldhash;
+            currEval = std::max<Eval>(currEval, -quiesceSearch(-beta, -alpha, depth - 1));
+            b.unmakeMove(ml[i].m);
             alpha = std::max(currEval, alpha);
             if (alpha >= beta)
             {
@@ -442,13 +427,13 @@ namespace engine
         return currEval;
     }
 
-    Eval Engine::alphaBetaSearch(const board::QBB& b, PrincipalVariation& pv, Eval alpha, Eval beta, int depth, bool nullBranch)
+    Eval Engine::alphaBetaSearch(PrincipalVariation& pv, Eval alpha, Eval beta, int depth, bool nullBranch)
     {
         if (depth <= 0)
         {
-            return quiesceSearch(b, alpha, beta, depth);
+            return quiesceSearch(alpha, beta, depth);
         }
-        StoreInfo recordNode(prevPos, hash);
+
         auto nodeType = Tables::ALL;
 
         if (shouldStop())
@@ -458,14 +443,14 @@ namespace engine
 
         uciUpdate();
 
-        if (insufficientMaterial(b) || threeFoldRep() || b.get50() == 50)
+        if (insufficientMaterial(b) || threeFoldRep() || b.boards.back().get50() == 50)
             return 0;
         ++nodes;
         
-        if (Tables::tt[hash].key == hash && Tables::tt[hash].depth >= depth)
+        if (Tables::tt[b.hashes.back()].key == b.hashes.back() && Tables::tt[b.hashes.back()].depth >= depth)
         {
-            auto nodetype = Tables::tt[hash].nodeType;
-            auto eval = Tables::tt[hash].eval;
+            auto nodetype = Tables::tt[b.hashes.back()].nodeType;
+            auto eval = Tables::tt[b.hashes.back()].eval;
             if (nodetype == Tables::ALL && eval < alpha)
             {
                 return eval;
@@ -482,13 +467,9 @@ namespace engine
 
         if (!isPVNode(alpha, beta) && !nullBranch && !inCheck)
         {
-            board::QBB bnull = b;
-            auto oldhash = hash;
-            hash ^= Tables::tt.nullUpdate(bnull);
-            bnull.doNullMove();
-            StoreInfo recordMove(prevMoves, 0);
-            Eval nulleval = -alphaBetaSearch(bnull, pvChild, -beta, -beta + 1, depth - 3, true);
-            hash = oldhash;
+            b.makeMove(0);
+            Eval nulleval = -alphaBetaSearch(pvChild, -beta, -beta + 1, depth - 3, true);
+            b.unmakeMove(0);
             if (nulleval >= beta)
             {
                 return nulleval;
@@ -504,9 +485,8 @@ namespace engine
 
         Move topMove = 0;
         Eval currEval = negInf;
-        moves::MoveOrder moves(&killers, &historyHeuristic, b, hash, ply());
+        moves::MoveOrder moves(&killers, &historyHeuristic, b.hashes.back(), ply());
         Move nextMove = 0;
-        board::QBB bcopy = b;
         std::size_t i = 0;
         Eval besteval = negInf;
         const bool PVNode = isPVNode(alpha, beta);
@@ -538,7 +518,7 @@ namespace engine
                 && std::abs(alpha) < 10000
                 && std::abs(beta) < 10000
                 && !board::isPromo(nextMove)
-                && !(b.getPieceType(board::getMoveFromSq(nextMove)) == constants::myPawn && isMovingTo7thRank)
+                && !(b.boards.back().getPieceType(board::getMoveFromSq(nextMove)) == constants::myPawn && isMovingTo7thRank)
                 && materialBalance + eval::getCaptureValue(b, nextMove) + margin <= alpha)
             {
                 moveWasPruned = true;
@@ -546,40 +526,37 @@ namespace engine
             }
 
             everythingPruned = false;
-            auto oldhash = hash;
-            bcopy.makeMove(nextMove);
+            b.makeMove(nextMove);
 
-            StoreInfo recordMove(prevMoves, nextMove);
-            hash ^= Tables::tt.incrementalUpdate(nextMove, b, bcopy);
             if (i == 0)
             {
-                currEval = -alphaBetaSearch(bcopy, pvChild, -beta, -alpha, depth - 1, nullBranch);
+                currEval = -alphaBetaSearch(pvChild, -beta, -alpha, depth - 1, nullBranch);
             }
             else
             {
                 bool isKiller = moves.stageReturned == moves::Stage::killer1Stage || moves.stageReturned == moves::Stage::killer2Stage;
-                auto LMRReduction = LMR(i, b, nextMove, bcopy, depth, PVNode, isKiller);
-                currEval = -alphaBetaSearch(bcopy, pvChild, -alpha - 1, -alpha, depth - 1 - LMRReduction, nullBranch);
+                auto LMRReduction = LMR(i, b.boards[b.boards.size() - 2], nextMove, b, depth, PVNode, isKiller);
+                currEval = -alphaBetaSearch(pvChild, -alpha - 1, -alpha, depth - 1 - LMRReduction, nullBranch);
                 if (LMRReduction && currEval > alpha)
                 {
-                    currEval = -alphaBetaSearch(bcopy, pvChild, -alpha - 1, -alpha, depth - 1, nullBranch);
+                    currEval = -alphaBetaSearch(pvChild, -alpha - 1, -alpha, depth - 1, nullBranch);
                 }
                 if (currEval > alpha && currEval < beta)
                 {
-                    currEval = -alphaBetaSearch(bcopy, pvChild, -beta, -alpha, depth - 1, nullBranch);
+                    currEval = -alphaBetaSearch(pvChild, -beta, -alpha, depth - 1, nullBranch);
                 }
             }
             besteval = std::max(besteval, currEval);
-            bcopy = b;
-            hash = oldhash;
+            b.unmakeMove(nextMove);
             if (besteval >= beta)
             {
                 nodeType = Tables::CUT;
-                Tables::tt.tryStore(hash, depth, besteval, nextMove, nodeType, initialPos, moveWasPruned);
-                if (!b.isCapture(nextMove))
+                Tables::tt.tryStore(b.hashes.back(), depth, besteval, nextMove, nodeType, initialPos, moveWasPruned);
+                if (!b.boards.back().isCapture(nextMove))
                 {
                     killers.storeKiller(nextMove, ply());
-                    historyHeuristic.updateHistory(b, nextMove, depth);
+                    auto piececodeidx = b.boards.back().getPieceCodeIdx(board::getMoveFromSq(nextMove));
+                    historyHeuristic.updateHistory(piececodeidx, board::getMoveToSq(nextMove), depth);
                 }
                 return besteval;
             }
@@ -600,11 +577,11 @@ namespace engine
 
         if (nodeType == Tables::PV)
         {
-            Tables::tt.tryStore(hash, depth, besteval, topMove, nodeType, initialPos, moveWasPruned);
+            Tables::tt.tryStore(b.hashes.back(), depth, besteval, topMove, nodeType, initialPos, moveWasPruned);
         }
         else
         {
-            Tables::tt.tryStore(hash, depth, besteval, topMove, nodeType, initialPos, moveWasPruned);
+            Tables::tt.tryStore(b.hashes.back(), depth, besteval, topMove, nodeType, initialPos, moveWasPruned);
         }
         return everythingPruned ? alpha : besteval;
     }

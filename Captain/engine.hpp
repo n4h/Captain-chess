@@ -44,8 +44,6 @@ namespace engine
 
     using namespace std::literals::chrono_literals;
     using eval::Eval;
-    using MoveHistory = std::vector<Move>;
-    using PositionHistory = std::vector<std::uint64_t>;
     using PrincipalVariation = std::forward_list<Move>;
     // 12000 is arbitrary 
     constexpr auto negInf = -12000;
@@ -70,8 +68,7 @@ namespace engine
     class Engine
     {
     public:
-        void rootSearch(const board::QBB&, std::chrono::time_point<std::chrono::steady_clock>,
-            const MoveHistory&, const PositionHistory&);
+        void rootSearch(board::Board _b, std::chrono::time_point<std::chrono::steady_clock>);
         double getEval();
         Engine() :engine_out(std::cout) {}
         void setSettings(SearchSettings ss) noexcept { settings = ss; }
@@ -80,34 +77,20 @@ namespace engine
         Eval eval = 0;
         moves::Movelist<moves::ScoredMove> rootMoves;
     private:
-        template<typename T, typename T2>
-        struct StoreInfo
-        {
-            StoreInfo(T& x, T2 item) : h(x)
-            {
-                h.push_back(item);
-            }
-            ~StoreInfo()
-            {
-                h.pop_back();
-            }
-        private:
-            T& h;
-        };
         std::string move2uciFormat(const board::QBB&, Move);
         std::string getPVuciformat(board::QBB b);
-        std::string getCurrline(board::QBB b);
+        std::string getCurrline();
         std::size_t ply() const;
         bool shouldStop() noexcept;
         void uciUpdate();
         bool threeFoldRep() const;
         bool insufficientMaterial(const board::QBB&) const;
-        Eval quiesceSearch(const board::QBB& b, Eval alpha, Eval beta, int depth);
-        Eval alphaBetaSearch(const board::QBB&, PrincipalVariation& pv, Eval, Eval, int, bool);
+        Eval quiesceSearch(Eval alpha, Eval beta, int depth);
+        Eval alphaBetaSearch(PrincipalVariation& pv, Eval, Eval, int, bool);
         bool isPVNode(Eval alpha, Eval beta);
         int LMR(std::size_t i, const board::QBB& before, Move m, const board::QBB& after, int currDepth, bool PV, bool isKiller);
         void printPV(const board::QBB& b);
-        std::string line2string(board::QBB b, const std::vector<Move>& moves);
+        std::string line2string(const std::vector<Move>& moves);
         std::chrono::milliseconds elapsed() const;
 
         std::osyncstream engine_out;
@@ -115,13 +98,11 @@ namespace engine
         std::chrono::time_point<std::chrono::steady_clock> searchStart;
         std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
         std::size_t nodes = 0;
-        std::uint64_t hash = 0;
         std::size_t currIDdepth = 0;
         PrincipalVariation MainPV;
-        std::vector<Move> prevMoves;
         std::size_t initialMove = 0;
-        std::vector<std::uint64_t> prevPos;
         std::size_t initialPos = 0;
+        board::Board b;
         
         bool engineW = true;
         std::chrono::milliseconds moveTime = 0ms;
