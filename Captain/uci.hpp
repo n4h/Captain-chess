@@ -50,16 +50,14 @@ namespace uci
         std::string UCIName = "Captain v4.0";
         std::string UCIAuthor = "Narbeh Mouradian";
         bool initialized = false;
-        board::QBB b;
-        engine::MoveHistory moves;
-        engine::PositionHistory pos;
+        board::Board b;
         engine::Engine e;
         std::future<void> engineResult;
 
         friend class engine::Engine;
     };
 
-    std::tuple<Move, bool> uciMove2boardMove(const board::QBB&, const std::string&, board::Color);
+    Move uciMove2boardMove(const board::QBB&, const std::string&);
 
     Move SAN2ucimove(const board::QBB&, const std::string&);
 

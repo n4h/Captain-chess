@@ -80,8 +80,6 @@ namespace uci
                 {
                     initialized = true;
                 }
-                moves.clear();
-                pos.clear();
                 Tables::tt.clear();
                 e.newGame();
             }
@@ -114,37 +112,28 @@ namespace uci
         {
             initialized = true;
         }
-        moves.clear();
-        pos.clear();
         if (command[1] == "startpos")
         {
-            b = board::QBB{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"};
-            pos.push_back(Tables::tt.initialHash(b));
+            b = board::Board{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"};
             if (command.size() >= 3 && command[2] == "moves")
             {
                 for (std::size_t i = 3; i < command.size(); ++i)
                 {
-                    auto [move, halfMove] = uciMove2boardMove(b, command[i], b.getColorToPlay());
+                    auto move = uciMove2boardMove(b, command[i]);
                     b.makeMove(move);
-                    moves.push_back(move);
-                    pos.push_back(Tables::tt.initialHash(b));
                 }
             }
         }
         else if (command[1] == "fen" && command.size() >= 8)
         {
-            // FEN string contains 6 space separated fields
-            b = board::QBB{command[2] + " " + command[3] + " " + command[4] + " " + command[5] + " "
+            b = board::Board{command[2] + " " + command[3] + " " + command[4] + " " + command[5] + " "
              + command[6] + " " + command[7]};
-            pos.push_back(Tables::tt.initialHash(b));
             if (command.size() >= 9 && command[8] == "moves")
             {
                 for (std::size_t i = 9; i < command.size(); ++i)
                 {
-                    auto [move, halfMove] = uciMove2boardMove(b, command[i], b.getColorToPlay());
+                    auto move = uciMove2boardMove(b, command[i]);
                     b.makeMove(move);
-                    moves.push_back(move);
-                    pos.push_back(Tables::tt.initialHash(b));
                 }
             }
         }
@@ -197,7 +186,7 @@ namespace uci
         e.setSettings(ss);
 
         SearchFlags::searching.test_and_set();
-        auto tmp = std::async(&engine::Engine::rootSearch, &e, std::cref(b), startTime, std::cref(moves), std::cref(pos));
+        auto tmp = std::async(&engine::Engine::rootSearch, &e, b, startTime);
         engineResult = std::move(tmp);
     }
 
@@ -252,12 +241,13 @@ namespace uci
     }
 
     // we're assuming that the GUI isn't sending us invalid moves
-    std::tuple<Move, bool> uciMove2boardMove(const board::QBB& b, const std::string& uciMove, board::Color c)
+    Move uciMove2boardMove(const board::QBB& b, const std::string& uciMove)
     {
         auto fromFile = aux::fileNumber(uciMove[0]);
-        unsigned fromRank = c == board::Color::White ? uciMove[1] - '0' - 1: 7 - (uciMove[1] - '0' - 1);
+        unsigned fromRank = b.isWhiteToPlay() ? uciMove[1] - '0' - 1 : 7 - (uciMove[1] - '0' - 1);
         auto toFile = aux::fileNumber(uciMove[2]);
-        unsigned toRank = c == board::Color::White ? uciMove[3] - '0' - 1: 7 - (uciMove[3] - '0' - 1);
+        unsigned toRank = b.isWhiteToPlay() ? uciMove[3] - '0' - 1 : 7 - (uciMove[3] - '0' - 1);
+
         Move m = aux::index(fromRank, fromFile);
         m |= aux::index(toRank, toFile) << constants::toMaskOffset;
 
@@ -265,8 +255,6 @@ namespace uci
         board::square to = static_cast<board::square>(aux::index(toRank, toFile));
 
         auto piecetype = b.getPieceType(from);
-        auto piecetypeTo = b.getPieceType(to);
-        bool incHalfClock = !(piecetypeTo || piecetype == constants::myPawn);
         if (piecetype == constants::myPawn)
         {
             if (_tzcnt_u64(b.getEp()) == to)
@@ -282,7 +270,7 @@ namespace uci
                 m |= constants::QSCastle << constants::moveTypeOffset;
         }
         
-        return std::make_tuple(m, incHalfClock);
+        return m;
     }
 
     Move SAN2ucimove(board::QBB& b, const std::string& s)
@@ -399,10 +387,8 @@ namespace uci
         for (const auto& [pos, ml] : positions)
         {
             eng.newGame();
-            std::vector<std::uint64_t> posHash = { Tables::tt.initialHash(pos) };
-            std::vector<Move> moves = {};
             SearchFlags::searching.test_and_set();
-            eng.rootSearch(pos, std::chrono::steady_clock::now(), moves, posHash);
+            eng.rootSearch(pos, std::chrono::steady_clock::now());
             auto bestmove = eng.rootMoves[0].m;
             bool found = false;
             for (auto i : ml)
