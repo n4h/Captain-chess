@@ -27,6 +27,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <array>
 #include <climits>
 #include <cassert>
+#include <optional>
 
 #include "constants.hpp"
 #include "auxiliary.hpp"
@@ -510,6 +511,13 @@ namespace board
     };
 
     Bitboard getCastlingDiff(const board::QBB&, const board::QBB&);
+
+    struct PosInfo
+    {
+        bool check = false;
+        std::array<std::optional<Bitboard>, 12> attackmaps;
+
+    };
 
     struct Board
     {
