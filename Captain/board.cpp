@@ -22,6 +22,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <vector>
 #include <tuple>
 #include <cstdlib>
+#include <cassert>
 
 #include "board.hpp"
 #include "auxiliary.hpp"
@@ -58,7 +59,8 @@ namespace board
         case 'p':
             return std::make_tuple(w, pawns);
         default:
-            return std::make_tuple(w, 50); // generates out of bounds error
+            assert(false);
+            return std::make_tuple(w, 50);
         }
     }
 
@@ -81,7 +83,8 @@ namespace board
         
         auto splitfen = splitString(fen, ' ');
         auto splitboard = splitString(splitfen[0], '/');
-
+        
+        assert(splitfen[1] == "w" || splitfen[1] == "b");
         bool wToMove = splitfen[1] == "w";
 
         for (unsigned int i = 0; i != 8; ++i)
@@ -131,14 +134,16 @@ namespace board
         for (auto i : splitfen[2])
         {
             if (i == 'K') epc |= setbit(e1) | setbit(h1);
-            if (i == 'k') epc |= setbit(e8) | setbit(h8);
-            if (i == 'q') epc |= setbit(e8) | setbit(a8);
-            if (i == 'Q') epc |= setbit(e1) | setbit(a1);
+            else if (i == 'k') epc |= setbit(e8) | setbit(h8);
+            else if (i == 'q') epc |= setbit(e8) | setbit(a8);
+            else if (i == 'Q') epc |= setbit(e1) | setbit(a1);
+            else assert(i == '-');
         }
 
         if (splitfen[3] != "-")
         {
             const std::size_t file = fileNumber(splitfen[3][0]);
+            assert(splitfen[3][1] >= '1' && splitfen[3][1] <= '8');
             const std::size_t rank = splitfen[3][1] - '0' - 1;
             epc |= setbit(rank, file);
         }

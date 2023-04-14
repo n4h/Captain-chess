@@ -30,6 +30,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <chrono>
 #include <cstdlib>
 #include <random>
+#include <cassert>
 
 namespace aux
 {
@@ -163,6 +164,7 @@ namespace aux
         case 'h':
             return 7U;
         default:
+            assert(false);
             return 0U;
         }
     }
