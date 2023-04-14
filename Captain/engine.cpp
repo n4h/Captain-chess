@@ -521,6 +521,7 @@ namespace engine
                 && !(b.boards.back().getPieceType(board::getMoveFromSq(nextMove)) == constants::myPawn && isMovingTo7thRank)
                 && materialBalance + eval::getCaptureValue(b, nextMove) + margin <= alpha)
             {
+                assert(margin != posInf);
                 moveWasPruned = true;
                 continue;
             }
