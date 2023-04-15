@@ -510,6 +510,8 @@ namespace board
         }
     };
 
+    bool operator==(const QBB& b1, const QBB& b2);
+
     Bitboard getCastlingDiff(const board::QBB&, const board::QBB&);
 
     struct PosInfo

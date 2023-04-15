@@ -288,6 +288,12 @@ namespace board
         return b14 ^ b24;
     }
 
+    bool operator==(const QBB& b1, const QBB& b2)
+    {
+        return b1.side == b2.side && b1.pbq == b2.pbq
+            && b1.nbk == b2.nbk && b1.rqk == b2.rqk && b1.epc == b2.epc;
+    }
+
     std::uint64_t Board::initialHash(const board::QBB& b)
     {
         std::uint64_t inithash = 0;
