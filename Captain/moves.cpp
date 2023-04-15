@@ -190,8 +190,10 @@ namespace moves
         attackers |= knightAttacks(myKing) & b.their(b.getKnights());
         attackers |= hypqAllDiag(newOcc, myKing) & b.their(b.getDiagSliders());
         attackers |= hypqAllOrth(newOcc, myKing) & b.their(b.getOrthSliders());
-        attackers |= pawnAttacks(myKing) & b.their(b.getPawns()); // TODO fix moveLeavesKingInCheck
+        attackers |= pawnAttacks(myKing) & b.their(b.getPawns());
         attackers &= ~aux::setbit(toSq);
+        if (moveType == constants::enPCap)
+            attackers &= ~(aux::setbit(toSq) >> 8);
         
         return !attackers;
     }
