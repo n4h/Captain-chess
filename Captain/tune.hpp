@@ -111,8 +111,9 @@ namespace Tuning
                     for (std::size_t missing = popsize - pop.size(); missing != 0; --missing)
                     {
                         assert(i < pop.begin() + numSelected && j < pop.begin() + numSelected);
+                        const auto joffset = std::distance(pop.begin(), j);
                         pop.push_back(std::make_pair(crossover(i->first, j->first), std::numeric_limits<Fitness>::max()));
-                        i = j + 1;
+                        i = pop.begin() + joffset + 1;
                         j = i + 1;
                         if (i == pop.begin() + numSelected)
                         {
