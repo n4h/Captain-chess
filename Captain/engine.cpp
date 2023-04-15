@@ -435,6 +435,10 @@ namespace engine
 
     Eval Engine::alphaBetaSearch(PrincipalVariation& pv, Eval alpha, Eval beta, int depth, bool nullBranch)
     {
+#ifndef NDEBUG
+        board::QBB currentBoard = b.boards.back();
+#endif // !NDEBUG
+
         if (depth <= 0)
         {
             return quiesceSearch(alpha, beta, depth);
@@ -476,6 +480,7 @@ namespace engine
             b.makeMove(0);
             Eval nulleval = -alphaBetaSearch(pvChild, -beta, -beta + 1, depth - 3, true);
             b.unmakeMove(0);
+            assert(b.boards.back() == currentBoard);
             if (nulleval >= beta)
             {
                 return nulleval;
@@ -511,6 +516,7 @@ namespace engine
 
         for (; moves.next(b, nextMove); ++i)
         {
+            assert(moves::isLegalMove(b, nextMove));
             if (!SearchFlags::searching.test())
             {
                 throw Timeout();
@@ -555,6 +561,7 @@ namespace engine
             }
             besteval = std::max(besteval, currEval);
             b.unmakeMove(nextMove);
+            assert(b.boards.back() == currentBoard);
             if (besteval >= beta)
             {
                 nodeType = Tables::CUT;
