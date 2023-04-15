@@ -190,7 +190,7 @@ namespace moves
         attackers |= knightAttacks(myKing) & b.their(b.getKnights());
         attackers |= hypqAllDiag(newOcc, myKing) & b.their(b.getDiagSliders());
         attackers |= hypqAllOrth(newOcc, myKing) & b.their(b.getOrthSliders());
-        attackers |= pawnAttacks(myKing) & b.their(b.getPawns());
+        attackers |= pawnAttacks(myKing) & b.their(b.getPawns()); // TODO fix moveLeavesKingInCheck
         attackers &= ~aux::setbit(toSq);
         
         return !attackers;
