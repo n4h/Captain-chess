@@ -381,6 +381,7 @@ namespace uci
         engine::Engine eng;
         engine::SearchSettings ss;
         ss.maxDepth = 2;
+        ss.quiet = true;
         eng.setSettings(ss);
         eng.setEvaluator(e);
         std::uint64_t mistakes = 0;

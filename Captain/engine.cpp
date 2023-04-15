@@ -62,13 +62,16 @@ namespace engine
 
     void Engine::printPV(const board::QBB& b)
     {
-        engine_out << "info depth " << currIDdepth << " "
-            << "score cp " << eval << " "
-            << "time " << elapsed().count() << " "
-            << "nodes " << nodes << " "
-            << "nps " << nodes / std::max(aux::castsec(elapsed()).count(), 1LL) << " "
-            << "pv " << getPVuciformat(b) << std::endl;
-        engine_out.emit();
+        if (!settings.quiet)
+        {
+            engine_out << "info depth " << currIDdepth << " "
+                << "score cp " << eval << " "
+                << "time " << elapsed().count() << " "
+                << "nodes " << nodes << " "
+                << "nps " << nodes / std::max(aux::castsec(elapsed()).count(), 1LL) << " "
+                << "pv " << getPVuciformat(b) << std::endl;
+            engine_out.emit();
+        }
     }
 
     std::string Engine::line2string(const std::vector<Move>& moves)
@@ -198,14 +201,17 @@ namespace engine
 
     void Engine::uciUpdate()
     {
-        if (aux::castsec(std::chrono::steady_clock::now() - lastUpdate).count() >= 2)
+        if (!settings.quiet)
         {
-            lastUpdate = std::chrono::steady_clock::now();
-            auto seconds = aux::castsec(elapsed()).count();
-            if (seconds > 0)
+            if (aux::castsec(std::chrono::steady_clock::now() - lastUpdate).count() >= 2)
             {
-                engine_out << "info depth " << currIDdepth << " nodes " << nodes << " nps " << nodes / seconds << std::endl;
-                engine_out.emit();
+                lastUpdate = std::chrono::steady_clock::now();
+                auto seconds = aux::castsec(elapsed()).count();
+                if (seconds > 0)
+                {
+                    engine_out << "info depth " << currIDdepth << " nodes " << nodes << " nps " << nodes / seconds << std::endl;
+                    engine_out.emit();
+                }
             }
         }
     }
