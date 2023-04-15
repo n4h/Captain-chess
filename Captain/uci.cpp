@@ -360,7 +360,6 @@ namespace uci
             std::string term;
             while (iss >> term)
                 pos.push_back(term);
-            assert(pos[4] == "bm");
 
             std::string fen = pos[0] + " " + pos[1] + " " + pos[2] + " " + pos[3];
 
