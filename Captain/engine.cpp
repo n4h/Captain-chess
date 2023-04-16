@@ -321,7 +321,10 @@ namespace engine
         engine_out << "info string ANode " << tt->nodeTypePct(Tables::ALL) << std::endl;
         */
         eval = rootMoves[0].score;
-        engine_out << "bestmove " << move2uciFormat(b.boards[initialPos - 1], rootMoves[0].m) << std::endl;
+        if (!settings.quiet)
+        {
+            engine_out << "bestmove " << move2uciFormat(b.boards[initialPos - 1], rootMoves[0].m) << std::endl;
+        }
         engine_out.emit();
     }
 
