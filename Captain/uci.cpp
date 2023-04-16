@@ -365,15 +365,18 @@ namespace uci
 
             board::QBB b{ fen, false };
 
-            std::vector<Move> ml = {uciMove2boardMove(b, pos[6])};
-            /*
-            for (std::size_t i = 5; i != pos.size(); ++i)
+            if (board::validPosition(b))
             {
-                ml.push_back(SAN2ucimove(b, pos[i]));
+                std::vector<Move> ml = { uciMove2boardMove(b, pos[6]) };
+                /*
+                for (std::size_t i = 5; i != pos.size(); ++i)
+                {
+                    ml.push_back(SAN2ucimove(b, pos[i]));
+                }
+                */
+                assert(ml.size() > 0);
+                positions.push_back(std::make_pair(b, ml));
             }
-            */
-            assert(ml.size() > 0);
-            positions.push_back(std::make_pair(b, ml));
         }
     }
 
@@ -386,7 +389,7 @@ namespace uci
         eng.setSettings(ss);
         eng.setEvaluator(e);
         std::uint64_t mistakes = 0;
-        for (const auto& [pos, ml] : positions)
+        for (std::size_t count = 0; const auto& [pos, ml] : positions)
         {
             eng.newGame();
             SearchFlags::searching.test_and_set();
@@ -400,6 +403,8 @@ namespace uci
             }
             if (!found)
                 ++mistakes;
+            ++count;
+            (void)count;
         }
         return mistakes;
     }

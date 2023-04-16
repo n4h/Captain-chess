@@ -605,5 +605,7 @@ namespace board
         std::uint64_t nullUpdate(const board::QBB&);
     };
 
+    // valid position = won't cause any bugs when we use it
+    bool validPosition(const QBB& b);
 }
 #endif

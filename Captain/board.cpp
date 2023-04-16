@@ -288,6 +288,51 @@ namespace board
         return b14 ^ b24;
     }
 
+    bool validPosition(const QBB& b)
+    {
+        Bitboard occ = b.getOccupancy();
+
+        if ((occ | b.side) != occ)
+            return false;
+
+        aux::GetNextBit<board::square> nextPiece{ occ };
+        while (nextPiece())
+        {
+            auto piecetype = b.getPieceType(nextPiece.next);
+            if (piecetype == 1 || piecetype >= 14)
+                return false;
+        }
+
+        if (_popcnt64(b.my(b.getKings())) != 1)
+            return false;
+        if (_popcnt64(b.their(b.getKings())) != 1)
+            return false;
+
+        if (b.canCastleShort() && (b.getPieceType(board::e1) != myKing || b.getPieceType(board::h1) != myRook))
+            return false;
+        if (b.canCastleLong() && (b.getPieceType(board::e1) != myKing || b.getPieceType(board::a1) != myRook))
+            return false;
+        if (b.oppCanCastleShort() && (b.getPieceType(board::e8) != myKing || b.getPieceType(board::h8) != myRook))
+            return false;
+        if (b.oppCanCastleLong() && (b.getPieceType(board::e8) != myKing || b.getPieceType(board::a8) != myRook))
+            return false;
+
+        auto ep = b.getEp();
+
+        switch (_popcnt64(ep))
+        {
+        case 0:
+            return true;
+        case 1:
+            ep >>= 8;
+            return ep & b.their(b.getPawns()) ? true : false;
+        default:
+            return false;
+        }
+
+        return true;
+    }
+
     bool operator==(const QBB& b1, const QBB& b2)
     {
         return b1.side == b2.side && b1.pbq == b2.pbq
