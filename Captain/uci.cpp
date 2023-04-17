@@ -220,11 +220,12 @@ namespace uci
 
         for (eval::EvaluatorGeneticOps ego; auto& i : initialPop)
         {
-            ego.mutate(i.first, 0.95);
+            ego.mutate(i.first, 0.80);
         }
         Tuning::Tuner t{ initialPop };
 
         uci_out << "Current score " << EPDsuite.score(eval::Evaluator{}) << std::endl;
+        uci_out << "Positions count " << EPDsuite.positions.size() << std::endl;
         uci_out.emit();
         std::this_thread::sleep_for(std::chrono::seconds{ 10 });
 
