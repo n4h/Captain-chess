@@ -538,6 +538,7 @@ namespace eval
         printTerm("openFileNextToKingPenalty", openFileNextToKingPenalty);
         printTerm("pawnShieldBonus", pawnShieldBonus);
         printTerm("kingOpenFilePenalty", kingOpenFilePenalty);
+        printArray("kingAttackerValue", kingAttackerValue);
 
         return oss.str();
 
@@ -546,7 +547,7 @@ namespace eval
     void EvaluatorGeneticOps::mutate(Evaluator& e, double mutation_rate)
     {
         std::bernoulli_distribution doMutate(mutation_rate);
-        std::uniform_int_distribution positionalBonus(-50, 50);
+        std::uniform_int_distribution positionalBonus(-30, 30);
         std::uniform_int_distribution ZeroTo8(0, 8);
 
         auto mutate = [&](auto& mutator, int p = 0) {
@@ -569,6 +570,10 @@ namespace eval
             e._passedPawnBonus[i] += mutate(positionalBonus);
         }
 
+        for (std::size_t i = 0; i != e.kingAttackerValue.size(); ++i)
+        {
+            e.kingAttackerValue[i] += mutate(positionalBonus);
+        }
 
         e.knightmobility = mutate(ZeroTo8, e.knightmobility);
         e.bishopmobility = mutate(ZeroTo8, e.bishopmobility);
@@ -627,7 +632,6 @@ namespace eval
         e._kingCenterBonus = parent()._kingCenterBonus;
         e._kingCenterRingBonus = parent()._kingCenterRingBonus;
         e._knightOutpostBonus = parent()._knightOutpostBonus;
-        e._knightOutpostBonus = parent()._knightOutpostBonus;
         e.openFileNextToKingPenalty = parent().openFileNextToKingPenalty;
         e.pawnShieldBonus = parent().pawnShieldBonus;
         e.kingOpenFilePenalty = parent().kingOpenFilePenalty;
@@ -636,6 +640,11 @@ namespace eval
         {
             e._aggressionBonuses[i].first = parent()._aggressionBonuses[i].first;
             e._aggressionBonuses[i].second = parent()._aggressionBonuses[i].second;
+        }
+
+        for (std::size_t i = 0; i != 5; ++i)
+        {
+            e.kingAttackerValue[i] = parent().kingAttackerValue[i];
         }
 
         return e;
