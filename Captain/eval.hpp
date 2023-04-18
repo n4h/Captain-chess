@@ -80,47 +80,26 @@ namespace eval
     {
     public:
         using PSQT = std::array<Eval, 64>;
-        std::array<Eval, 5> piecevals = {100, 300, 300, 500, 900};
         constexpr Eval piecevals(std::size_t i) const { return evalTerms[i]; };
-        Eval knightmobility = 3;
         constexpr Eval knightMobility() const { return evalTerms[5]; }
-        Eval bishopmobility = 3;
         constexpr Eval bishopMobility() const { return evalTerms[6]; }
-        Eval rookvertmobility = 2;
         constexpr Eval rookVertMobility() const { return evalTerms[7]; }
-        Eval rookhormobility = 2;
         constexpr Eval rookHorMobility() const { return evalTerms[8]; }
-        Eval doubledpawnpenalty = 50;
         constexpr Eval doubledPawnPenalty() const { return evalTerms[9]; }
-        Eval tripledpawnpenalty = 100;
         constexpr Eval tripledPawnPenalty() const { return evalTerms[10]; }
-        Eval isolatedpawnpenalty = 25;
         constexpr Eval isolatedPawnPenalty() const { return evalTerms[11]; }
-        std::array<Eval, 6> _passedPawnBonus = {0, 10, 50, 50, 100, 300};
         constexpr Eval passedPawnBonus(std::size_t rank) const { return evalTerms[12 + rank - 1]; }
-        std::array<std::pair<unsigned, Eval>, 12> _aggressionBonuses;
         constexpr Eval getAggressionBonus(std::size_t pt, bool bonus) const { return evalTerms[18 + pt * 2 + bonus]; }
-        Eval _bishopOpenDiagonalBonus = 15;
         constexpr Eval bishopOpenDiagBonus() const { return evalTerms[42]; }
-        Eval _rookOpenFileBonus = 25;
         constexpr Eval rookOpenFileBonus() const { return evalTerms[43]; }
-        Eval rook7thRankBonus = 25;
         constexpr Eval rookRank7Bonus() const { return evalTerms[44]; }
-        Eval _bishopPairBonus = 25;
         constexpr Eval bishopPairBonus() const { return evalTerms[45]; }
-        Eval _kingCenterBonus = 20;
         constexpr Eval kingCenterBonus() const { return evalTerms[46]; }
-        Eval _kingCenterRingBonus = 15;
         constexpr Eval kingCenterRingBonus() const { return evalTerms[47]; }
-        Eval _knightOutpostBonus = 15;
         constexpr Eval knightOutpostBonus() const { return evalTerms[48]; }
-        Eval openFileNextToKingPenalty = 16;
         constexpr Eval kingAdjFileOpenPenalty() const { return evalTerms[49]; }
-        Eval kingOpenFilePenalty = 30;
         constexpr Eval kingFileOpenPenalty() const { return evalTerms[50]; }
-        Eval pawnShieldBonus = 10;
         constexpr Eval pawnShieldBonus() const { return evalTerms[51]; }
-        std::array<Eval, 5> kingAttackerValue = {3, 15, 15, 35, 55};
         constexpr Eval kingAttackerValue(std::size_t type) const { return evalTerms[52 + type]; }
 
         std::array<Eval, 57> evalTerms = {100, 300, 300, 500, 900,
