@@ -151,24 +151,24 @@ namespace eval
         while (_BitScanForward64(&index, pieces))
         {
             pieces = _blsr_u64(pieces);
-            e += aggressionBonus(board::square(index), enemyKingSq, _aggressionBonuses[type]);
+            e += aggressionBonus(board::square(index), enemyKingSq, { closenessBonus(type, 0), closenessBonus(type, 1) });
         }
         return e;
     }
 
     Eval Evaluator::apply7thRankBonus(Bitboard rooks, Bitboard rank) const
     {
-        return rook7thRankBonus * (_popcnt64(rooks & rank));
+        return rookRank7Bonus() * (_popcnt64(rooks & rank));
     }
 
     Eval Evaluator::materialBalance(const board::QBB& b) const
     {
         Eval balance = 0;
-        balance += piecevals[0] * (_popcnt64(b.my(b.getPawns())) - _popcnt64(b.their(b.getPawns())));
-        balance += piecevals[1] * (_popcnt64(b.my(b.getKnights())) - _popcnt64(b.their(b.getKnights())));
-        balance += piecevals[2] * (_popcnt64(b.my(b.getBishops())) - _popcnt64(b.their(b.getBishops())));
-        balance += piecevals[3] * (_popcnt64(b.my(b.getRooks())) - _popcnt64(b.their(b.getRooks())));
-        balance += piecevals[4] * (_popcnt64(b.my(b.getQueens())) - _popcnt64(b.their(b.getQueens())));
+        balance += piecevals(0) * (_popcnt64(b.my(b.getPawns())) - _popcnt64(b.their(b.getPawns())));
+        balance += piecevals(1) * (_popcnt64(b.my(b.getKnights())) - _popcnt64(b.their(b.getKnights())));
+        balance += piecevals(2) * (_popcnt64(b.my(b.getBishops())) - _popcnt64(b.their(b.getBishops())));
+        balance += piecevals(3) * (_popcnt64(b.my(b.getRooks())) - _popcnt64(b.their(b.getRooks())));
+        balance += piecevals(4) * (_popcnt64(b.my(b.getQueens())) - _popcnt64(b.their(b.getQueens())));
         return balance;
     }
 
@@ -205,11 +205,11 @@ namespace eval
             auto square = board::square(index);
             if (board::diagMask(square) == moves::hypqDiag(occ, square))
             {
-                e += _bishopOpenDiagonalBonus;
+                e += bishopOpenDiagBonus();
             }
             if (board::antiDiagMask(square) == moves::hypqAntiDiag(occ, square))
             {
-                e += _bishopOpenDiagonalBonus;
+                e += bishopOpenDiagBonus();
             }
         }
         return e;
@@ -223,7 +223,7 @@ namespace eval
         {
             rooks = _blsr_u64(rooks);
             auto square = board::square(index);
-            e += ((board::fileMask(square) & pawns) == 0) * _rookOpenFileBonus;
+            e += ((board::fileMask(square) & pawns) == 0) * rookOpenFileBonus();
         }
         return e;
     }
@@ -241,10 +241,10 @@ namespace eval
         Eval evaluation = 0;
         for (auto file : files)
         {
-            evaluation -= doubledpawnpenalty * (_popcnt64(myPawns & file) == 2);
-            evaluation -= tripledpawnpenalty * (_popcnt64(myPawns & file) > 2);
-            evaluation += doubledpawnpenalty * (_popcnt64(theirPawns & file) == 2);
-            evaluation += tripledpawnpenalty * (_popcnt64(theirPawns & file) > 2);
+            evaluation -= doubledPawnPenalty() * (_popcnt64(myPawns & file) == 2);
+            evaluation -= tripledPawnPenalty() * (_popcnt64(myPawns & file) > 2);
+            evaluation += doubledPawnPenalty() * (_popcnt64(theirPawns & file) == 2);
+            evaluation += tripledPawnPenalty() * (_popcnt64(theirPawns & file) > 2);
         }
 
         for (std::size_t i = 0; i != files.size(); ++i)
@@ -253,14 +253,14 @@ namespace eval
             {
                 if (!(myPawns & neighboringFiles[i]))
                 {
-                    evaluation -= isolatedpawnpenalty;
+                    evaluation -= isolatedPawnPenalty();
                 }
             }
             if (theirPawns & files[i])
             {
                 if (!(theirPawns & neighboringFiles[i]))
                 {
-                    evaluation += isolatedpawnpenalty;
+                    evaluation += isolatedPawnPenalty();
                 }
             }
         }
@@ -271,14 +271,14 @@ namespace eval
         while (ppSquare())
         {
             auto rank = aux::rank(ppSquare.next);
-            evaluation += _passedPawnBonus[rank - 1];
+            evaluation += passedPawnBonus(rank);
         }
 
         ppSquare = aux::GetNextBit<board::square>{theirPassedPawns};
         while (ppSquare())
         {
             auto rank = aux::rank(aux::flip(ppSquare.next));
-            evaluation -= _passedPawnBonus[rank - 1];
+            evaluation -= passedPawnBonus(rank - 1);
         }
 
         //auto [myBackwards, theirBackwards] = moves::backwardPawns(myPawns, theirPawns);
@@ -298,48 +298,48 @@ namespace eval
         const auto myPawns = b.my(pawns);
         const auto theirPawns = b.their(pawns);
 
-        double myScalingFactor = (_popcnt64(b.their(b.getKnights())) * piecevals[1]
-            + _popcnt64(b.their(b.getBishops())) * piecevals[2]
-            + _popcnt64(b.their(b.getRooks())) * piecevals[3]
-            + _popcnt64(b.their(b.getQueens())) * piecevals[4]);
-        myScalingFactor /= 2 * (piecevals[1] + piecevals[2] + piecevals[3]) + piecevals[4];
+        double myScalingFactor = (_popcnt64(b.their(b.getKnights())) * piecevals(1)
+            + _popcnt64(b.their(b.getBishops())) * piecevals(2)
+            + _popcnt64(b.their(b.getRooks())) * piecevals(3)
+            + _popcnt64(b.their(b.getQueens())) * piecevals(4));
+        myScalingFactor /= 2 * (piecevals(1) + piecevals(2) + piecevals(3)) + piecevals(4);
 
-        double theirScalingFactor = (_popcnt64(b.my(b.getKnights())) * piecevals[1]
-            + _popcnt64(b.my(b.getBishops())) * piecevals[2]
-            + _popcnt64(b.my(b.getRooks())) * piecevals[3]
-            + _popcnt64(b.my(b.getQueens())) * piecevals[4]);
-        theirScalingFactor /= 2 * (piecevals[1] + piecevals[2] + piecevals[3]) + piecevals[4];
+        double theirScalingFactor = (_popcnt64(b.my(b.getKnights())) * piecevals(1)
+            + _popcnt64(b.my(b.getBishops())) * piecevals(2)
+            + _popcnt64(b.my(b.getRooks())) * piecevals(3)
+            + _popcnt64(b.my(b.getQueens())) * piecevals(4));
+        theirScalingFactor /= 2 * (piecevals(1) + piecevals(2) + piecevals(3)) + piecevals(4);
 
 
         Eval evaluation = 0;
 
         if (!(myKingFile & pawns))
-            evaluation -= myScalingFactor * kingOpenFilePenalty;
+            evaluation -= myScalingFactor * kingFileOpenPenalty();
         if (!(theirKingFile & pawns))
-            evaluation += theirScalingFactor * kingOpenFilePenalty;
+            evaluation += theirScalingFactor * kingFileOpenPenalty();
 
 
         if (!(aux::shiftLeftNoWrap(myKingFile) & pawns))
-            evaluation -= myScalingFactor * openFileNextToKingPenalty;
+            evaluation -= myScalingFactor * kingAdjFileOpenPenalty();
 
         if (!(aux::shiftRightNoWrap(myKingFile) & pawns))
-            evaluation -= 0.5 * myScalingFactor * openFileNextToKingPenalty;
+            evaluation -= 0.5 * myScalingFactor * kingAdjFileOpenPenalty();
 
         if (!(aux::shiftLeftNoWrap(theirKingFile) & pawns))
-            evaluation += theirScalingFactor * openFileNextToKingPenalty;
+            evaluation += theirScalingFactor * kingAdjFileOpenPenalty();
 
         if (!(aux::shiftRightNoWrap(theirKingFile) & pawns))
-            evaluation += 0.5 * theirScalingFactor * openFileNextToKingPenalty;
+            evaluation += 0.5 * theirScalingFactor * kingAdjFileOpenPenalty();
 
         auto pawnShield = moves::pawnAttacks(myKing) | moves::pawnMovesUp(myKing);
 
         if (pawnShield == (pawnShield & myPawns))
-            evaluation += myScalingFactor * pawnShieldBonus;
+            evaluation += myScalingFactor * pawnShieldBonus();
 
         pawnShield = moves::enemyPawnAttacks(theirKing) | (moves::getBB(theirKing) >> 8);
 
         if (pawnShield == (pawnShield & theirPawns))
-            evaluation -= theirScalingFactor * pawnShieldBonus;
+            evaluation -= theirScalingFactor * pawnShieldBonus();
 
         auto kingArea = moves::kingAttacks(myKing) | moves::getBB(myKing);
 
@@ -350,11 +350,11 @@ namespace eval
         double attackerCountScale = (_popcnt64(pAttackers) + _popcnt64(kAttackers) + _popcnt64(bAttackers)
             + _popcnt64(rAttackers) + _popcnt64(qAttackers)) / 5.0;
 
-        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(pAttackers) * kingAttackerValue[0];
-        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(kAttackers) * kingAttackerValue[1];
-        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(bAttackers) * kingAttackerValue[2];
-        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(rAttackers) * kingAttackerValue[3];
-        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(qAttackers) * kingAttackerValue[4];
+        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(pAttackers) * kingAttackerValue(0);
+        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(kAttackers) * kingAttackerValue(1);
+        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(bAttackers) * kingAttackerValue(2);
+        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(rAttackers) * kingAttackerValue(3);
+        evaluation -= attackerCountScale * myScalingFactor * _popcnt64(qAttackers) * kingAttackerValue(4);
 
         kingArea = moves::kingAttacks(theirKing) | moves::getBB(theirKing);
 
@@ -364,11 +364,11 @@ namespace eval
         attackerCountScale = (_popcnt64(pAttackers) + _popcnt64(kAttackers) + _popcnt64(bAttackers)
             + _popcnt64(rAttackers) + _popcnt64(qAttackers)) / 5.0;
 
-        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(pAttackers) * kingAttackerValue[0];
-        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(kAttackers) * kingAttackerValue[1];
-        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(bAttackers) * kingAttackerValue[2];
-        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(rAttackers) * kingAttackerValue[3];
-        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(qAttackers) * kingAttackerValue[4];
+        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(pAttackers) * kingAttackerValue(0);
+        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(kAttackers) * kingAttackerValue(1);
+        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(bAttackers) * kingAttackerValue(2);
+        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(rAttackers) * kingAttackerValue(3);
+        evaluation += attackerCountScale * theirScalingFactor * _popcnt64(qAttackers) * kingAttackerValue(4);
 
         return evaluation;
     }
@@ -413,48 +413,48 @@ namespace eval
         {
             moves::AttackMap moves = moves::knightAttacks(mobility.next);
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
-            evaluation += knightmobility*_popcnt64(moves);
+            evaluation += knightMobility()*_popcnt64(moves);
         }
         mobility = GetNextBit<Bitboard>{ pieces[theirKnights] };
         while (mobility())
         {
             moves::AttackMap moves = moves::knightAttacks(mobility.next);
             moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
-            evaluation -= knightmobility*_popcnt64(moves);
+            evaluation -= knightMobility()*_popcnt64(moves);
         }
         mobility = GetNextBit<Bitboard>{ pieces[myBishops] };
         while (mobility())
         {
             moves::AttackMap moves = moves::hypqAllDiag(occ & ~pieces[myQueens], mobility.next);
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
-            evaluation += bishopmobility*_popcnt64(moves);
+            evaluation += bishopMobility()*_popcnt64(moves);
         }
         mobility = GetNextBit<Bitboard>{ pieces[theirBishops] };
         while (mobility())
         {
             moves::AttackMap moves = moves::hypqAllDiag(occ & ~pieces[theirQueens], mobility.next);
             moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
-            evaluation -= bishopmobility*_popcnt64(moves);
+            evaluation -= bishopMobility()*_popcnt64(moves);
         }
         mobility = GetNextBit<Bitboard>{ pieces[myRooks] };
         while (mobility())
         {
             moves::AttackMap moves = moves::hypqRank(occ & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
-            evaluation += rookhormobility*_popcnt64(moves);
+            evaluation += rookHorMobility()*_popcnt64(moves);
             moves = moves::hypqFile(occ & ~(pieces[myQueens] | pieces[myRooks]), mobility.next);
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
-            evaluation += rookvertmobility*_popcnt64(moves);
+            evaluation += rookVertMobility()*_popcnt64(moves);
         }
         mobility = GetNextBit<Bitboard>{ pieces[theirRooks] };
         while (mobility())
         {
             moves::AttackMap moves = moves::hypqRank(occ & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
             moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
-            evaluation -= rookhormobility*_popcnt64(moves);
+            evaluation -= rookHorMobility()*_popcnt64(moves);
             moves = moves::hypqFile(occ & ~(pieces[theirQueens] | pieces[theirRooks]), mobility.next);
             moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
-            evaluation -= rookvertmobility*_popcnt64(moves);
+            evaluation -= rookVertMobility()*_popcnt64(moves);
         }
 
         evaluation += evalPawns(pieces[myPawns], pieces[theirPawns]); // TODO store this in pawn hash
@@ -487,9 +487,6 @@ namespace eval
     std::string Evaluator::asString() const
     {
         std::ostringstream oss;
-
-        auto printTerm = [&](const std::string& name, Eval e) {oss << name << "=" << e << '\n'; };
-
         auto printArray = [&](const std::string& name, const auto& array)
         {
             oss << name << "={";
@@ -500,45 +497,11 @@ namespace eval
             oss << "}" << '\n';
         };
 
-        auto printArrayOfPairs = [&](const std::string& name, const auto& array)
-        {
-            oss << name << "={";
-            for (const auto& [i, j] : array)
-            {
-                oss << "(" << i << "," << j << ")" << ",";
-            }
-            oss << "}" << '\n';
-        };
-
         oss << '\n';
         auto now = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
         oss << "Tuning completed date/time: " << now << '\n' << '\n';
 
-        printArray("piecevals", piecevals);
-
-        printTerm("knightmobility", knightmobility);
-        printTerm("bishopmobility", bishopmobility);
-        printTerm("rookvertmobility", rookvertmobility);
-        printTerm("rookhormobility", rookhormobility);
-
-        printTerm("doubledpawnpenalty", doubledpawnpenalty);
-        printTerm("tripledpawnpenalty", tripledpawnpenalty);
-        printTerm("isolatedpawnpenalty", isolatedpawnpenalty);
-
-        printArray("_passedPawnBonus", _passedPawnBonus);
-        printArrayOfPairs("_aggressionBonuses", _aggressionBonuses);
-
-        printTerm("_bishopOpenDiagonalBonus", _bishopOpenDiagonalBonus);
-        printTerm("_rookOpenFileBonus", _rookOpenFileBonus);
-        printTerm("rook7thRankBonus", rook7thRankBonus);
-        printTerm("_bishopPairBonus", _bishopPairBonus);
-        printTerm("_kingCenterBonus", _kingCenterBonus);
-        printTerm("_kingCenterRingBonus", _kingCenterRingBonus);
-        printTerm("_knightOutpostBonus", _knightOutpostBonus);
-        printTerm("openFileNextToKingPenalty", openFileNextToKingPenalty);
-        printTerm("pawnShieldBonus", pawnShieldBonus);
-        printTerm("kingOpenFilePenalty", kingOpenFilePenalty);
-        printArray("kingAttackerValue", kingAttackerValue);
+        printArray("evalTerms", evalTerms);
 
         return oss.str();
 
@@ -554,50 +517,22 @@ namespace eval
             return doMutate(aux::seed) ? mutator(aux::seed) : p;
         };
 
-        for (std::size_t i = 0; i != e._aggressionBonuses.size(); ++i)
+        for (auto& i : e.evalTerms)
         {
-            e._aggressionBonuses[i].first = mutate(ZeroTo8, e._aggressionBonuses[i].first);
-            e._aggressionBonuses[i].second += mutate(positionalBonus);
+            i += mutate(positionalBonus);
         }
 
-        for (std::size_t i = 0; i != e.piecevals.size(); ++i)
+
+        for (std::size_t i = 5; i != 9; ++i)
         {
-            e.piecevals[i] += mutate(positionalBonus);
+            e.evalTerms[i] = mutate(ZeroTo8, e.evalTerms[i]);
         }
 
-        for (std::size_t i = 0; i != e._passedPawnBonus.size(); ++i)
+        for (std::size_t i = 18; i != 42; i += 2)
         {
-            e._passedPawnBonus[i] += mutate(positionalBonus);
+            e.evalTerms[i] = mutate(ZeroTo8, e.evalTerms[i]);
         }
 
-        for (std::size_t i = 0; i != e.kingAttackerValue.size(); ++i)
-        {
-            e.kingAttackerValue[i] += mutate(positionalBonus);
-        }
-
-        e.knightmobility = mutate(ZeroTo8, e.knightmobility);
-        e.bishopmobility = mutate(ZeroTo8, e.bishopmobility);
-        e.rookvertmobility = mutate(ZeroTo8, e.rookvertmobility);
-        e.rookhormobility = mutate(ZeroTo8, e.rookhormobility);
-
-        e.doubledpawnpenalty += mutate(positionalBonus);
-        e.tripledpawnpenalty += mutate(positionalBonus);
-        e.isolatedpawnpenalty += mutate(positionalBonus);
-
-        e._bishopOpenDiagonalBonus += mutate(positionalBonus);
-        e._rookOpenFileBonus += mutate(positionalBonus);
-        e._bishopPairBonus += mutate(positionalBonus);
-        e.rook7thRankBonus += mutate(positionalBonus);
-
-        e._kingCenterBonus += mutate(positionalBonus);
-        e._kingCenterRingBonus += mutate(positionalBonus);
-
-        e._knightOutpostBonus += mutate(positionalBonus);
-
-        e.openFileNextToKingPenalty += mutate(positionalBonus);
-        e.pawnShieldBonus += mutate(positionalBonus);
-
-        e.kingOpenFilePenalty += mutate(positionalBonus);
     }
 
     Evaluator EvaluatorGeneticOps::crossover(const Evaluator& e1, const Evaluator& e2)
@@ -608,43 +543,9 @@ namespace eval
             return which_e(aux::seed) ? e1 : e2;
         };
 
-        for (std::size_t i = 0; i != e.piecevals.size(); ++i)
+        for (std::size_t i = 0; i != e.evalTerms.size(); ++i)
         {
-            e.piecevals[i] = parent().piecevals[i];
-        }
-
-        for (std::size_t i = 0; i != e._passedPawnBonus.size(); ++i)
-        {
-            e._passedPawnBonus[i] = parent()._passedPawnBonus[i];
-        }
-
-        e.knightmobility = parent().knightmobility;
-        e.bishopmobility = parent().bishopmobility;
-        e.rookvertmobility = parent().rookvertmobility;
-        e.rookhormobility = parent().rookhormobility;
-        e.doubledpawnpenalty = parent().doubledpawnpenalty;
-        e.tripledpawnpenalty = parent().tripledpawnpenalty;
-        e.isolatedpawnpenalty = parent().isolatedpawnpenalty;
-        e._bishopOpenDiagonalBonus = parent()._bishopOpenDiagonalBonus;
-        e._rookOpenFileBonus = parent()._rookOpenFileBonus;
-        e.rook7thRankBonus = parent().rook7thRankBonus;
-        e._bishopPairBonus = parent()._bishopPairBonus;
-        e._kingCenterBonus = parent()._kingCenterBonus;
-        e._kingCenterRingBonus = parent()._kingCenterRingBonus;
-        e._knightOutpostBonus = parent()._knightOutpostBonus;
-        e.openFileNextToKingPenalty = parent().openFileNextToKingPenalty;
-        e.pawnShieldBonus = parent().pawnShieldBonus;
-        e.kingOpenFilePenalty = parent().kingOpenFilePenalty;
-
-        for (std::size_t i = 0; i != 12; ++i)
-        {
-            e._aggressionBonuses[i].first = parent()._aggressionBonuses[i].first;
-            e._aggressionBonuses[i].second = parent()._aggressionBonuses[i].second;
-        }
-
-        for (std::size_t i = 0; i != 5; ++i)
-        {
-            e.kingAttackerValue[i] = parent().kingAttackerValue[i];
+            e.evalTerms[i] = parent().evalTerms[i];
         }
 
         return e;

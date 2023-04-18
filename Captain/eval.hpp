@@ -89,7 +89,7 @@ namespace eval
         constexpr Eval tripledPawnPenalty() const { return evalTerms[10]; }
         constexpr Eval isolatedPawnPenalty() const { return evalTerms[11]; }
         constexpr Eval passedPawnBonus(std::size_t rank) const { return evalTerms[12 + rank - 1]; }
-        constexpr Eval getAggressionBonus(std::size_t pt, bool bonus) const { return evalTerms[18 + pt * 2 + bonus]; }
+        constexpr Eval closenessBonus(std::size_t pt, bool bonus) const { return evalTerms[18 + pt * 2 + bonus]; }
         constexpr Eval bishopOpenDiagBonus() const { return evalTerms[42]; }
         constexpr Eval rookOpenFileBonus() const { return evalTerms[43]; }
         constexpr Eval rookRank7Bonus() const { return evalTerms[44]; }
@@ -119,9 +119,9 @@ namespace eval
         constexpr Eval kingCentralization(board::square s) const
         {
             if (aux::setbit(s) & constants::center)
-                return _kingCenterBonus;
+                return kingCenterBonus();
             else if (aux::setbit(s) & constants::centerRing)
-                return _kingCenterRingBonus;
+                return kingCenterRingBonus();
             else
                 return 0;
         }
@@ -156,7 +156,7 @@ namespace eval
 
         constexpr Eval bishopPairBonus(bool pair) const
         {
-            return pair ? _bishopPairBonus : 0;
+            return pair ? bishopPairBonus() : 0;
         }
 
         template<OutpostType t>
@@ -171,7 +171,7 @@ namespace eval
                     myKnight = moves::pawnAttacks(myKnight);
                     if (!(myKnight & enemyPawns))
                     {
-                        return _knightOutpostBonus;
+                        return knightOutpostBonus();
                     }
                 }
                 return 0;
@@ -185,7 +185,7 @@ namespace eval
                     myKnight = moves::enemyPawnAttacks(myKnight);
                     if (!(myKnight & myPawns))
                     {
-                        return _knightOutpostBonus;
+                        return knightOutpostBonus();
                     }
                 }
                 return 0;
@@ -217,22 +217,7 @@ namespace eval
 
         Eval materialBalance(const board::QBB& b) const;
 
-        constexpr Evaluator()
-        {
-            _aggressionBonuses[0] = std::make_pair(0, 0);
-            _aggressionBonuses[1] = std::make_pair(4, 5);
-            _aggressionBonuses[2] = std::make_pair(0, 0);
-            _aggressionBonuses[3] = std::make_pair(7, 5);
-            _aggressionBonuses[4] = std::make_pair(3, 5);
-            _aggressionBonuses[5] = std::make_pair(0, 0);
-
-            _aggressionBonuses[6] = std::make_pair(0, 0);
-            _aggressionBonuses[7] = std::make_pair(4, 5);
-            _aggressionBonuses[8] = std::make_pair(0, 0);
-            _aggressionBonuses[9] = std::make_pair(7, 5);
-            _aggressionBonuses[10] = std::make_pair(3, 5);
-            _aggressionBonuses[11] = std::make_pair(0, 0);
-        }
+        constexpr Evaluator() {}
         std::string asString() const;
     };
 
