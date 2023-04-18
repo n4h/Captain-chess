@@ -397,7 +397,7 @@ namespace eval
 
         for (std::size_t i = 0; i != 5; ++i)
         {
-            evaluation += piecevals[i] * (_popcnt64(pieces[i]) - _popcnt64(pieces[i + 6]));
+            evaluation += piecevals(i) * (_popcnt64(pieces[i]) - _popcnt64(pieces[i + 6]));
         }
 
         const auto myKingSq = board::square(_tzcnt_u64(pieces[myKing]));
