@@ -262,7 +262,7 @@ namespace engine
         }
         Eval worstCase = rootMinBound;
         this->eval = rootMinBound;
-        for (unsigned int k = 1; k <= 128; ++k)
+        for (unsigned int k = 0; k <= 128; ++k)
         {
             currIDdepth = k;
             worstCase = rootMinBound;
