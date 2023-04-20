@@ -109,7 +109,9 @@ namespace eval
             15, 25, 25, 25, 20, 15, 15, 16, 30, 10, 
             3, 15, 15, 35, 55};
 
+        using ParamListType = decltype(evalTerms);
 
+    private:
         enum OutpostType {MyOutpost, OppOutpost};
 
         unsigned totalMaterialValue(const board::QBB& b) const;
