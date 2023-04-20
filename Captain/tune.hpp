@@ -37,14 +37,14 @@ namespace Tuning
     template<typename Agent, 
         typename Fitness, 
         typename GeneticOperators = typename Agent::GAOps>
-    class Tuner : private GeneticOperators
+    class GeneticTuner : private GeneticOperators
     {
         Population<Agent, Fitness> pop;
         std::optional<typename Population<Agent, Fitness>::value_type> historical_best;
         using GeneticOperators::mutate;
         using GeneticOperators::crossover;
     public:
-        Tuner(Population<Agent, Fitness> population)
+        GeneticTuner(Population<Agent, Fitness> population)
             : pop(std::move(population))
         {
             assert(pop.size() > 0);
@@ -130,6 +130,43 @@ namespace Tuning
             }
         }
     };
+
+    // see https://www.chessprogramming.org/Texel%27s_Tuning_Method#Pseudo_Code
+    template<typename Evaluator, typename Error>
+    auto local_search(Evaluator e, Error compute_error)
+    {
+        using ErrorType = decltype(compute_error(std::declval<Evaluator>()));
+        std::pair<Evaluator, ErrorType > best = { e, compute_error(e) };
+        bool improved = true;
+        while (improved)
+        {
+            improved = false;
+            for (std::size_t i = 0; i != e.evalTerms.size(); ++i)
+            {
+                e = best;
+                e.evalTerms[i] += 1;
+                ErrorType error = compute_error(e);
+                if (error < best.second)
+                {
+                    best.first = e;
+                    best.second = error;
+                    improved = true;
+                }
+                else
+                {
+                    e.evalTerms[i] -= 2;
+                    ErrorType error = compute_error(e);
+                    if (error < best.second)
+                    {
+                        best.first = e;
+                        best.second = error;
+                        improved = true;
+                    }
+                }
+            }
+        }
+        return best;
+    }
 }
 
 

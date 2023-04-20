@@ -222,7 +222,7 @@ namespace uci
         {
             ego.mutate(i.first, 0.80);
         }
-        Tuning::Tuner t{ initialPop };
+        Tuning::GeneticTuner t{ initialPop };
 
         uci_out << "Current score " << EPDsuite.score(eval::Evaluator{}) << std::endl;
         uci_out << "Positions count " << EPDsuite.positions.size() << std::endl;
