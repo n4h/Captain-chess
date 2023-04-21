@@ -131,12 +131,30 @@ namespace Tuning
         }
     };
 
+    template<typename Evaluator, typename Error>
+    double find_best_K(Evaluator e, Error compute_error)
+    {
+        double K = 0.01;
+        using ErrorType = decltype(compute_error(std::declval<Evaluator>(), std::declval<double>()));
+        ErrorType error = compute_error(e, K);
+        constexpr double h = 0.01;
+        do
+        {
+            ErrorType new_error = compute_error(e, K + h);
+            if (new_error > error)
+                return K;
+            error = new_error;
+            K += h;
+        } while (K < 55);
+        return K;
+    }
+
     // see https://www.chessprogramming.org/Texel%27s_Tuning_Method#Pseudo_Code
     template<typename Evaluator, typename Error>
-    auto local_search(Evaluator e, Error compute_error)
+    auto local_search(Evaluator e, Error compute_error, const double K)
     {
-        using ErrorType = decltype(compute_error(std::declval<Evaluator>()));
-        std::pair<Evaluator, ErrorType > best = { e, compute_error(e) };
+        using ErrorType = decltype(compute_error(std::declval<Evaluator>(), std::declval<double>()));
+        std::pair<Evaluator, ErrorType > best = { e, compute_error(e, K) };
         bool improved = true;
         while (improved)
         {
@@ -145,7 +163,7 @@ namespace Tuning
             {
                 e = best;
                 e.evalTerms[i] += 1;
-                ErrorType error = compute_error(e);
+                ErrorType error = compute_error(e, K);
                 if (error < best.second)
                 {
                     best.first = e;
@@ -155,7 +173,7 @@ namespace Tuning
                 else
                 {
                     e.evalTerms[i] -= 2;
-                    ErrorType error = compute_error(e);
+                    ErrorType error = compute_error(e, K);
                     if (error < best.second)
                     {
                         best.first = e;
