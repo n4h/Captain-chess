@@ -31,6 +31,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstdlib>
 #include <random>
 #include <cassert>
+#include <cmath>
 
 namespace aux
 {
@@ -271,5 +272,14 @@ namespace aux
         }
         constexpr Xor64rng(std::uint64_t seed) : x(seed) {}
     };
+
+    inline double sigmoid(double K, double s)
+    {
+        double x = -K * s;
+        x /= 400;
+        x = std::pow(10, x);
+        x += 1;
+        return 1 / x;
+    }
 }
 #endif
