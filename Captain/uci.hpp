@@ -59,8 +59,6 @@ namespace uci
 
     Move uciMove2boardMove(const board::QBB&, const std::string&);
 
-    Move SAN2ucimove(const board::QBB&, const std::string&);
-
     struct TestPositions
     {
         using BestMoveList = std::vector<Move>;
