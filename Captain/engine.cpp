@@ -232,7 +232,7 @@ namespace engine
         historyHeuristic = Tables::HistoryTable();
     }
 
-    void Engine::rootSearch(board::Board _b, std::chrono::time_point<std::chrono::steady_clock> s)
+    void Engine::newSearch(board::Board _b, std::chrono::time_point<std::chrono::steady_clock> s)
     {
         searchStart = s;
         lastUpdate = s;
@@ -242,6 +242,7 @@ namespace engine
         engineW = b.boards.back().isWhiteToPlay();
         currIDdepth = 0;
         nodes = 0;
+
         auto mytime = engineW ? settings.wmsec : settings.bmsec;
         [[maybe_unused]] auto myinc = engineW ? settings.winc : settings.binc;
         auto moveNumber = (initialPos + 2) / 2;
@@ -251,9 +252,15 @@ namespace engine
         }
         else
         {
-            moveTime = aux::castms((0.95*mytime) / settings.movestogo);
+            moveTime = aux::castms((0.95 * mytime) / settings.movestogo);
         }
         rootMoves.clear();
+        eval = rootMinBound;
+    }
+
+    void Engine::rootSearch(board::Board _b, std::chrono::time_point<std::chrono::steady_clock> s)
+    {
+        newSearch(_b, s);
         moves::genMoves(b, rootMoves);
         
         for (auto& i : rootMoves)
@@ -261,7 +268,6 @@ namespace engine
             i.score = rootMinBound;
         }
         Eval worstCase = rootMinBound;
-        this->eval = rootMinBound;
         for (unsigned int k = 0; k <= 128; ++k)
         {
             currIDdepth = k;

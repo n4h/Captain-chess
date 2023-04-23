@@ -75,6 +75,8 @@ namespace engine
         void setSettings(SearchSettings ss) noexcept { settings = ss; }
         void setEvaluator(const eval::Evaluator& e) { evaluate = e; }
         void newGame();
+        void newSearch(board::Board, std::chrono::time_point<std::chrono::steady_clock>);
+        Eval quiesceSearch(Eval alpha, Eval beta, int depth);
         Eval eval = 0;
         moves::Movelist<moves::ScoredMove> rootMoves;
     private:
@@ -86,7 +88,6 @@ namespace engine
         void uciUpdate();
         bool threeFoldRep() const;
         bool insufficientMaterial(const board::QBB&) const;
-        Eval quiesceSearch(Eval alpha, Eval beta, int depth);
         Eval alphaBetaSearch(PrincipalVariation& pv, Eval, Eval, int, bool);
         bool isPVNode(Eval alpha, Eval beta);
         int LMR(std::size_t i, const board::QBB& before, Move m, const board::QBB& after, int currDepth, bool PV, bool isKiller);
