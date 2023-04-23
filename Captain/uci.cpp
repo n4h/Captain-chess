@@ -239,7 +239,7 @@ namespace uci
 
         const auto [evaluator, fitness] = t.get_historical_best();
 
-        std::ofstream output{ std::string("finalevaluator.txt") };
+        std::ofstream output{ std::string("finalevaluator.txt"), std::ios::app };
         output << evaluator.asString();
         uci_out << "fitness " << fitness << std::endl;
         uci_out.emit();
@@ -273,7 +273,7 @@ namespace uci
         uci_out.emit();
         auto [ev, err] = Tuning::local_search(eval::Evaluator{}, error, K);
         
-        std::ofstream output{ std::string("finalevaluator.txt") };
+        std::ofstream output{ std::string("finalevaluator.txt"), std::ios::app };
         output << ev.asString();
         uci_out << "error " << err << std::endl;
         uci_out.emit();
