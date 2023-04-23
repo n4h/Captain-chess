@@ -102,12 +102,9 @@ namespace eval
         constexpr Eval pawnShieldBonus() const { return evalTerms[51]; }
         constexpr Eval kingAttackerValue(std::size_t type) const { return evalTerms[52 + type]; }
 
-        std::array<Eval, 57> evalTerms = {100, 300, 300, 500, 900,
-            3, 3, 2, 2, 
-            50, 100, 25, 0, 10, 50, 50, 100, 300,
-            0, 0, 4, 5, 0, 0, 7, 5, 3, 5, 0, 0, 0, 0, 4, 5, 0, 0, 7, 5, 3, 5, 0, 0, 
-            15, 25, 25, 25, 20, 15, 15, 16, 30, 10, 
-            3, 15, 15, 35, 55};
+        std::array<Eval, 57> evalTerms = { 104,249,281,425,1026,18,15,17,10,19,180,2,-40,
+            -31,-11,56,127,169,0,0,7,16,0,0,8,33,6,97,0,0,0,0,5,31,0,0,8,46,6,53,0,0,15,
+            -10,43,25,44,-18,17,18,113,9,3,15,15,35,55, };
 
         using ParamListType = decltype(evalTerms);
 
