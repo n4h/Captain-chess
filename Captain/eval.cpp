@@ -281,10 +281,10 @@ namespace eval
             evaluation -= passedPawnBonus(rank - 1);
         }
 
-        //auto [myBackwards, theirBackwards] = moves::backwardPawns(myPawns, theirPawns);
+        auto [myBackwards, theirBackwards] = moves::backwardPawns(myPawns, theirPawns);
 
-        //evaluation -= backwardspawnpenalty * _popcnt64(myBackwards);
-        //evaluation += backwardspawnpenalty * _popcnt64(theirBackwards);
+        evaluation -= backwardsPawnPenalty() * _popcnt64(myBackwards);
+        evaluation += backwardsPawnPenalty() * _popcnt64(theirBackwards);
 
         return evaluation;
     }
@@ -340,7 +340,7 @@ namespace eval
 
         if (pawnShield == (pawnShield & theirPawns))
             evaluation -= theirScalingFactor * pawnShieldBonus();
-        /*
+        
         auto kingArea = moves::kingAttacks(myKing) | moves::getBB(myKing);
 
         auto [pAttackers, kAttackers, bAttackers, rAttackers, qAttackers, _]
@@ -369,7 +369,7 @@ namespace eval
         evaluation += attackerCountScale * theirScalingFactor * _popcnt64(bAttackers) * kingAttackerValue(2);
         evaluation += attackerCountScale * theirScalingFactor * _popcnt64(rAttackers) * kingAttackerValue(3);
         evaluation += attackerCountScale * theirScalingFactor * _popcnt64(qAttackers) * kingAttackerValue(4);
-        */
+        
         return evaluation;
     }
 

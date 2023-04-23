@@ -101,10 +101,11 @@ namespace eval
         constexpr Eval kingFileOpenPenalty() const { return evalTerms[50]; }
         constexpr Eval pawnShieldBonus() const { return evalTerms[51]; }
         constexpr Eval kingAttackerValue(std::size_t type) const { return evalTerms[52 + type]; }
+        constexpr Eval backwardsPawnPenalty() const { return evalTerms[57]; }
 
-        std::array<Eval, 57> evalTerms = { 104,249,281,425,1026,18,15,17,10,19,180,2,-40,
-            -31,-11,56,127,169,0,0,7,16,0,0,8,33,6,97,0,0,0,0,5,31,0,0,8,46,6,53,0,0,15,
-            -10,43,25,44,-18,17,18,113,9,3,15,15,35,55, };
+        std::array<Eval, 58> evalTerms = { 93,256,276,440,1070,17,14,15,9,11,111,-1,-24,-10,
+            2,57,131,160,0,0,7,12,0,0,8,32,6,50,0,0,0,0,5,28,0,0,8,40,5,
+            50,0,0,15,-14,37,27,17,14,17,18,114,-1,27,33,22,64,70,27, };
 
         using ParamListType = decltype(evalTerms);
 
