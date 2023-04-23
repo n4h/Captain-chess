@@ -161,7 +161,7 @@ namespace Tuning
             improved = false;
             for (std::size_t i = 0; i != e.evalTerms.size(); ++i)
             {
-                e = best;
+                e = best.first;
                 e.evalTerms[i] += 1;
                 ErrorType error = compute_error(e, K);
                 if (error < best.second)
