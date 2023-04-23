@@ -46,6 +46,7 @@ namespace uci
         void UCIStopCommand();
         void UCISetOptionCommand(const std::vector<std::string>&);
         void Tune(double, double, std::size_t, std::size_t, std::string);
+        void Tune(std::string);
         std::osyncstream uci_out;
         std::string UCIName = "Captain v4.0";
         std::string UCIAuthor = "Narbeh Mouradian";
@@ -65,7 +66,11 @@ namespace uci
 
         std::vector<std::pair<board::QBB, BestMoveList>> positions;
 
+        std::vector<std::pair<board::QBB, double>> scoredPositions;
+
         void loadPositions(std::string filename);
+
+        void loadScoredPositions(std::string filename);
 
         std::uint64_t score(const eval::Evaluator& e) const;
     };

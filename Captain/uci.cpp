@@ -103,6 +103,10 @@ namespace uci
                     std::stoi(UCIMessage[4]), 
                     UCIMessage[5]);
             }
+            if (UCIMessage[0] == "tune2")
+            {
+                Tune(UCIMessage[1]);
+            }
         }
     }
 
@@ -241,6 +245,40 @@ namespace uci
         uci_out.emit();
     }
 
+    void UCIProtocol::Tune(std::string filename)
+    {
+        TestPositions EPDSuite;
+        EPDSuite.loadScoredPositions(filename);
+
+        auto error = [&EPDSuite, this](eval::Evaluator ev, double k) {
+            double N = EPDSuite.scoredPositions.size();
+            double sum = 0;
+            for (auto& [pos, score] : EPDSuite.scoredPositions)
+            {
+                engine::SearchSettings ss;
+                ss.quiet = true;
+                e.setEvaluator(ev);
+                e.setSettings(ss);
+                e.newGame();
+                e.newSearch(pos, std::chrono::steady_clock::now());
+                SearchFlags::searching.test_and_set();
+                double tmp = score - aux::sigmoid(k, e.quiesceSearch(engine::rootMinBound, engine::rootMaxBound, 0));
+                sum += (tmp * tmp);
+            }
+            return sum / N;
+        };
+
+        const double K = Tuning::find_best_K(eval::Evaluator{}, error);
+        uci_out << "best K " << K << std::endl;
+        uci_out.emit();
+        auto [ev, err] = Tuning::local_search(eval::Evaluator{}, error, K);
+        
+        std::ofstream output{ std::string("finalevaluator.txt") };
+        output << ev.asString();
+        uci_out << "error " << err << std::endl;
+        uci_out.emit();
+    }
+
     // we're assuming that the GUI isn't sending us invalid moves
     Move uciMove2boardMove(const board::QBB& b, const std::string& uciMove)
     {
@@ -301,6 +339,33 @@ namespace uci
                 */
                 assert(ml.size() > 0);
                 positions.push_back(std::make_pair(b, ml));
+            }
+        }
+    }
+
+    void TestPositions::loadScoredPositions(std::string filename)
+    {
+        std::ifstream test{ filename };
+        std::string input;
+        while (std::getline(test, input))
+        {
+            std::vector<std::string> pos = {};
+            std::istringstream iss{ input };
+            std::string term;
+            while (iss >> term)
+                pos.push_back(term);
+
+            std::string fen = pos[0] + " " + pos[1] + " " + pos[2] + " " + pos[3];
+
+            board::QBB b{ fen, false };
+
+            if (board::validPosition(b))
+            {
+                std::string pgneq = "pgn=";
+                auto first = pos[8].find_first_not_of(pgneq);
+                assert(pos[8][first] == '0' || pos[8][first] == '1');
+                double score = std::stod(pos[8].substr(first));
+                scoredPositions.push_back(std::make_pair(b, score));
             }
         }
     }
