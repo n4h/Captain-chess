@@ -151,7 +151,7 @@ namespace eval
         while (_BitScanForward64(&index, pieces))
         {
             pieces = _blsr_u64(pieces);
-            e += aggressionBonus(board::square(index), enemyKingSq, { closenessBonus(type, 0), closenessBonus(type, 1) });
+            e += aggressionBonus(board::square(index), enemyKingSq, closenessBonus(type));
         }
         return e;
     }
@@ -490,9 +490,10 @@ namespace eval
         auto printArray = [&](const std::string& name, const auto& array)
         {
             oss << name << "={";
-            for (const auto& i : array)
+            for (std::size_t j = 0; const auto& i : array)
             {
-                oss << i << ",";
+                oss << "/* " << j << " */ " << i << ",";
+                ++j;
             }
             oss << "}" << '\n';
         };
