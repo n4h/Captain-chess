@@ -90,6 +90,7 @@ namespace eval
         constexpr Eval isolatedPawnPenalty() const { return evalTerms[11]; }
         constexpr Eval passedPawnBonus(std::size_t rank) const { return evalTerms[12 + rank - 1]; }
         constexpr Eval closenessBonus(std::size_t pt) const { return evalTerms[18 + (pt % 6)]; }
+        constexpr Eval knightPawnCountPenalty(std::size_t pawnCount) const { return evalTerms[24 + (pawnCount / 4)]; }
         constexpr Eval bishopOpenDiagBonus() const { return evalTerms[42]; }
         constexpr Eval rookOpenFileBonus() const { return evalTerms[43]; }
         constexpr Eval rookRank7Bonus() const { return evalTerms[44]; }
@@ -106,7 +107,7 @@ namespace eval
         std::array<Eval, 58> evalTerms =
         { 93,256,276,440,1070,17,14,15,9,11,
             111,-1,-24,-10,2,57,131,160,1,1,
-            2,3,3,1,8,32,6,50,0,0,
+            2,3,3,1,-16,-12,-8,-4,0,0,
             0,0,5,28,0,0,8,40,5,50,
             0,0,15,-14,37,27,17,14,17,18,
             114,-1,27,33,22,64,70,27, };

@@ -407,7 +407,9 @@ namespace eval
         {
             evaluation += (i < 6 ? 1 : -1) * applyAggressionBonus(i, i < 6 ? oppKingSq : myKingSq, pieces[i]);
         }
-
+        const auto pawnCount = _popcnt64(pieces[myPawns] | pieces[theirPawns]);
+        evaluation += _popcnt64(pieces[myKnights]) * knightPawnCountPenalty(pawnCount);
+        evaluation -= _popcnt64(pieces[theirKnights]) * knightPawnCountPenalty(pawnCount);
         aux::GetNextBit<Bitboard> mobility(pieces[myKnights]);
         while (mobility())
         {
