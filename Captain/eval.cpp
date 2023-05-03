@@ -407,15 +407,29 @@ namespace eval
         {
             evaluation += (i < 6 ? 1 : -1) * applyAggressionBonus(i, i < 6 ? oppKingSq : myKingSq, pieces[i]);
         }
+
         const auto pawnCount = _popcnt64(pieces[myPawns] | pieces[theirPawns]);
         evaluation += _popcnt64(pieces[myKnights]) * knightPawnCountPenalty(pawnCount);
         evaluation -= _popcnt64(pieces[theirKnights]) * knightPawnCountPenalty(pawnCount);
+        evaluation += _popcnt64(pieces[myRooks]) * rookPawnCountBonus(pawnCount);
+        evaluation -= _popcnt64(pieces[theirRooks]) * rookPawnCountBonus(pawnCount);
+        auto myConnectRookCnt = _popcnt64(moves::KSRank(occ, pieces[myRooks]) & pieces[myRooks])/2;
+        auto myDoubleRookCnt = _popcnt64(moves::KSFile(occ, pieces[myRooks]) & pieces[myRooks]) / 2;
+        auto theirConnectRookCnt = _popcnt64(moves::KSRank(occ, pieces[theirRooks]) & pieces[theirRooks]) / 2;
+        auto theirDoubleRookCnt = _popcnt64(moves::KSFile(occ, pieces[theirRooks]) & pieces[theirRooks]) / 2;
+        evaluation += myConnectRookCnt * connectedRookBonus();
+        evaluation -= theirConnectRookCnt * connectedRookBonus();
+        evaluation += myDoubleRookCnt * doubledRookBonus();
+        evaluation -= theirDoubleRookCnt * doubledRookBonus();
+
         aux::GetNextBit<Bitboard> mobility(pieces[myKnights]);
         while (mobility())
         {
             moves::AttackMap moves = moves::knightAttacks(mobility.next);
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += knightMobility()*_popcnt64(moves);
+            if (!moves::getMyAttackersBB(b, occ, mobility.next))
+                evaluation += undefendedKnightPenalty();
         }
         mobility = GetNextBit<Bitboard>{ pieces[theirKnights] };
         while (mobility())
@@ -423,6 +437,8 @@ namespace eval
             moves::AttackMap moves = moves::knightAttacks(mobility.next);
             moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
             evaluation -= knightMobility()*_popcnt64(moves);
+            if (!moves::getTheirAttackersBB(b, occ, mobility.next))
+                evaluation -= undefendedKnightPenalty();
         }
         mobility = GetNextBit<Bitboard>{ pieces[myBishops] };
         while (mobility())
@@ -430,6 +446,8 @@ namespace eval
             moves::AttackMap moves = moves::hypqAllDiag(occ & ~pieces[myQueens], mobility.next);
             moves &= ~(moves::enemyPawnAttacks(pieces[theirPawns]) | pieces[myKing] | pieces[myPawns]);
             evaluation += bishopMobility()*_popcnt64(moves);
+            if (!moves::getMyAttackersBB(b, occ, mobility.next))
+                evaluation += undefendedBishopPenalty();
         }
         mobility = GetNextBit<Bitboard>{ pieces[theirBishops] };
         while (mobility())
@@ -437,6 +455,8 @@ namespace eval
             moves::AttackMap moves = moves::hypqAllDiag(occ & ~pieces[theirQueens], mobility.next);
             moves &= ~(moves::pawnAttacks(pieces[myPawns]) | pieces[theirKing] | pieces[theirPawns]);
             evaluation -= bishopMobility()*_popcnt64(moves);
+            if (!moves::getTheirAttackersBB(b, occ, mobility.next))
+                evaluation -= undefendedBishopPenalty();
         }
         mobility = GetNextBit<Bitboard>{ pieces[myRooks] };
         while (mobility())

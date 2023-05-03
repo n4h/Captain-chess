@@ -90,7 +90,18 @@ namespace eval
         constexpr Eval isolatedPawnPenalty() const { return evalTerms[11]; }
         constexpr Eval passedPawnBonus(std::size_t rank) const { return evalTerms[12 + rank - 1]; }
         constexpr Eval closenessBonus(std::size_t pt) const { return evalTerms[18 + (pt % 6)]; }
+        // TODO implement everything below
         constexpr Eval knightPawnCountPenalty(std::size_t pawnCount) const { return evalTerms[24 + (pawnCount / 4)]; }
+        constexpr Eval rookPawnCountBonus(std::size_t pawnCount) const { return evalTerms[29 + (pawnCount / 4)]; }
+        constexpr Eval connectedRookBonus() const {return evalTerms[34];}
+        constexpr Eval doubledRookBonus() const { return evalTerms[35]; }
+        constexpr Eval undefendedKnightPenalty() const { return evalTerms[36]; }
+        constexpr Eval undefendedBishopPenalty() const { return evalTerms[37]; }
+        constexpr Eval kingPassedPDistBonus() const { return evalTerms[38]; } // TODO 1
+        constexpr Eval rookBehindPassedP() const { return evalTerms[39]; } // TODO 2
+        constexpr Eval pawnIslandPenalty() const { return evalTerms[40]; } // TODO 3
+        constexpr Eval connectedPawnBonus() const { return evalTerms[41]; } // TODO 4
+
         constexpr Eval bishopOpenDiagBonus() const { return evalTerms[42]; }
         constexpr Eval rookOpenFileBonus() const { return evalTerms[43]; }
         constexpr Eval rookRank7Bonus() const { return evalTerms[44]; }
