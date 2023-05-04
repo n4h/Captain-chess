@@ -286,6 +286,12 @@ namespace eval
         evaluation -= backwardsPawnPenalty() * _popcnt64(myBackwards);
         evaluation += backwardsPawnPenalty() * _popcnt64(theirBackwards);
 
+        auto myConnectedPawns = (aux::shiftLeftNoWrap(myPawns) & myPawns) | (aux::shiftRightNoWrap(myPawns) & myPawns);
+        auto theirConnectedPawns = (aux::shiftLeftNoWrap(theirPawns) & theirPawns) | (aux::shiftRightNoWrap(theirPawns) & theirPawns);
+
+        evaluation += connectedPawnBonus() * _popcnt64(myConnectedPawns);
+        evaluation -= connectedPawnBonus() * _popcnt64(theirConnectedPawns);
+
         return evaluation;
     }
 
@@ -409,18 +415,30 @@ namespace eval
         }
 
         const auto pawnCount = _popcnt64(pieces[myPawns] | pieces[theirPawns]);
+
         evaluation += _popcnt64(pieces[myKnights]) * knightPawnCountPenalty(pawnCount);
         evaluation -= _popcnt64(pieces[theirKnights]) * knightPawnCountPenalty(pawnCount);
         evaluation += _popcnt64(pieces[myRooks]) * rookPawnCountBonus(pawnCount);
         evaluation -= _popcnt64(pieces[theirRooks]) * rookPawnCountBonus(pawnCount);
+
         auto myConnectRookCnt = _popcnt64(moves::KSRank(occ, pieces[myRooks]) & pieces[myRooks])/2;
         auto myDoubleRookCnt = _popcnt64(moves::KSFile(occ, pieces[myRooks]) & pieces[myRooks]) / 2;
         auto theirConnectRookCnt = _popcnt64(moves::KSRank(occ, pieces[theirRooks]) & pieces[theirRooks]) / 2;
         auto theirDoubleRookCnt = _popcnt64(moves::KSFile(occ, pieces[theirRooks]) & pieces[theirRooks]) / 2;
+
         evaluation += myConnectRookCnt * connectedRookBonus();
         evaluation -= theirConnectRookCnt * connectedRookBonus();
         evaluation += myDoubleRookCnt * doubledRookBonus();
         evaluation -= theirDoubleRookCnt * doubledRookBonus();
+
+        const auto [myPassed, theirPassed] = detectPassedPawns(pieces[myPawns], pieces[theirPawns]);
+
+        const auto myRooksBehind = moves::KSSouth(myPassed, myPassed) & pieces[myRooks];
+        const auto theirRooksBehind = moves::KSNorth(theirPassed, theirPassed) & pieces[theirRooks];
+
+        evaluation += rookBehindPassedP() * _popcnt64(myRooksBehind);
+        evaluation -= rookBehindPassedP() * _popcnt64(theirRooksBehind);
+
 
         aux::GetNextBit<Bitboard> mobility(pieces[myKnights]);
         while (mobility())
@@ -485,6 +503,15 @@ namespace eval
         {
             evaluation += kingCentralization(myKingSq);
             evaluation -= kingCentralization(oppKingSq);
+
+            auto expansion = moves::kingAttacks(myPassed) | myPassed;
+            unsigned distance;
+
+            for (distance = 1; !(expansion & pieces[myKing]); ++distance) expansion |= moves::kingAttacks(expansion);
+            evaluation -= kingPassedPDistPenalty() * distance;
+
+            for (distance = 1; !(expansion & pieces[theirKing]); ++distance) expansion |= moves::kingAttacks(expansion);
+            evaluation += kingPassedPDistPenalty() * distance;
         }
         else
         {

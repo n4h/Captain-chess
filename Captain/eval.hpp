@@ -97,10 +97,10 @@ namespace eval
         constexpr Eval doubledRookBonus() const { return evalTerms[35]; }
         constexpr Eval undefendedKnightPenalty() const { return evalTerms[36]; }
         constexpr Eval undefendedBishopPenalty() const { return evalTerms[37]; }
-        constexpr Eval kingPassedPDistBonus() const { return evalTerms[38]; } // TODO 1
-        constexpr Eval rookBehindPassedP() const { return evalTerms[39]; } // TODO 2
+        constexpr Eval kingPassedPDistPenalty() const { return evalTerms[38]; }
+        constexpr Eval rookBehindPassedP() const { return evalTerms[39]; }
         constexpr Eval pawnIslandPenalty() const { return evalTerms[40]; } // TODO 3
-        constexpr Eval connectedPawnBonus() const { return evalTerms[41]; } // TODO 4
+        constexpr Eval connectedPawnBonus() const { return evalTerms[41]; }
 
         constexpr Eval bishopOpenDiagBonus() const { return evalTerms[42]; }
         constexpr Eval rookOpenFileBonus() const { return evalTerms[43]; }
