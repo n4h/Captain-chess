@@ -292,6 +292,11 @@ namespace eval
         evaluation += connectedPawnBonus() * _popcnt64(myConnectedPawns);
         evaluation -= connectedPawnBonus() * _popcnt64(theirConnectedPawns);
 
+        auto [myfileset, theirfileset] = moves::pawnFileset(myPawns, theirPawns);
+
+        evaluation += pawnIslandPenalty() * _popcnt64(myfileset & (myfileset ^ (myfileset >> 1)));
+        evaluation -= pawnIslandPenalty() * _popcnt64(theirfileset & (theirfileset ^ (theirfileset >> 1)));
+
         return evaluation;
     }
 
