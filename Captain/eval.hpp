@@ -100,7 +100,6 @@ namespace eval
         constexpr Eval rookBehindPassedP() const { return evalTerms[39]; }
         constexpr Eval pawnIslandPenalty() const { return evalTerms[40]; }
         constexpr Eval connectedPawnBonus() const { return evalTerms[41]; }
-
         constexpr Eval bishopOpenDiagBonus() const { return evalTerms[42]; }
         constexpr Eval rookOpenFileBonus() const { return evalTerms[43]; }
         constexpr Eval rookRank7Bonus() const { return evalTerms[44]; }
@@ -114,7 +113,7 @@ namespace eval
         constexpr Eval kingAttackerValue(std::size_t type) const { return evalTerms[52 + type]; }
         constexpr Eval backwardsPawnPenalty() const { return evalTerms[57]; }
 
-        std::array<Eval, 58> evalTerms =
+        std::array<Eval, 58> evalTerms = // TODO readjust for tuning
         { 93,256,276,440,1070,17,14,15,9,11,
             111,-1,-24,-10,2,57,131,160,1,1,
             2,3,3,1,-16,-12,-8,-4,0,0,
