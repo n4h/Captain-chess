@@ -599,6 +599,11 @@ namespace moves
         return pawnSouthSpan(pawnAttacks) | pawnAttacks;
     }
 
+    constexpr std::pair<std::uint8_t, std::uint8_t> pawnFileset(Bitboard myPawns, Bitboard theirPawns)
+    {
+        return { KSSouth(myPawns, myPawns) & 0xFFU, KSSouth(theirPawns, theirPawns) & 0xFFU };
+    }
+
     constexpr std::pair<Bitboard, Bitboard> backwardPawns(Bitboard myPawns, Bitboard theirPawns)
     {
         const auto myStops = myPawns << 8;
