@@ -32,6 +32,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <random>
 #include <cassert>
 #include <cmath>
+#include <utility>
 
 namespace aux
 {
@@ -280,6 +281,24 @@ namespace aux
         x = std::pow(10, x);
         x += 1;
         return 1 / x;
+    }
+
+    template<typename T>
+    constexpr void sort3(T& arr)
+    {
+        if (arr[0] > arr[2])
+        {
+            std::swap(arr[0], arr[2]);
+        }
+        if (arr[1] > arr[2])
+        {
+            std::swap(arr[1], arr[2]);
+            return;
+        }
+        if (arr[0] > arr[1])
+        {
+            std::swap(arr[0], arr[1]);
+        }
     }
 }
 #endif
