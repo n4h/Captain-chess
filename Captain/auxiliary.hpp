@@ -284,20 +284,20 @@ namespace aux
     }
 
     template<typename T>
-    constexpr void sort3(T& arr)
+    constexpr void sort3(T& e1, T& e2, T& e3)
     {
-        if (arr[0] > arr[2])
+        if (e1 > e3)
         {
-            std::swap(arr[0], arr[2]);
+            std::swap(e1, e3);
         }
-        if (arr[1] > arr[2])
+        if (e2 > e3)
         {
-            std::swap(arr[1], arr[2]);
+            std::swap(e2, e3);
             return;
         }
-        if (arr[0] > arr[1])
+        if (e1 > e2)
         {
-            std::swap(arr[0], arr[1]);
+            std::swap(e1, e2);
         }
     }
 }
