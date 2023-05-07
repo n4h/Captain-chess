@@ -112,14 +112,56 @@ namespace eval
         constexpr Eval pawnShieldBonus() const { return evalTerms[51]; }
         constexpr Eval kingAttackerValue(std::size_t type) const { return evalTerms[52 + type]; }
         constexpr Eval backwardsPawnPenalty() const { return evalTerms[57]; }
+        constexpr Eval overDefendedPenalty(std::size_t pc) const { return evalTerms[58 + pc]; }
+        constexpr Eval connectivityBonus(std::size_t pc) const { return evalTerms[64 + pc]; }
+        constexpr Eval connectivityBonus(std::size_t pc1, std::size_t pc2) const
+        {
+            if (pc1 > pc2) std::swap(pc1, pc2);
+            constexpr std::array<unsigned char, 6> offsets = {0, 6, 6+5, 6+5+4, 6+5+4+3, 6+5+4+3+2};
+            constexpr std::array<signed char, 6> adj = {0, -1, -2, -3, -4, -5};
+            return evalTerms[70 + offsets[pc1] + (pc2 + adj[pc1])];
+        }
+        constexpr Eval connectivityBonus(std::size_t pc1, std::size_t pc2, std::size_t pc3) const
+        {
+            /*
+            * Code for computation of offsets array
+            * 
+            offsets[0] = 0;
+            int lastNumAdded = 6;
+            for (size_t i = 0; i != 6; ++i)
+            {
+                for (size_t j = (i == 0 ? 1 : i); j != 6; ++j)
+                {
+                    auto idx = connectivityBonus(i, j) - 70;
+                    offsets[idx] = offsets[idx - 1] + lastNumAdded;
+                    lastNumAdded = 6 - j;
+                }
+            }
+            */
+            constexpr auto cb2offset = [](std::size_t pc1, std::size_t pc2) {
+                if (pc1 > pc2) std::swap(pc1, pc2);
+                constexpr std::array<unsigned char, 6> offsets = { 0, 6, 6+5, 6+5+4, 6+5+4+3, 6+5+4+3+2 };
+                constexpr std::array<signed char, 6> adj = { 0, -1, -2, -3, -4, -5 };
+                return offsets[pc1] + (pc2 + adj[pc1]);
+            };
+            aux::sort3(pc1, pc2, pc3);
+            constexpr std::array<unsigned char, 21> offsets = { 0,6,11,15,18,20,21,26,30,33,35,36,40,43,45,46,49,51,52,54,55, };
+            constexpr std::array<signed char, 6> adj = { 0, -1, -2, -3, -4, -5 };
+            return evalTerms[91 + offsets[cb2offset(pc1, pc2)] + (pc3 + adj[pc2])];
+        }
 
-        std::array<Eval, 58> evalTerms =
+
+        std::array<Eval, 91> evalTerms =
         { 93,256,276,440,1070,17,14,15,9,11,
             111,-1,-24,-10,2,57,131,160,1,1,
             2,3,3,1,-16,-12,-8,-4,0,16,
             12,8,4,0,2,4,-8,-8,5,50,
             -5,5,15,-14,37,27,17,14,17,18,
-            114,-1,27,33,22,64,70,27, };
+            114,-1,27,33,22,64,70,27,20,10,
+            10, 8, 1, 30, 8, 4, 5, 3 ,2 ,1,
+            15, 11, 12, 10, 9, 10, 7, 8, 6, 5,
+            6, 6, 7, 6, 6, 5, 4, 5, 8, 4,
+            0, }; // TODO fill in terms before tuning
 
         using ParamListType = decltype(evalTerms);
 
