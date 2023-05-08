@@ -132,7 +132,7 @@ namespace eval
             {
                 for (size_t j = (i == 0 ? 1 : i); j != 6; ++j)
                 {
-                    auto idx = connectivityBonus(i, j) - 70;
+                    auto idx = cb2offset(i, j) - 70;
                     offsets[idx] = offsets[idx - 1] + lastNumAdded;
                     lastNumAdded = 6 - j;
                 }
@@ -149,9 +149,10 @@ namespace eval
             constexpr std::array<signed char, 6> adj = { 0, -1, -2, -3, -4, -5 };
             return evalTerms[91 + offsets[cb2offset(pc1, pc2)] + (pc3 + adj[pc2])];
         }
+        constexpr Eval connectivityPieceVal(std::size_t pc) const { return evalTerms[147 + pc]; }
+        constexpr Eval tempoBonus() const { return evalTerms[153]; }
 
-
-        std::array<Eval, 91> evalTerms =
+        std::array<Eval, 154> evalTerms =
         { 93,256,276,440,1070,17,14,15,9,11,
             111,-1,-24,-10,2,57,131,160,1,1,
             2,3,3,1,-16,-12,-8,-4,0,16,
@@ -161,7 +162,13 @@ namespace eval
             10, 8, 1, 30, 8, 4, 5, 3 ,2 ,1,
             15, 11, 12, 10, 9, 10, 7, 8, 6, 5,
             6, 6, 7, 6, 6, 5, 4, 5, 8, 4,
-            0, }; // TODO fill in terms before tuning
+            0, 0, 18, 19, 17, 16, 17, 14, 15, 13,
+            12, 13, 0, 14, 13, 13, 12, 11, 12, 7,
+            11, 0, 5, 11, 9, 8, 9, 3, 11, 10,
+            8, 8, 7, 7, 7, 7, 0, 5, 5, 5, 
+            5, 9, 8, 6, 6, 7, 0, 8, 6, 7,
+            7, 6, 0, 6, 7, 0, 0, 50, 35, 30,
+            10, 4, 0, 10};
 
         using ParamListType = decltype(evalTerms);
 
