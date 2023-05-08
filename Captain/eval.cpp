@@ -386,7 +386,7 @@ namespace eval
 
     Eval Evaluator::operator()(const board::QBB& b) const
     {
-        Eval evaluation = 0;
+        Eval evaluation = tempoBonus();
 
         const std::array<Bitboard, 12> pieces = {
             b.my(b.getPawns()),
