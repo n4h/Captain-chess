@@ -216,6 +216,8 @@ namespace eval
 
         Eval evalPawns(Bitboard myPawns, Bitboard theirPawns) const noexcept;
 
+        Eval connectivity(const board::QBB& b) const;
+
         constexpr Eval bishopPairBonus(bool pair) const
         {
             return pair ? bishopPairBonus() : 0;

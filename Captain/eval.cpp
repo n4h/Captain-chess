@@ -300,6 +300,11 @@ namespace eval
         return evaluation;
     }
 
+    Eval Evaluator::connectivity(const board::QBB& b) const
+    {
+        return 0;
+    }
+
     Eval Evaluator::kingSafety(const board::QBB& b, board::square myKing, board::square theirKing) const
     {
         auto myKingFile = board::fileMask(myKing);
