@@ -520,7 +520,7 @@ namespace board
         std::array<std::optional<Bitboard>, 12> attackmaps;
 
     };
-
+    // TODO store attack maps per position
     struct Board
     {
     private:
