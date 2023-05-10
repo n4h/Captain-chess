@@ -725,6 +725,41 @@ namespace moves
         return orth | diag;
     }
 
+    struct AnyAttackMap
+    {
+        Bitboard attackmap = 0;
+        unsigned piececode = 0;
+        void operator()(const board::QBB& b, board::square s)
+        {
+            piececode = b.getPieceType(s);
+            switch (piececode >> 1)
+            {
+            case constants::emptySquare:
+                return;
+            case constants::pawnCode:
+                attackmap = piececode == constants::myPawn ? pawnAttacks(getBB(s)) : enemyPawnAttacks(getBB(s));
+                goto shift;
+            case constants::knightCode:
+                attackmap = knightAttacks(s);
+                goto shift;
+            case constants::bishopCode:
+                attackmap = hypqAllDiag(b.getOccupancy(), s);
+                goto shift;
+            case constants::rookCode:
+                attackmap = hypqAllOrth(b.getOccupancy(), s);
+                goto shift;
+            case constants::queenCode:
+                attackmap = hypqAllDiag(b.getOccupancy(), s) | hypqAllOrth(b.getOccupancy(), s);
+                goto shift;
+            case constants::kingCode:
+                attackmap = kingAttacks(s);
+                goto shift;
+            }
+        shift:
+            piececode >>= 1;
+        }
+    };
+
     template<typename Attacks, typename T, std::size_t N>
     void addMoves(Bitboard pieces, Movelist<T, N>& ml, Attacks dest)
     {
