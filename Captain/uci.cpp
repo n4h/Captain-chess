@@ -252,9 +252,10 @@ namespace uci
 
         auto error = [&EPDSuite, this](eval::Evaluator ev, double k) {
             double N = EPDSuite.scoredPositions.size();
-            double sum = 0;
-            for (auto& [pos, score] : EPDSuite.scoredPositions)
-            {
+            std::atomic<double> sum = 0;
+            std::for_each(std::execution::par, EPDSuite.scoredPositions.cbegin(), EPDSuite.scoredPositions.cend(), [&](const auto& x) {
+                const auto& pos = x.first;
+                const auto score = x.second;
                 engine::SearchSettings ss;
                 ss.quiet = true;
                 e.setEvaluator(ev);
@@ -263,8 +264,9 @@ namespace uci
                 e.newSearch(pos, std::chrono::steady_clock::now());
                 SearchFlags::searching.test_and_set();
                 double tmp = score - aux::sigmoid(k, e.quiesceSearch(engine::rootMinBound, engine::rootMaxBound, 0));
-                sum += (tmp * tmp);
-            }
+                tmp = tmp * tmp;
+                sum += tmp;
+            });
             return sum / N;
         };
 
