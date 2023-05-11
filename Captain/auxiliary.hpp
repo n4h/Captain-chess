@@ -236,7 +236,7 @@ namespace aux
     template<typename T>
     struct GetNextBit
     {
-        std::uint64_t bits;
+        std::uint64_t bits = 0;
         T next;
         GetNextBit(std::uint64_t b) :bits(b) {}
         bool operator()()
