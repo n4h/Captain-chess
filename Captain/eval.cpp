@@ -302,7 +302,76 @@ namespace eval
 
     Eval Evaluator::connectivity(const board::QBB& b) const
     {
-        return 0;
+        Eval evaluation = 0;
+        aux::GetNextBit<board::square> nextPiece{ b.my(b.getOccupancy()) };
+        while (nextPiece())
+        {
+            auto piececodeIdx = b.getPieceCodeIdx(nextPiece.next);
+            auto [pa, na, ba, ra, qa, ka] = moves::getMyAttackers(b, b.getOccupancy(), nextPiece.next);
+            auto allAttackers = pa | na | ba | ra | qa | ka;
+            switch (_popcnt64(allAttackers))
+            {
+            case 0:
+                break;
+            case 1:
+                evaluation += connectivityPieceVal(piececodeIdx) * connectivityBonus(b.getPieceCodeIdx(board::square(_tzcnt_u64(allAttackers))));
+                break;
+            case 2:
+            {
+                auto high = b.getPieceCodeIdx(board::square(63 - __lzcnt64(allAttackers)));
+                auto low = b.getPieceCodeIdx(board::square(_tzcnt_u64(allAttackers)));
+                evaluation += connectivityPieceVal(piececodeIdx) * connectivityBonus(low, high);
+            }
+            break;
+            case 3:
+            {
+                Bitboard lsb = _blsi_u64(allAttackers);
+                allAttackers = _blsr_u64(allAttackers);
+                auto low = b.getPieceCodeIdx(board::square(_tzcnt_u64(lsb)));
+                auto mid = b.getPieceCodeIdx(board::square(_tzcnt_u64(allAttackers)));
+                auto high = b.getPieceCodeIdx(board::square(63 - __lzcnt64(allAttackers)));
+                evaluation += connectivityPieceVal(piececodeIdx) * connectivityBonus(low, mid, high);
+            }
+            break;
+            default:
+                evaluation -= overDefendedPenalty(piececodeIdx);
+            }
+        }
+        nextPiece = aux::GetNextBit<board::square>{ b.their(b.getOccupancy()) };
+        while (nextPiece())
+        {
+            auto piececodeIdx = b.getPieceCodeIdx(nextPiece.next);
+            auto [pa, na, ba, ra, qa, ka] = moves::getTheirAttackers(b, b.getOccupancy(), nextPiece.next);
+            auto allAttackers = pa | na | ba | ra | qa | ka;
+            switch (_popcnt64(allAttackers))
+            {
+            case 0:
+                break;
+            case 1:
+                evaluation -= connectivityPieceVal(piececodeIdx) * connectivityBonus(b.getPieceCodeIdx(board::square(_tzcnt_u64(allAttackers))));
+                break;
+            case 2:
+            {
+                auto high = b.getPieceCodeIdx(board::square(63 - __lzcnt64(allAttackers)));
+                auto low = b.getPieceCodeIdx(board::square(_tzcnt_u64(allAttackers)));
+                evaluation -= connectivityPieceVal(piececodeIdx) * connectivityBonus(low, high);
+            }
+            break;
+            case 3:
+            {
+                Bitboard lsb = _blsi_u64(allAttackers);
+                allAttackers = _blsr_u64(allAttackers);
+                auto low = b.getPieceCodeIdx(board::square(_tzcnt_u64(lsb)));
+                auto mid = b.getPieceCodeIdx(board::square(_tzcnt_u64(allAttackers)));
+                auto high = b.getPieceCodeIdx(board::square(63 - __lzcnt64(allAttackers)));
+                evaluation -= connectivityPieceVal(piececodeIdx) * connectivityBonus(low, mid, high);
+            }
+            break;
+            default:
+                evaluation += overDefendedPenalty(piececodeIdx);
+            }
+        }
+        return evaluation;
     }
 
     Eval Evaluator::kingSafety(const board::QBB& b, board::square myKing, board::square theirKing) const
@@ -539,6 +608,8 @@ namespace eval
 
         evaluation += this->apply7thRankBonus(pieces[myRooks], board::rankMask(board::a7));
         evaluation -= this->apply7thRankBonus(pieces[theirRooks], board::rankMask(board::a2));
+
+        evaluation += connectivity(b);
 
         return evaluation;
     }
