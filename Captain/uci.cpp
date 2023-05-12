@@ -250,20 +250,21 @@ namespace uci
         TestPositions EPDSuite;
         EPDSuite.loadScoredPositions(filename);
 
-        auto error = [&EPDSuite, this](eval::Evaluator ev, double k) {
+        auto error = [&EPDSuite](eval::Evaluator ev, double k) {
             double N = EPDSuite.scoredPositions.size();
             std::atomic<double> sum = 0;
-            std::for_each(std::execution::par, EPDSuite.scoredPositions.cbegin(), EPDSuite.scoredPositions.cend(), [&](const auto& x) {
+            std::for_each(std::execution::par, EPDSuite.scoredPositions.cbegin(), EPDSuite.scoredPositions.cend(), [&sum, &ev, &k](const auto& x) {
                 const auto& pos = x.first;
                 const auto score = x.second;
                 engine::SearchSettings ss;
                 ss.quiet = true;
-                e.setEvaluator(ev);
-                e.setSettings(ss);
-                e.newGame();
-                e.newSearch(pos, std::chrono::steady_clock::now());
+                engine::Engine eng{};
+                eng.setEvaluator(ev);
+                eng.setSettings(ss);
+                eng.newGame();
+                eng.newSearch(pos, std::chrono::steady_clock::now());
                 SearchFlags::searching.test_and_set();
-                double tmp = score - aux::sigmoid(k, e.quiesceSearch(engine::rootMinBound, engine::rootMaxBound, 0));
+                double tmp = score - aux::sigmoid(k, eng.quiesceSearch(engine::rootMinBound, engine::rootMaxBound, 0));
                 tmp = tmp * tmp;
                 sum += tmp;
             });
