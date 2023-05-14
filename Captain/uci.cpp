@@ -28,6 +28,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cstdlib>
 #include <tuple>
 #include <locale>
+#include <numeric>
 
 #include "uci.hpp"
 #include "board.hpp"
@@ -249,25 +250,28 @@ namespace uci
     {
         TestPositions EPDSuite;
         EPDSuite.loadScoredPositions(filename);
-
+        
         auto error = [&EPDSuite](eval::Evaluator ev, double k) {
             double N = EPDSuite.scoredPositions.size();
-            std::atomic<double> sum = 0;
-            std::for_each(std::execution::par, EPDSuite.scoredPositions.cbegin(), EPDSuite.scoredPositions.cend(), [&sum, &ev, &k](const auto& x) {
-                const auto& pos = x.first;
-                const auto score = x.second;
-                engine::SearchSettings ss;
-                ss.quiet = true;
-                engine::Engine eng{};
-                eng.setEvaluator(ev);
-                eng.setSettings(ss);
-                eng.newGame();
-                eng.newSearch(pos, std::chrono::steady_clock::now());
-                SearchFlags::searching.test_and_set();
-                double tmp = score - aux::sigmoid(k, eng.quiesceSearch(engine::rootMinBound, engine::rootMaxBound, 0));
-                tmp = tmp * tmp;
-                sum += tmp;
-            });
+            double sum = std::transform_reduce(std::execution::par,
+                EPDSuite.scoredPositions.cbegin(),
+                EPDSuite.scoredPositions.cend(),
+                0.0,
+                std::plus<>(), 
+                [&ev, &k](const auto& x) -> double {
+                    const auto& pos = x.first;
+                    const auto score = x.second;
+                    engine::SearchSettings ss;
+                    ss.quiet = true;
+                    engine::Engine eng{};
+                    eng.setEvaluator(ev);
+                    eng.setSettings(ss);
+                    eng.newGame();
+                    eng.newSearch(pos, std::chrono::steady_clock::now());
+                    SearchFlags::searching.test_and_set();
+                    double tmp = score - aux::sigmoid(k, eng.quiesceSearch(engine::rootMinBound, engine::rootMaxBound, 0));
+                    return tmp * tmp;
+                });
             return sum / N;
         };
 
