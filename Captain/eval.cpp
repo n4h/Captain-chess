@@ -512,11 +512,21 @@ namespace eval
             auto expansion = moves::kingAttacks(myPassed) | myPassed;
             unsigned distance;
 
-            for (distance = 1; !(expansion & pieces[myKing]); ++distance) expansion |= moves::kingAttacks(expansion);
-            evaluation -= kingPassedPDistPenalty() * distance;
+            if (expansion)
+            {
+                for (distance = 1; !(expansion & pieces[myKing]); ++distance)
+                    expansion |= moves::kingAttacks(expansion);
+                evaluation -= kingPassedPDistPenalty() * distance;
+            }
 
-            for (distance = 1; !(expansion & pieces[theirKing]); ++distance) expansion |= moves::kingAttacks(expansion);
-            evaluation += kingPassedPDistPenalty() * distance;
+            expansion = moves::kingAttacks(theirPassed) | theirPassed;
+
+            if (expansion)
+            {
+                for (distance = 1; !(expansion & pieces[theirKing]); ++distance)
+                    expansion |= moves::kingAttacks(expansion);
+                evaluation += kingPassedPDistPenalty() * distance;
+            }
         }
         else
         {
