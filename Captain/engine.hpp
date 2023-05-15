@@ -58,6 +58,7 @@ namespace engine
         std::size_t movestogo = std::numeric_limits<std::size_t>::max();
         bool infiniteSearch = false;
         bool ponder = false;
+        bool ignoreSearchFlags = false;
         std::chrono::milliseconds maxTime = std::chrono::milliseconds::max();
         std::chrono::milliseconds wmsec = std::chrono::milliseconds::max();
         std::chrono::milliseconds bmsec = std::chrono::milliseconds::max();

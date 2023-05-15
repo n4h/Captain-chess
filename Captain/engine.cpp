@@ -277,7 +277,7 @@ namespace engine
             
             for (auto& [move, score] : rootMoves)
             {
-                if (!SearchFlags::searching.test())
+                if (!settings.ignoreSearchFlags && !SearchFlags::searching.test())
                     goto endsearch;
                 b.makeMove(move);
                 try 
@@ -423,7 +423,7 @@ namespace engine
                     continue;
                 }
             }
-            if (!SearchFlags::searching.test())
+            if (!settings.ignoreSearchFlags && !SearchFlags::searching.test())
                 throw Timeout();
             b.makeMove(ml[i].m);
             
@@ -526,7 +526,7 @@ namespace engine
         for (; moves.next(b, nextMove); ++i)
         {
             assert(moves::isLegalMove(b, nextMove));
-            if (!SearchFlags::searching.test())
+            if (!settings.ignoreSearchFlags && !SearchFlags::searching.test())
             {
                 throw Timeout();
             }

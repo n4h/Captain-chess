@@ -263,6 +263,7 @@ namespace uci
                     const auto score = x.second;
                     engine::SearchSettings ss;
                     ss.quiet = true;
+                    ss.ignoreSearchFlags = true;
                     engine::Engine eng{};
                     eng.setEvaluator(ev);
                     eng.setSettings(ss);
