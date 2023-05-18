@@ -279,11 +279,24 @@ namespace uci
         const double K = Tuning::find_best_K(eval::Evaluator{}, error);
         uci_out << "best K " << K << std::endl;
         uci_out.emit();
-        auto [ev, err] = Tuning::local_search(eval::Evaluator{}, error, K);
-        
+
         std::ofstream output{ std::string("finalevaluator.txt"), std::ios::app };
-        output << ev.asString();
-        uci_out << "error " << err << std::endl;
+        auto best = Tuning::local_search_one_iteration(eval::Evaluator{}, error, K);
+
+        double olderror = best.second;
+        
+        do
+        {
+            olderror = best.second;
+            for (std::size_t i = 0; i != 10; ++i)
+            {
+                best = Tuning::local_search_one_iteration(best.first, error, K);
+            }
+            output << best.first.asString();
+            uci_out << "error " << best.second << std::endl;
+            uci_out.emit();
+        } while (best.second < olderror);
+        uci_out << "done tuning" << std::endl;
         uci_out.emit();
     }
 
