@@ -185,6 +185,36 @@ namespace Tuning
         }
         return best;
     }
+
+    template<typename Evaluator, typename Error>
+    auto local_search_one_iteration(Evaluator e, Error compute_error, const double K)
+    {
+        using ErrorType = decltype(compute_error(std::declval<Evaluator>(), std::declval<double>()));
+        std::pair<Evaluator, ErrorType > best = { e, compute_error(e, K) };
+
+        for (std::size_t i = 0; i != e.evalTerms.size(); ++i)
+        {
+            e = best.first;
+            e.evalTerms[i] += 1;
+            ErrorType error = compute_error(e, K);
+            if (error < best.second)
+            {
+                best.first = e;
+                best.second = error;
+            }
+            else
+            {
+                e.evalTerms[i] -= 2;
+                ErrorType error = compute_error(e, K);
+                if (error < best.second)
+                {
+                    best.first = e;
+                    best.second = error;
+                }
+            }
+        }
+        return best;
+    }
 }
 
 
