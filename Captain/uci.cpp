@@ -280,7 +280,6 @@ namespace uci
         uci_out << "best K " << K << std::endl;
         uci_out.emit();
 
-        std::ofstream output{ std::string("finalevaluator.txt"), std::ios::app };
         auto best = Tuning::local_search_one_iteration(eval::Evaluator{}, error, K);
 
         double olderror = best.second;
@@ -292,6 +291,7 @@ namespace uci
             {
                 best = Tuning::local_search_one_iteration(best.first, error, K);
             }
+            std::ofstream output{ std::string("finalevaluator.txt"), std::ios::app };
             output << best.first.asString();
             uci_out << "error " << best.second << std::endl;
             uci_out.emit();
